@@ -113,11 +113,6 @@
       "Description": "S3 key prefix for the Quick Start assets.",
       "Type": "String",
       "Default": "latest"
-    },
-    "QuickStartS3URL": {
-      "Description": "Used to dynamically generate URLs for subtemplates.",
-      "Type": "String",
-      "Default": "https://s3.amazonaws.com"
     }
   },
   "Metadata": {
@@ -135,16 +130,48 @@
         },
         {
           "Label" : { "default" : "Quickstart Settings" },
-          "Parameters": [ "QSS3BucketName", "QSS3KeyPrefix", "QuickStartS3URL"]
+          "Parameters": [ "QSS3BucketName", "QSS3KeyPrefix"]
         }
       ]
+    }
+  },
+  "Mappings": {
+    "RegionMap": {
+      "ap-northeast-1": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "ap-northeast-2": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "ap-south-1": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "ap-southeast-1": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "ap-southeast-2": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "ca-central-1": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "eu-central-1": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "eu-west-1": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "sa-east-1": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "us-east-1": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "us-east-2": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "us-west-1": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "us-west-2": { "QuickStartS3URL": "https://s3.amazonaws.com" }
     }
   },
   "Resources": {
     "VPCStack": {
       "Type": "AWS::CloudFormation::Stack",
       "Properties": {
-        "TemplateURL": "https://s3.amazonaws.com/splk-cf-stacks/splunk_network.json",
+        "TemplateURL": { "Fn::Join": [
+          "/", [{
+              "Fn::FindInMap": [
+                "RegionMap", {
+                  "Ref": "AWS::Region"
+                },
+                "QuickStartS3URL"
+              ]
+            }, {
+              "Ref": "QSS3BucketName"
+            }, {
+              "Ref": "QSS3KeyPrefix"
+            },
+            "splunk_network.json"
+          ]
+        ]},
         "Parameters" : {
            "SSHLocation" : { "Ref": "SSHLocation" },
            "SplunkSubnet1CIDR" : { "Ref": "SplunkSubnet1CIDR" },
@@ -158,7 +185,22 @@
       "Type": "AWS::CloudFormation::Stack",
       "DependsOn": "VPCStack",
       "Properties": {
-        "TemplateURL": "https://s3.amazonaws.com/splk-cf-stacks/splunk_deployment_existing_vpc.json",
+        "TemplateURL": { "Fn::Join": [
+          "/", [{
+              "Fn::FindInMap": [
+                "RegionMap", {
+                  "Ref": "AWS::Region"
+                },
+                "QuickStartS3URL"
+              ]
+            }, {
+              "Ref": "QSS3BucketName"
+            }, {
+              "Ref": "QSS3KeyPrefix"
+            },
+            "splunk_deployment_existing_vpc.json"
+          ]
+        ]},
         "Parameters" : {
            "VPCID": { "Fn::GetAtt": [ "VPCStack", "Outputs.VPCID"] },
            "VPCCIDR": { "Fn::GetAtt": [ "VPCStack", "Outputs.VPCCIDR"] },
@@ -173,7 +215,9 @@
            "SSHLocation": { "Ref": "SSHLocation" },
            "SplunkIndexerCount": { "Ref": "SplunkIndexerCount" },
            "SHCEnabled": { "Ref": "SHCEnabled" },
-           "SHCCount": { "Ref": "SHCCount" }
+           "SHCCount": { "Ref": "SHCCount" },
+           "QSS3BucketName": { "Ref": "QSS3BucketName" },
+           "QSS3KeyPrefix": { "Ref": "QSS3KeyPrefix" }
          },
         "TimeoutInMinutes": "60"
       }

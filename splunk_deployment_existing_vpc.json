@@ -105,11 +105,6 @@
       "Description": "S3 key prefix for the Quick Start assets.",
       "Type": "String",
       "Default": "latest"
-    },
-    "QuickStartS3URL": {
-      "Description": "Used to dynamically generate URLs for subtemplates.",
-      "Type": "String",
-      "Default": "https://s3.amazonaws.com"
     }
   },
   "Metadata": {
@@ -127,7 +122,7 @@
         },
         {
           "Label" : { "default" : "Quickstart Settings" },
-          "Parameters": [ "QSS3BucketName", "QSS3KeyPrefix", "QuickStartS3URL"]
+          "Parameters": [ "QSS3BucketName", "QSS3KeyPrefix" ]
         }
       ]
     }
@@ -144,19 +139,19 @@
   },
   "Mappings": {
     "RegionMap": {
-      "ap-south-1": {"AMI": "ami-f7334798"},
-      "eu-west-1": {"AMI": "ami-0097d073"},
-      "ap-northeast-2": {"AMI": "ami-9c63b6f2"},
-      "ap-northeast-1": {"AMI": "ami-c0479ba1"},
-      "sa-east-1": {"AMI": "ami-dd2ebdb1"},
-      "ca-central-1": {"AMI": "ami-105eec74"},
-      "ap-southeast-1": {"AMI": "ami-52d87c31"},
-      "ap-southeast-2": {"AMI": "ami-22576441"},
-      "eu-central-1": {"AMI": "ami-b61fe3d9"},
-      "us-east-1": {"AMI": "ami-231d5b34"},
-      "us-east-2": {"AMI": "ami-fbf5ae9e"},
-      "us-west-1": {"AMI": "ami-98ce80f8"},
-      "us-west-2": {"AMI": "ami-b8835dd8"}
+      "ap-northeast-1": { "AMI": "ami-c0479ba1", "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "ap-northeast-2": { "AMI": "ami-9c63b6f2", "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "ap-south-1": { "AMI": "ami-f7334798", "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "ap-southeast-1": { "AMI": "ami-52d87c31", "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "ap-southeast-2": { "AMI": "ami-22576441", "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "ca-central-1": { "AMI": "ami-105eec74", "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "eu-central-1": { "AMI": "ami-b61fe3d9", "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "eu-west-1": { "AMI": "ami-0097d073", "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "sa-east-1": { "AMI": "ami-dd2ebdb1", "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "us-east-1": { "AMI": "ami-231d5b34", "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "us-east-2": { "AMI": "ami-fbf5ae9e", "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "us-west-1": { "AMI": "ami-98ce80f8", "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "us-west-2": { "AMI": "ami-b8835dd8", "QuickStartS3URL": "https://s3.amazonaws.com" }
     },
     "SplunkConfig": {
       "indexer-disk-size": {"gb": "200"},
