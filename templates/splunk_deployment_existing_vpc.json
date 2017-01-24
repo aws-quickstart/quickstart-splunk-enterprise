@@ -82,6 +82,22 @@
       "Default": "3",
       "ConstraintDescription": "must be a valid number, 3-10"
     },
+    "SplunkReplicationFactor": {
+      "Description": "How many copies of data should be stored in the Splunk clusters",
+      "Type": "Number",
+      "MinValue": "2",
+      "MaxValue": "5",
+      "Default": "2",
+      "ConstraintDescription": "must be a valid number, 2-5"
+    },
+   "SplunkIndexerDiskSize": {
+      "Description": "The size of the attached EBS volume to the Splunk indexers.  (in GB)",
+      "Type": "Number",
+      "MinValue": "50",
+      "MaxValue": "16000",
+      "Default": "200",
+      "ConstraintDescription": "must be a valid number, 50-16000"
+    },
     "SHCEnabled": {
       "Description": "Do you want to build a Splunk search head cluster?",
       "Type": "String",
@@ -118,7 +134,7 @@
         },
         {
           "Label" : { "default" : "Splunk Settings" },
-          "Parameters" : [ "SplunkAdminPassword", "SplunkSecret", "SplunkLicenseBucket", "SplunkLicensePath", "SplunkIndexerCount", "SHCEnabled", "SHCCount"]
+          "Parameters" : [ "SplunkAdminPassword", "SplunkSecret", "SplunkLicenseBucket", "SplunkLicensePath", "SplunkIndexerCount","SplunkIndexerDiskSize", "SHCEnabled", "SplunkReplicationFactor" ,"SHCCount"]
         },
         {
           "Label" : { "default" : "Quickstart Settings" },
@@ -154,9 +170,7 @@
       "us-west-2": { "AMI": "ami-b8835dd8", "QuickStartS3URL": "https://s3.amazonaws.com" }
     },
     "SplunkConfig": {
-      "indexer-disk-size": {"gb": "200"},
       "searchhead-disk-size": {"gb": "100"},
-      "cluster-replication-factor": {"repfactor": "2"},
       "cluster-search-factor": {"searchfactor": "2"}
     }
   },
@@ -448,9 +462,7 @@
                 { "Ref": "SplunkSecret"},
                 "\n",
                 "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -replication_factor ",
-                {
-                  "Fn::FindInMap": ["SplunkConfig", "cluster-replication-factor", "repfactor"]
-                },
+                {"Ref": "SplunkReplicationFactor" },
                 " -search_factor ",
                 {
                   "Fn::FindInMap": ["SplunkConfig", "cluster-search-factor", "searchfactor"]
@@ -615,8 +627,9 @@
                   "-auth admin:", { "Ref": "SplunkAdminPassword" }, "\n",
 
                 "sudo -u $SPLUNK_USER $SPLUNK_BIN init shcluster-config ",
-                  "-mgmt_uri https://$LOCALIP:8089 -replication_port 8090 -replication_factor 3 ",
-                  "-conf_deploy_fetch_url https://", { "Fn::GetAtt": [ "SplunkSHCDeployer", "PrivateIp" ] }, ":8089 ",
+                  "-mgmt_uri https://$LOCALIP:8089 -replication_port 8090 -replication_factor ", 
+                  { "Ref": "SplunkReplicationFactor" },
+                  " -conf_deploy_fetch_url https://", { "Fn::GetAtt": [ "SplunkSHCDeployer", "PrivateIp" ] }, ":8089 ",
                   "-shcluster_label SplunkSHC ",
                   "-secret ", { "Ref": "SplunkSecret"}, " ",
                   "-auth admin:", { "Ref": "SplunkAdminPassword" }, "\n",
@@ -708,8 +721,9 @@
                   "-auth admin:", { "Ref": "SplunkAdminPassword" }, "\n",
 
                 "sudo -u $SPLUNK_USER $SPLUNK_BIN init shcluster-config ",
-                  "-mgmt_uri https://$LOCALIP:8089 -replication_port 8090 -replication_factor 3 ",
-                  "-conf_deploy_fetch_url https://", { "Fn::GetAtt": [ "SplunkSHCDeployer", "PrivateIp" ] }, ":8089 ",
+                  "-mgmt_uri https://$LOCALIP:8089 -replication_port 8090 -replication_factor ",
+                  { "Ref": "SplunkReplicationFactor"},
+                  " -conf_deploy_fetch_url https://", { "Fn::GetAtt": [ "SplunkSHCDeployer", "PrivateIp" ] }, ":8089 ",
                   "-shcluster_label SplunkSHC ",
                   "-secret ", { "Ref": "SplunkSecret"}, " ",
                   "-auth admin:", { "Ref": "SplunkAdminPassword" }, "\n",
@@ -801,8 +815,9 @@
                   "-auth admin:", { "Ref": "SplunkAdminPassword" }, "\n",
 
                 "sudo -u $SPLUNK_USER $SPLUNK_BIN init shcluster-config ",
-                  "-mgmt_uri https://$LOCALIP:8089 -replication_port 8090 -replication_factor 3 ",
-                  "-conf_deploy_fetch_url https://", { "Fn::GetAtt": [ "SplunkSHCDeployer", "PrivateIp" ] }, ":8089 ",
+                  "-mgmt_uri https://$LOCALIP:8089 -replication_port 8090 -replication_factor ",
+                  { "Ref": "SplunkReplicationFactor"},
+                  " -conf_deploy_fetch_url https://", { "Fn::GetAtt": [ "SplunkSHCDeployer", "PrivateIp" ] }, ":8089 ",
                   "-shcluster_label SplunkSHC ",
                   "-secret ", { "Ref": "SplunkSecret"}, " ",
                   "-auth admin:", { "Ref": "SplunkAdminPassword" }, "\n",
