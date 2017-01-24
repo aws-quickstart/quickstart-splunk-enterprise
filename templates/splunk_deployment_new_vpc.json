@@ -54,6 +54,22 @@
       "Default": "3",
       "ConstraintDescription": "must be a valid number, 3-10"
     },
+    "SplunkReplicationFactor": {
+      "Description": "How many copies of data should be stored in the Splunk Indexer Cluster",
+      "Type": "Number",
+      "MinValue": "2",
+      "MaxValue": "5",
+      "Default": "3",
+      "ConstraintDescription": "must be a valid number, 2-5"
+    },
+   "SplunkIndexerDiskSize": {
+      "Description": "The size of the attached EBS volume to the Splunk indexers.  (in GB)",
+      "Type": "Number",
+      "MinValue": "50",
+      "MaxValue": "16000",
+      "Default": "100",
+      "ConstraintDescription": "must be a valid number, 50-16000"
+    },
     "SHCEnabled": {
       "Description": "Do you want to build a Splunk search head cluster?",
       "Type": "String",
@@ -126,7 +142,7 @@
         },
         {
           "Label" : { "default" : "Splunk Settings" },
-          "Parameters" : [ "SplunkAdminPassword", "SplunkSecret" , "SplunkLicenseBucket", "SplunkLicensePath", "SplunkIndexerCount", "SHCEnabled", "SHCCount"]
+          "Parameters" : [ "SplunkAdminPassword", "SplunkSecret" , "SplunkLicenseBucket", "SplunkLicensePath", "SplunkIndexerCount", "SplunkReplicationFactor", "SplunkIndexerDiskSize", "SHCEnabled", "SHCCount"]
         },
         {
           "Label" : { "default" : "Quickstart Settings" },
@@ -216,6 +232,8 @@
            "SplunkIndexerCount": { "Ref": "SplunkIndexerCount" },
            "SHCEnabled": { "Ref": "SHCEnabled" },
            "SHCCount": { "Ref": "SHCCount" },
+           "SplunkIndexerDiskSize": { "Ref": "SplunkIndexerCount"},
+           "SplunkReplicationFactor": { "Ref": "SplunkReplicationFactor"},
            "QSS3BucketName": { "Ref": "QSS3BucketName" },
            "QSS3KeyPrefix": { "Ref": "QSS3KeyPrefix" }
          },
@@ -225,8 +243,7 @@
   },
   "Outputs": {
     "SearchHeadURL": {
-      "Description": "Search Head URL",
-      "Value": {"Fn::GetAtt" : [ "SplunkStack", "Outputs.SearchHeadURL" ] }
+      "Value" : { "Fn::GetAtt" : [ "SplunkStack", "Outputs.SearchHeadURL" ] }
     },
     "ClusterMasterURL": {
       "Description": "Cluster Master URL",
