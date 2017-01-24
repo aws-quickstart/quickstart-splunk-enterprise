@@ -222,5 +222,19 @@
         "TimeoutInMinutes": "60"
       }
     }
+  },
+  "Outputs": {
+    "SearchHeadURL": {
+      "Description": "Search Head URL",
+      "Value": {"Fn::GetAtt" : [ "SplunkStack", "Outputs.SearchHeadURL" ] }
+    },
+    "ClusterMasterURL": {
+      "Description": "Cluster Master URL",
+      "Value": {"Fn::GetAtt" : [ "SplunkStack", "Outputs.ClusterMasterURL" ] }
+    },
+    "Credentials": {
+      "Description": "Admin credentials for Splunk search head URL.",
+      "Value": {"Fn::GetAtt" : [ "SplunkStack", "Outputs.Credentials" ] }
+    }
   }
 }
