@@ -232,7 +232,7 @@
     "SplunkSearchHeadInstance": {
       "Type": "AWS::EC2::Instance",
       "Condition": "CreateSingleSearchHead",
-      "DependsOn": "SplunkCMASG",
+      "DependsOn": "SplunkCM",
       "Properties": {
         "ImageId": {
           "Fn::FindInMap": ["RegionMap", {"Ref": "AWS::Region"}, "AMI"]
@@ -293,8 +293,8 @@
                 "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave -master_uri https://",
                 {
                   "Fn::GetAtt": [
-                    "SplunkELB",
-                    "DNSName"
+                    "SplunkCM",
+                    "PrivateIp"
                   ]
                 },
                 ":8089 -auth admin:",
@@ -309,8 +309,8 @@
                 " -mode searchhead -master_uri https://",
                 {
                   "Fn::GetAtt": [
-                    "SplunkELB",
-                    "DNSName"
+                    "SplunkCM",
+                    "PrivateIp"
                   ]
                 },
                 ":8089 -auth admin:",
@@ -337,11 +337,142 @@
         }
       }
     },
+    "SplunkCM": {
+      "Type": "AWS::EC2::Instance",
+      "Metadata": {
+        "AWS::CloudFormation::Init": { "Fn::If": [
+          "ConfigureLicense",
+          {
+            "config": {
+              "files": {
+                "/etc/splunk/splunk.license" : {
+                  "source" : { "Fn::If": [
+                    "ConfigureLicense", 
+                    {"Fn::Join" : ["", ["https://" , { "Ref" : "SplunkLicenseBucket" }, ".s3.amazonaws.com/", { "Ref" : "SplunkLicensePath" }]]},
+                    {"Ref": "AWS::NoValue"}
+                  ] },
+                  "mode"  : "000600",
+                  "owner" : "splunk",
+                  "group" : "splunk",
+                  "authentication": "S3AccessCreds"
+                }
+              }
+            }
+          },
+          { "Ref" : "AWS::NoValue" }
+        ]
+        },
+        "AWS::CloudFormation::Authentication": { "Fn::If": [
+          "ConfigureLicense",
+          {
+            "S3AccessCreds" : {
+              "type" : "S3",
+              "accessKeyId" : { "Ref" : "CfnKeys" },
+              "secretKey" : {"Fn::GetAtt": ["CfnKeys", "SecretAccessKey"]},
+              "buckets" : [ { "Ref" : "SplunkLicenseBucket" } ]
+            }
+          },
+          { "Ref" : "AWS::NoValue" }
+        ]
+      }
+      },
+      "Properties": {
+        "AssociatePublicIpAddress": true,
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {"VolumeSize": 50 }
+          }
+        ],
+        "SecurityGroups": [
+          {"Ref": "SplunkSecurityGroup"},
+          {"Ref": "SplunkSearchHeadSecurityGroup"}
+        ],
+        "ImageId": {
+          "Fn::FindInMap": ["RegionMap", {"Ref": "AWS::Region"}, "AMI"]
+        },
+        "InstanceType": "c3.large",
+        "KeyName": {"Ref": "KeyName"},
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash -v\n",
+                "yum update -y aws-cfn-bootstrap\n",
 
+                "export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)\n",
+                "export INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null)\n",
+                "export SPLUNK_USER=splunk\n",
+                "export SPLUNK_BIN=/opt/splunk/bin/splunk\n",
+                "export SPLUNK_HOME=/opt/splunk\n",
+                "hostname splunklicense\n",
+                "printf '%s\t%s\n' \"$LOCALIP\" 'splunklicense' >> /etc/hosts\n",
+                "HOME=$SPLUNK_HOME $SPLUNK_BIN stop\n",
+                "mkdir -p /opt/splunk/etc/licenses/enterprise\n",
+
+                "# Install files from the metadata\n",
+                "/opt/aws/bin/cfn-init -v ",
+                "         --stack ", { "Ref": "AWS::StackName" },
+                "         --resource SplunkCM",
+                "         --region ", { "Ref": "AWS::Region" }, "\n",
+
+                "mv /etc/splunk/splunk.license /opt/splunk/etc/licenses/enterprise/\n",
+                "mv /opt/splunk/etc/passwd /opt/splunk/etc/passwd.bak\n",
+                "mkdir -p /opt/splunk/.splunk\n",
+                "chown -R splunk.splunk /opt/splunk/\n",
+
+                "$SPLUNK_BIN enable boot-start -user splunk --accept-license --answer-yes --no-prompt\n",
+                "sed -i 's/force-change-pass true//' /etc/init.d/splunk\n",
+                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN start\n",
+                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit user admin -password ",
+                {
+                  "Ref": "SplunkAdminPassword"
+                },
+                " -role admin -auth admin:changeme\n",
+                "touch /opt/splunk/etc/.ui_login\n",
+                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN add licenses /opt/splunk/etc/licenses/enterprise/splunk.license\n",
+                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN login -auth admin:",
+                {
+                  "Ref": "SplunkAdminPassword"
+                },
+                "\n",
+                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode master -secret ",
+                { "Ref": "SplunkSecret"},
+                "\n",
+                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -replication_factor ",
+                {
+                  "Fn::FindInMap": ["SplunkConfig", "cluster-replication-factor", "repfactor"]
+                },
+                " -search_factor ",
+                {
+                  "Fn::FindInMap": ["SplunkConfig", "cluster-search-factor", "searchfactor"]
+                },
+                "\n",
+                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -cluster_label SplunkASGtest -auth admin:",
+                {
+                  "Ref": "SplunkAdminPassword"
+                },
+                "\n",
+                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -site default\n",
+                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN stop\n",
+                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN start\n",
+
+                "/opt/aws/bin/cfn-signal -e $? --stack ", { "Ref" : "AWS::StackName" },
+                " --resource SplunkCM",
+                " --region ", { "Ref" : "AWS::Region" }, "\n",
+
+                "usermod --expiredate 1 splunk\n"
+              ]
+            ]
+          }
+        }
+      }
+    },
     "SplunkSHCDeployer": {
       "Type": "AWS::EC2::Instance",
       "Condition": "CreateSHC",
-      "DependsOn": "SplunkCMASG",
+      "DependsOn": "SplunkCM",
       "Properties": {
         "ImageId": { "Fn::FindInMap": [ "RegionMap", { "Ref": "AWS::Region" }, "AMI" ] },
         "SecurityGroupIds": [
@@ -390,7 +521,7 @@
 
                 "sudo -u $SPLUNK_USER $SPLUNK_BIN start\n",
                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
-                  "-master_uri https://", { "Fn::GetAtt": [ "SplunkELB", "DNSName" ] }, ":8089 ",
+                  "-master_uri https://", { "Fn::GetAtt": [ "SplunkCM", "PrivateIp" ] }, ":8089 ",
                   "-auth admin:", { "Ref": "SplunkAdminPassword" }, "\n",
                 "printf '\n%s\n%s = %s\n' [shclustering] pass4SymmKey  '", { "Ref": "SplunkSecret"}, "'  >> /opt/splunk/etc/system/local/server.conf\n",
                 
@@ -473,7 +604,7 @@
 
                 "sudo -u $SPLUNK_USER $SPLUNK_BIN start\n",
                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
-                  "-master_uri https://", { "Fn::GetAtt": [ "SplunkELB", "DNSName" ] }, ":8089 ",
+                  "-master_uri https://", { "Fn::GetAtt": [ "SplunkCM", "PrivateIp" ] }, ":8089 ",
                   "-auth admin:", { "Ref": "SplunkAdminPassword" }, "\n",
 
                 "sudo -u $SPLUNK_USER $SPLUNK_BIN init shcluster-config ",
@@ -484,7 +615,7 @@
                   "-auth admin:", { "Ref": "SplunkAdminPassword" }, "\n",
 
                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config ",
-                  "-mode searchhead -master_uri https://", { "Fn::GetAtt": [ "SplunkELB", "DNSName" ] }, ":8089 ",
+                  "-mode searchhead -master_uri https://", { "Fn::GetAtt": [ "SplunkCM", "PrivateIp" ] }, ":8089 ",
                   "-secret ", { "Ref": "SplunkSecret"}, " ",
                   "-auth admin:", { "Ref": "SplunkAdminPassword" }, "\n",
 
@@ -566,7 +697,7 @@
 
                 "sudo -u $SPLUNK_USER $SPLUNK_BIN start\n",
                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
-                  "-master_uri https://", { "Fn::GetAtt": [ "SplunkELB", "DNSName" ] }, ":8089 ",
+                  "-master_uri https://", { "Fn::GetAtt": [ "SplunkCM", "PrivateIp" ] }, ":8089 ",
                   "-auth admin:", { "Ref": "SplunkAdminPassword" }, "\n",
 
                 "sudo -u $SPLUNK_USER $SPLUNK_BIN init shcluster-config ",
@@ -577,7 +708,7 @@
                   "-auth admin:", { "Ref": "SplunkAdminPassword" }, "\n",
 
                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config ",
-                  "-mode searchhead -master_uri https://", { "Fn::GetAtt": [ "SplunkELB", "DNSName" ] }, ":8089 ",
+                  "-mode searchhead -master_uri https://", { "Fn::GetAtt": [ "SplunkCM", "PrivateIp" ] }, ":8089 ",
                   "-secret ", { "Ref": "SplunkSecret"}, " ",
                   "-auth admin:", { "Ref": "SplunkAdminPassword" }, "\n",
 
@@ -659,7 +790,7 @@
 
                 "sudo -u $SPLUNK_USER $SPLUNK_BIN start\n",
                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
-                  "-master_uri https://", { "Fn::GetAtt": [ "SplunkELB", "DNSName" ] }, ":8089 ",
+                  "-master_uri https://", { "Fn::GetAtt": [ "SplunkCM", "PrivateIp" ] }, ":8089 ",
                   "-auth admin:", { "Ref": "SplunkAdminPassword" }, "\n",
 
                 "sudo -u $SPLUNK_USER $SPLUNK_BIN init shcluster-config ",
@@ -670,7 +801,7 @@
                   "-auth admin:", { "Ref": "SplunkAdminPassword" }, "\n",
 
                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config ",
-                  "-mode searchhead -master_uri https://", { "Fn::GetAtt": [ "SplunkELB", "DNSName" ] }, ":8089 ",
+                  "-mode searchhead -master_uri https://", { "Fn::GetAtt": [ "SplunkCM", "PrivateIp" ] }, ":8089 ",
                   "-secret ", { "Ref": "SplunkSecret"}, " ",
                   "-auth admin:", { "Ref": "SplunkAdminPassword" }, "\n",
 
@@ -748,137 +879,6 @@
         "Bucket" : { "Ref" : "SplunkLicenseBucket" }
       }
     },
-
-    "SplunkCMLaunchConfiguration": {
-      "Type": "AWS::AutoScaling::LaunchConfiguration",
-      "Metadata": {
-        "AWS::CloudFormation::Init": { "Fn::If": [
-          "ConfigureLicense",
-          {
-            "config": {
-              "files": {
-                "/etc/splunk/splunk.license" : {
-                  "source" : { "Fn::If": [
-                    "ConfigureLicense", 
-                    {"Fn::Join" : ["", ["https://" , { "Ref" : "SplunkLicenseBucket" }, ".s3.amazonaws.com/", { "Ref" : "SplunkLicensePath" }]]},
-                    {"Ref": "AWS::NoValue"}
-                  ] },
-                  "mode"  : "000600",
-                  "owner" : "splunk",
-                  "group" : "splunk",
-                  "authentication": "S3AccessCreds"
-                }
-              }
-            }
-          },
-          { "Ref" : "AWS::NoValue" }
-        ]},
-        "AWS::CloudFormation::Authentication": { "Fn::If": [
-          "ConfigureLicense",
-          {
-            "S3AccessCreds" : {
-              "type" : "S3",
-              "accessKeyId" : { "Ref" : "CfnKeys" },
-              "secretKey" : {"Fn::GetAtt": ["CfnKeys", "SecretAccessKey"]},
-              "buckets" : [ { "Ref" : "SplunkLicenseBucket" } ]
-            }
-          },
-          { "Ref" : "AWS::NoValue" }
-        ]}
-      },
-      "Properties": {
-        "AssociatePublicIpAddress": true,
-        "BlockDeviceMappings": [
-          {
-            "DeviceName": "/dev/xvda",
-            "Ebs": {"VolumeSize": 50 }
-          }
-        ],
-        "SecurityGroups": [
-          {"Ref": "SplunkSecurityGroup"},
-          {"Ref": "SplunkSearchHeadSecurityGroup"}
-        ],
-        "ImageId": {
-          "Fn::FindInMap": ["RegionMap", {"Ref": "AWS::Region"}, "AMI"]
-        },
-        "InstanceType": "c3.large",
-        "KeyName": {"Ref": "KeyName"},
-        "UserData": {
-          "Fn::Base64": {
-            "Fn::Join": [
-              "",
-              [
-                "#!/bin/bash -v\n",
-                "yum update -y aws-cfn-bootstrap\n",
-
-                "export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)\n",
-                "export INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null)\n",
-                "export SPLUNK_USER=splunk\n",
-                "export SPLUNK_BIN=/opt/splunk/bin/splunk\n",
-                "export SPLUNK_HOME=/opt/splunk\n",
-                "hostname splunklicense\n",
-                "printf '%s\t%s\n' \"$LOCALIP\" 'splunklicense' >> /etc/hosts\n",
-                "HOME=$SPLUNK_HOME $SPLUNK_BIN stop\n",
-                "mkdir -p /opt/splunk/etc/licenses/enterprise\n",
-
-                "# Install files from the metadata\n",
-                "/opt/aws/bin/cfn-init -v ",
-                "         --stack ", { "Ref": "AWS::StackName" },
-                "         --resource SplunkCMLaunchConfiguration",
-                "         --region ", { "Ref": "AWS::Region" }, "\n",
-
-                "mv /etc/splunk/splunk.license /opt/splunk/etc/licenses/enterprise/\n",
-                "mv /opt/splunk/etc/passwd /opt/splunk/etc/passwd.bak\n",
-                "mkdir -p /opt/splunk/.splunk\n",
-                "chown -R splunk.splunk /opt/splunk/\n",
-
-                "$SPLUNK_BIN enable boot-start -user splunk --accept-license --answer-yes --no-prompt\n",
-                "sed -i 's/force-change-pass true//' /etc/init.d/splunk\n",
-                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN start\n",
-                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit user admin -password ",
-                {
-                  "Ref": "SplunkAdminPassword"
-                },
-                " -role admin -auth admin:changeme\n",
-                "touch /opt/splunk/etc/.ui_login\n",
-                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN add licenses /opt/splunk/etc/licenses/enterprise/splunk.license\n",
-                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN login -auth admin:",
-                {
-                  "Ref": "SplunkAdminPassword"
-                },
-                "\n",
-                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode master -secret ",
-                { "Ref": "SplunkSecret"},
-                "\n",
-                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -replication_factor ",
-                {
-                  "Fn::FindInMap": ["SplunkConfig", "cluster-replication-factor", "repfactor"]
-                },
-                " -search_factor ",
-                {
-                  "Fn::FindInMap": ["SplunkConfig", "cluster-search-factor", "searchfactor"]
-                },
-                "\n",
-                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -cluster_label SplunkASGtest -auth admin:",
-                {
-                  "Ref": "SplunkAdminPassword"
-                },
-                "\n",
-                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -site default\n",
-                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN stop\n",
-                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN start\n",
-
-                "/opt/aws/bin/cfn-signal -e $? --stack ", { "Ref" : "AWS::StackName" },
-                " --resource SplunkCMASG",
-                " --region ", { "Ref" : "AWS::Region" }, "\n",
-
-                "usermod --expiredate 1 splunk\n"
-              ]
-            ]
-          }
-        }
-      }
-    },
     "SplunkIndexerLaunchConfiguration": {
       "Type": "AWS::AutoScaling::LaunchConfiguration",
       "Properties": {
@@ -929,7 +929,7 @@
 
                 "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave -master_uri https://",
                 {
-                  "Fn::GetAtt": ["SplunkELB", "DNSName"]
+                  "Fn::GetAtt": ["SplunkCM", "PrivateIp"]
                 },
                 ":8089 -auth admin:",
                 {
@@ -940,7 +940,7 @@
                 "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN start --accept-license --answer-yes --no-prompt\n",
                 "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode slave -master_uri https://",
                 {
-                  "Fn::GetAtt": ["SplunkELB", "DNSName"]
+                  "Fn::GetAtt": ["SplunkCM", "PrivateIp"]
                 },
                 ":8089 -auth admin:",
                 {
@@ -961,39 +961,6 @@
               ]
             ]
           }
-        }
-      }
-    },
-    "SplunkELB": {
-      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
-      "Properties": {
-        "Listeners": [
-          {
-            "LoadBalancerPort": "8089",
-            "InstancePort": "8089",
-            "Protocol": "tcp"
-          },
-          {
-            "LoadBalancerPort": "8000",
-            "InstancePort": "8000",
-            "Protocol": "tcp"
-          }
-        ],
-        "Scheme": "internal",
-        "SecurityGroups": [
-          {"Ref": "SplunkSecurityGroup"},
-          {"Ref": "SplunkSearchHeadSecurityGroup"}
-        ],
-        "Subnets": [
-          {"Ref": "PublicSubnet1ID"},
-          {"Ref": "PublicSubnet2ID"}
-        ],
-        "HealthCheck": {
-          "Target": "TCP:8089",
-          "HealthyThreshold": "2",
-          "UnhealthyThreshold": "3",
-          "Interval": "30",
-          "Timeout": "5"
         }
       }
     },
@@ -1061,7 +1028,7 @@
     },
     "SplunkIndexerNodesASG": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
-      "DependsOn": "SplunkCMASG",
+      "DependsOn": "SplunkCM",
       "Properties": {
         "VPCZoneIdentifier": [ 
           {"Ref": "PublicSubnet1ID"}, 
@@ -1084,38 +1051,6 @@
         }
       }
     },
-    "SplunkCMASG": {
-      "Type": "AWS::AutoScaling::AutoScalingGroup",
-      "DependsOn": "SplunkELB",
-      "Properties": {
-        "VPCZoneIdentifier": [
-          {"Ref": "PublicSubnet1ID"},
-          {"Ref": "PublicSubnet2ID"}
-        ],
-        "LaunchConfigurationName": {"Ref": "SplunkCMLaunchConfiguration"},
-        "LoadBalancerNames": [
-          {"Ref": "SplunkELB"},
-          {"Ref": "SplunkELBext"}
-        ],
-        "HealthCheckType": "ELB",
-        "HealthCheckGracePeriod": "90",
-        "MinSize": "1",
-        "MaxSize": "1",
-        "DesiredCapacity": "1",
-        "Tags": [
-          { "Key": "Application", "Value": { "Ref": "AWS::StackId" }, "PropagateAtLaunch": true },
-          { "Key": "Role", "Value": "splunk-indexer-cluster-master", "PropagateAtLaunch": true },
-          { "Key": "Name", "Value": "cluster-master", "PropagateAtLaunch": true }
-        ]
-      },
-      "CreationPolicy": {
-        "ResourceSignal": {
-          "Count": 1,
-          "Timeout": "PT30M"
-        }
-      }
-    }
-  },
   "Outputs": {
     "SearchHeadURL": {
       "Description": "Search Head URL",
@@ -1134,7 +1069,7 @@
       "Value": {
         "Fn::Join": [ "", [
           "http://",
-          { "Fn::GetAtt": [ "SplunkELBext", "DNSName" ] },
+          { "Fn::GetAtt": [ "SplunkCM", "PublicDnsName" ] },
           ":8000"
         ]]
       }
@@ -1148,4 +1083,5 @@
       }
     }
   }
+}
 }
