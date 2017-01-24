@@ -373,20 +373,27 @@
             }
           },
           { "Ref" : "AWS::NoValue" }
-        ]
-      }
+          ] }
       },
       "Properties": {
-        "AssociatePublicIpAddress": true,
         "BlockDeviceMappings": [
           {
             "DeviceName": "/dev/xvda",
             "Ebs": {"VolumeSize": 50 }
           }
         ],
-        "SecurityGroups": [
-          {"Ref": "SplunkSecurityGroup"},
-          {"Ref": "SplunkSearchHeadSecurityGroup"}
+        "NetworkInterfaces": 
+        [
+          {
+            "GroupSet": [
+             { "Ref": "SplunkSecurityGroup" },
+             { "Ref": "SplunkSearchHeadSecurityGroup" }
+            ],
+          "AssociatePublicIpAddress": "true",
+          "DeviceIndex": "0",
+          "DeleteOnTermination": "true",
+          "SubnetId": { "Ref": "PublicSubnet1ID" }
+          }
         ],
         "ImageId": {
           "Fn::FindInMap": ["RegionMap", {"Ref": "AWS::Region"}, "AMI"]
@@ -891,11 +898,7 @@
             }
           }
         ],
-        "SecurityGroups": [
-          {
-            "Ref": "SplunkSecurityGroup"
-          }
-        ],
+        "SecurityGroups": [{"Ref": "SplunkSecurityGroup"} ],
         "ImageId": {"Fn::FindInMap": ["RegionMap", {"Ref": "AWS::Region"}, "AMI"] },
         "InstanceType": {
           "Ref": "InstanceType"
@@ -975,9 +978,7 @@
           }
         ],
         "Scheme": "internet-facing",
-        "SecurityGroups": [
-          {"Ref": "SplunkSearchHeadSecurityGroup"}
-        ],
+        "SecurityGroups": [{"Ref": "SplunkSearchHeadSecurityGroup"} ],
         "Subnets": [
           {"Ref": "PublicSubnet1ID"},
           {"Ref": "PublicSubnet2ID"}
@@ -1050,8 +1051,19 @@
           "Timeout": "PT30M"
         }
       }
+    }
     },
   "Outputs": {
+        "ClusterMasterURL": {
+      "Description": "Cluster Master URL",
+      "Value": {
+        "Fn::Join": [ "", [
+          "http://",
+          { "Fn::GetAtt": [ "SplunkCM", "PublicDnsName" ] },
+          ":8000"
+        ]]
+      }
+    },
     "SearchHeadURL": {
       "Description": "Search Head URL",
       "Value": {
@@ -1060,16 +1072,6 @@
             { "Fn::GetAtt": [ "SplunkSHCLoadBalancer", "DNSName" ] },
             { "Fn::GetAtt": [ "SplunkSearchHeadInstance", "PublicDnsName" ] }
           ]},
-          ":8000"
-        ]]
-      }
-    },
-    "ClusterMasterURL": {
-      "Description": "Cluster Master URL",
-      "Value": {
-        "Fn::Join": [ "", [
-          "http://",
-          { "Fn::GetAtt": [ "SplunkCM", "PublicDnsName" ] },
           ":8000"
         ]]
       }
@@ -1083,5 +1085,5 @@
       }
     }
   }
-}
-}
+ }
+
