@@ -232,7 +232,7 @@
            "SplunkIndexerCount": { "Ref": "SplunkIndexerCount" },
            "SHCEnabled": { "Ref": "SHCEnabled" },
            "SHCCount": { "Ref": "SHCCount" },
-           "SplunkIndexerDiskSize": { "Ref": "SplunkIndexerCount"},
+           "SplunkIndexerDiskSize": { "Ref": "SplunkIndexerDiskSize"},
            "SplunkReplicationFactor": { "Ref": "SplunkReplicationFactor"},
            "QSS3BucketName": { "Ref": "QSS3BucketName" },
            "QSS3KeyPrefix": { "Ref": "QSS3KeyPrefix" }
