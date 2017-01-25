@@ -909,7 +909,7 @@
           {
             "DeviceName": "/dev/xvda",
             "Ebs": {
-              "VolumeSize": {"Fn::FindInMap": ["SplunkConfig", "indexer-disk-size", "gb"] }
+              "VolumeSize": {"Ref": "SplunkIndexerDiskSize"}
             }
           }
         ],
