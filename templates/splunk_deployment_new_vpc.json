@@ -76,14 +76,6 @@
       "Default": "no",
       "AllowedValues": ["yes", "no"]
     },
-    "SHCCount": {
-      "Description": "How many search head peers for your cluster?  [3-10]",
-      "Type": "Number",
-      "MinValue": "3",
-      "MaxValue": "10",
-      "Default": "3",
-      "ConstraintDescription": "must be a valid number, 3-10"
-    },
     "VPCCIDR": {
       "Description": "The address space that will be assigned to the entire VPC where Splunk will reside. (Recommend at least a /16)",
       "Type": "String",
@@ -142,7 +134,7 @@
         },
         {
           "Label" : { "default" : "Splunk Settings" },
-          "Parameters" : [ "SplunkAdminPassword", "SplunkSecret" , "SplunkLicenseBucket", "SplunkLicensePath", "SplunkIndexerCount", "SplunkReplicationFactor", "SplunkIndexerDiskSize", "SHCEnabled", "SHCCount"]
+          "Parameters" : [ "SplunkAdminPassword", "SplunkSecret" , "SplunkLicenseBucket", "SplunkLicensePath", "SplunkIndexerCount", "SplunkReplicationFactor", "SplunkIndexerDiskSize", "SHCEnabled"]
         },
         {
           "Label" : { "default" : "Quickstart Settings" },
@@ -231,7 +223,6 @@
            "SSHLocation": { "Ref": "SSHLocation" },
            "SplunkIndexerCount": { "Ref": "SplunkIndexerCount" },
            "SHCEnabled": { "Ref": "SHCEnabled" },
-           "SHCCount": { "Ref": "SHCCount" },
            "SplunkIndexerDiskSize": { "Ref": "SplunkIndexerDiskSize"},
            "SplunkReplicationFactor": { "Ref": "SplunkReplicationFactor"},
            "QSS3BucketName": { "Ref": "QSS3BucketName" },

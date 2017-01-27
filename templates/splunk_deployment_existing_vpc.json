@@ -104,14 +104,6 @@
       "Default": "no",
       "AllowedValues": ["yes", "no"]
     },
-    "SHCCount": {
-      "Description": "How many search head peers for your cluster?  [3-10]",
-      "Type": "Number",
-      "MinValue": "3",
-      "MaxValue": "10",
-      "Default": "3",
-      "ConstraintDescription": "must be a valid number, 3-10"
-    },
     "QSS3BucketName": {
       "Description": "S3 bucket name for the Quick Start assets.",
       "Type": "String",
@@ -134,7 +126,7 @@
         },
         {
           "Label" : { "default" : "Splunk Settings" },
-          "Parameters" : [ "SplunkAdminPassword", "SplunkSecret", "SplunkLicenseBucket", "SplunkLicensePath", "SplunkIndexerCount","SplunkIndexerDiskSize", "SHCEnabled", "SplunkReplicationFactor" ,"SHCCount"]
+          "Parameters" : [ "SplunkAdminPassword", "SplunkSecret", "SplunkLicenseBucket", "SplunkLicensePath", "SplunkIndexerCount","SplunkIndexerDiskSize", "SHCEnabled", "SplunkReplicationFactor"]
         },
         {
           "Label" : { "default" : "Quickstart Settings" },
