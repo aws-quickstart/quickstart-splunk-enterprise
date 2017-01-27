@@ -104,14 +104,6 @@
       "Default": "no",
       "AllowedValues": ["yes", "no"]
     },
-    "SHCCount": {
-      "Description": "How many search head peers for your cluster?  [3-10]",
-      "Type": "Number",
-      "MinValue": "3",
-      "MaxValue": "10",
-      "Default": "3",
-      "ConstraintDescription": "must be a valid number, 3-10"
-    },
     "QSS3BucketName": {
       "Description": "S3 bucket name for the Quick Start assets.",
       "Type": "String",
@@ -134,7 +126,7 @@
         },
         {
           "Label" : { "default" : "Splunk Settings" },
-          "Parameters" : [ "SplunkAdminPassword", "SplunkSecret", "SplunkLicenseBucket", "SplunkLicensePath", "SplunkIndexerCount","SplunkIndexerDiskSize", "SHCEnabled", "SplunkReplicationFactor" ,"SHCCount"]
+          "Parameters" : [ "SplunkAdminPassword", "SplunkSecret", "SplunkLicenseBucket", "SplunkLicensePath", "SplunkIndexerCount","SplunkIndexerDiskSize", "SHCEnabled", "SplunkReplicationFactor"]
         },
         {
           "Label" : { "default" : "Quickstart Settings" },
@@ -154,20 +146,35 @@
     }
   },
   "Mappings": {
-    "RegionMap": {
-      "ap-northeast-1": { "AMI": "ami-c0479ba1", "QuickStartS3URL": "https://s3.amazonaws.com" },
-      "ap-northeast-2": { "AMI": "ami-9c63b6f2", "QuickStartS3URL": "https://s3.amazonaws.com" },
-      "ap-south-1": { "AMI": "ami-f7334798", "QuickStartS3URL": "https://s3.amazonaws.com" },
-      "ap-southeast-1": { "AMI": "ami-52d87c31", "QuickStartS3URL": "https://s3.amazonaws.com" },
-      "ap-southeast-2": { "AMI": "ami-22576441", "QuickStartS3URL": "https://s3.amazonaws.com" },
-      "ca-central-1": { "AMI": "ami-105eec74", "QuickStartS3URL": "https://s3.amazonaws.com" },
-      "eu-central-1": { "AMI": "ami-b61fe3d9", "QuickStartS3URL": "https://s3.amazonaws.com" },
-      "eu-west-1": { "AMI": "ami-0097d073", "QuickStartS3URL": "https://s3.amazonaws.com" },
-      "sa-east-1": { "AMI": "ami-dd2ebdb1", "QuickStartS3URL": "https://s3.amazonaws.com" },
-      "us-east-1": { "AMI": "ami-231d5b34", "QuickStartS3URL": "https://s3.amazonaws.com" },
-      "us-east-2": { "AMI": "ami-fbf5ae9e", "QuickStartS3URL": "https://s3.amazonaws.com" },
-      "us-west-1": { "AMI": "ami-98ce80f8", "QuickStartS3URL": "https://s3.amazonaws.com" },
-      "us-west-2": { "AMI": "ami-b8835dd8", "QuickStartS3URL": "https://s3.amazonaws.com" }
+    "AWSAMIRegionMap": {
+      "ap-northeast-1": { "AMI": "ami-c0479ba1" },
+      "ap-northeast-2": { "AMI": "ami-9c63b6f2" },
+      "ap-south-1": { "AMI": "ami-f7334798" },
+      "ap-southeast-1": { "AMI": "ami-52d87c31" },
+      "ap-southeast-2": { "AMI": "ami-22576441" },
+      "ca-central-1": { "AMI": "ami-105eec74" },
+      "eu-central-1": { "AMI": "ami-b61fe3d9" },
+      "eu-west-1": { "AMI": "ami-0097d073" },
+      "sa-east-1": { "AMI": "ami-dd2ebdb1" },
+      "us-east-1": { "AMI": "ami-231d5b34" },
+      "us-east-2": { "AMI": "ami-fbf5ae9e" },
+      "us-west-1": { "AMI": "ami-98ce80f8" },
+      "us-west-2": { "AMI": "ami-b8835dd8" }
+    },
+    "AWSInfoRegionMap": {
+      "ap-northeast-1": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "ap-northeast-2": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "ap-south-1": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "ap-southeast-1": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "ap-southeast-2": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "ca-central-1": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "eu-central-1": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "eu-west-1": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "sa-east-1": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "us-east-1": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "us-east-2": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "us-west-1": { "QuickStartS3URL": "https://s3.amazonaws.com" },
+      "us-west-2": { "QuickStartS3URL": "https://s3.amazonaws.com" }
     },
     "SplunkConfig": {
       "searchhead-disk-size": {"gb": "100"},
@@ -249,7 +256,7 @@
       "DependsOn": "SplunkCM",
       "Properties": {
         "ImageId": {
-          "Fn::FindInMap": ["RegionMap", {"Ref": "AWS::Region"}, "AMI"]
+          "Fn::FindInMap": ["AWSAMIRegionMap", {"Ref": "AWS::Region"}, "AMI"]
             },
         "SecurityGroupIds": [
           {"Ref": "SplunkSecurityGroup"},
@@ -410,7 +417,7 @@
           }
         ],
         "ImageId": {
-          "Fn::FindInMap": ["RegionMap", {"Ref": "AWS::Region"}, "AMI"]
+          "Fn::FindInMap": ["AWSAMIRegionMap", {"Ref": "AWS::Region"}, "AMI"]
         },
         "InstanceType": "c3.large",
         "KeyName": {"Ref": "KeyName"},
@@ -493,7 +500,7 @@
       "Condition": "CreateSHC",
       "DependsOn": "SplunkCM",
       "Properties": {
-        "ImageId": { "Fn::FindInMap": [ "RegionMap", { "Ref": "AWS::Region" }, "AMI" ] },
+        "ImageId": { "Fn::FindInMap": [ "AWSAMIRegionMap", { "Ref": "AWS::Region" }, "AMI" ] },
         "SecurityGroupIds": [
           { "Ref": "SplunkSecurityGroup" },
           { "Ref": "SplunkSearchHeadSecurityGroup" }
@@ -569,7 +576,7 @@
       "Condition": "CreateSHC",
       "DependsOn": "SplunkSHCDeployer",
       "Properties": {
-        "ImageId": { "Fn::FindInMap": [ "RegionMap", { "Ref": "AWS::Region" }, "AMI" ] },
+        "ImageId": { "Fn::FindInMap": [ "AWSAMIRegionMap", { "Ref": "AWS::Region" }, "AMI" ] },
         "InstanceType": { "Ref": "InstanceType" },
         "KeyName": { "Ref": "KeyName" },
         "Tags": [
@@ -663,7 +670,7 @@
       "Condition": "CreateSHC",
       "DependsOn": "SplunkSHCDeployer",
       "Properties": {
-        "ImageId": { "Fn::FindInMap": [ "RegionMap", { "Ref": "AWS::Region" }, "AMI" ] },
+        "ImageId": { "Fn::FindInMap": [ "AWSAMIRegionMap", { "Ref": "AWS::Region" }, "AMI" ] },
         "InstanceType": { "Ref": "InstanceType" },
         "KeyName": { "Ref": "KeyName" },
         "Tags": [
@@ -757,7 +764,7 @@
       "Condition": "CreateSHC",
       "DependsOn": "SplunkSHCDeployer",
       "Properties": {
-        "ImageId": { "Fn::FindInMap": [ "RegionMap", { "Ref": "AWS::Region" }, "AMI" ] },
+        "ImageId": { "Fn::FindInMap": [ "AWSAMIRegionMap", { "Ref": "AWS::Region" }, "AMI" ] },
         "InstanceType": { "Ref": "InstanceType" },
         "KeyName": { "Ref": "KeyName" },
         "Tags": [
@@ -914,7 +921,7 @@
           }
         ],
         "SecurityGroups": [{"Ref": "SplunkSecurityGroup"} ],
-        "ImageId": {"Fn::FindInMap": ["RegionMap", {"Ref": "AWS::Region"}, "AMI"] },
+        "ImageId": {"Fn::FindInMap": ["AWSAMIRegionMap", {"Ref": "AWS::Region"}, "AMI"] },
         "InstanceType": {
           "Ref": "InstanceType"
         },
@@ -1069,16 +1076,6 @@
     }
     },
   "Outputs": {
-        "ClusterMasterURL": {
-      "Description": "Cluster Master URL",
-      "Value": {
-        "Fn::Join": [ "", [
-          "http://",
-          { "Fn::GetAtt": [ "SplunkCM", "PublicDnsName" ] },
-          ":8000"
-        ]]
-      }
-    },
     "SearchHeadURL": {
       "Description": "Search Head URL",
       "Value": {
@@ -1091,14 +1088,16 @@
         ]]
       }
     },
-    "Credentials": {
-      "Description": "Admin credentials for Splunk search head URL.",
+    "ClusterMasterURL": {
+      "Description": "Cluster Master URL",
       "Value": {
-        "Fn::Join": [ ":", [
-          "admin", { "Ref": "SplunkAdminPassword" }
+        "Fn::Join": [ "", [
+          "http://",
+          { "Fn::GetAtt": [ "SplunkCM", "PublicDnsName" ] },
+          ":8000"
         ]]
       }
     }
   }
- }
+}
 
