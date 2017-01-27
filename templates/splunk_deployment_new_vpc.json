@@ -26,11 +26,13 @@
     },
     "SplunkLicenseBucket" : {
       "Description" : "Name of private S3 bucket with licenses to be accessed via authenticated requests",
-      "Type" : "String"
+      "Type" : "String",
+      "Default": ""
     },
     "SplunkLicensePath" : {
       "Description" : "Path to license file in S3 Bucket (without leading '/')",
-      "Type" : "String"
+      "Type" : "String",
+      "Default": ""
     },
     "KeyName": {
       "Description": "Name of an existing EC2 KeyPair to enable SSH access to the instance",
