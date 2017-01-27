@@ -17,11 +17,11 @@
     },
     "SplunkAdminPassword": {
       "NoEcho": "true",
-      "Description": "Admin password for Splunk. (6-32 characters, alphanumeric only)",
+      "Description": "Admin password for Splunk. Must be at least 8 characters containing letters, numbers and symbols",
       "Type": "String",
       "MinLength": "6",
       "MaxLength": "32",
-      "AllowedPattern": "[a-zA-Z0-9]*",
+      "AllowedPattern": "(?=^.{6,255}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
       "ConstraintDescription": "Must be alphanumeric only.  6-32 characters"
     },
     "SplunkLicenseBucket" : {
@@ -123,12 +123,12 @@
     },
     "SplunkSecret": {
       "NoEcho": "true",
-      "Description": "Shared secret for Splunk cluster. (6-32 characters, alphanumeric only)",
+      "Description": "Shared cluster secret for Search Head and Indexer clusters. Must be at least 8 characters containing letters, numbers and symbols.",
       "Type": "String",
       "MinLength": "6",
       "MaxLength": "32",
-      "AllowedPattern": "[a-zA-Z0-9]*",
-      "ConstraintDescription": "Must be alphanumeric only.  6-32 characters"
+      "AllowedPattern": "(?=^.{6,255}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
+      "ConstraintDescription": "Must be at least 8 characters containing letters, numbers and symbols."
     },
     "QSS3BucketName": {
       "Description": "S3 bucket name for the Quick Start assets.",
@@ -138,7 +138,7 @@
     "QSS3KeyPrefix": {
       "Description": "S3 key prefix for the Quick Start assets.",
       "Type": "String",
-      "Default": "latest"
+      "Default": "splunk"
     }
   },
   "Metadata": {
