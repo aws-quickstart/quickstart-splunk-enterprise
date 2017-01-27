@@ -144,7 +144,7 @@
     }
   },
   "Mappings": {
-    "RegionMap": {
+    "AWSInfoRegionMap": {
       "ap-northeast-1": { "QuickStartS3URL": "https://s3.amazonaws.com" },
       "ap-northeast-2": { "QuickStartS3URL": "https://s3.amazonaws.com" },
       "ap-south-1": { "QuickStartS3URL": "https://s3.amazonaws.com" },
@@ -167,7 +167,7 @@
         "TemplateURL": { "Fn::Join": [
           "/", [{
               "Fn::FindInMap": [
-                "RegionMap", {
+                "AWSInfoRegionMap", {
                   "Ref": "AWS::Region"
                 },
                 "QuickStartS3URL"
@@ -196,7 +196,7 @@
         "TemplateURL": { "Fn::Join": [
           "/", [{
               "Fn::FindInMap": [
-                "RegionMap", {
+                "AWSInfoRegionMap", {
                   "Ref": "AWS::Region"
                 },
                 "QuickStartS3URL"
