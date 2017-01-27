@@ -1368,14 +1368,6 @@
           "http://", { "Fn::GetAtt": [ "SplunkELBext", "DNSName" ] }, ":8000"
         ]]
       }
-    },
-    "Credentials": {
-      "Description": "Admin credentials for Splunk search head URL.",
-      "Value": {
-        "Fn::Join": [ ":", [
-          "admin", { "Ref": "SplunkAdminPassword" }
-        ]]
-      }
     }
   }
 }

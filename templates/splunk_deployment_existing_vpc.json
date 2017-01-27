@@ -1076,16 +1076,6 @@
     }
     },
   "Outputs": {
-        "ClusterMasterURL": {
-      "Description": "Cluster Master URL",
-      "Value": {
-        "Fn::Join": [ "", [
-          "http://",
-          { "Fn::GetAtt": [ "SplunkCM", "PublicDnsName" ] },
-          ":8000"
-        ]]
-      }
-    },
     "SearchHeadURL": {
       "Description": "Search Head URL",
       "Value": {
@@ -1098,14 +1088,16 @@
         ]]
       }
     },
-    "Credentials": {
-      "Description": "Admin credentials for Splunk search head URL.",
+    "ClusterMasterURL": {
+      "Description": "Cluster Master URL",
       "Value": {
-        "Fn::Join": [ ":", [
-          "admin", { "Ref": "SplunkAdminPassword" }
+        "Fn::Join": [ "", [
+          "http://",
+          { "Fn::GetAtt": [ "SplunkCM", "PublicDnsName" ] },
+          ":8000"
         ]]
       }
     }
   }
- }
+}
 
