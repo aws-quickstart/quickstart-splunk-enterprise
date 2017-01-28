@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Splunk deployment with indexer and search head clustering, with auto-healing cluster master.",
+  "Description": "Splunk deployment with indexer, search head clustering and cluster master.",
   "Parameters": {
     "InstanceType": {
       "Type": "String",
@@ -288,7 +288,7 @@
             }, {
               "Ref": "QSS3KeyPrefix"
             },
-            "templates/splunk_deployment_existing_vpc.json"
+            "templates/splunk_deployment_existing_vpc.template"
           ]
         ]},
         "Parameters" : {

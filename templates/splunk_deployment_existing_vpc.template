@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Splunk deployment with indexer and search head clustering, with auto-healing cluster master.",
+  "Description": "Splunk deployment with indexer, search head clustering and cluster master. QS(5030)",
   "Parameters": {
     "InstanceType": {
       "Type": "String",
