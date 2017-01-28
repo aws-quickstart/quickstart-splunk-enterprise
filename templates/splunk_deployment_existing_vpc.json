@@ -114,7 +114,7 @@
     "QSS3KeyPrefix": {
       "Description": "S3 key prefix for the Quick Start assets.",
       "Type": "String",
-      "Default": "splunk-enterprise"
+      "Default": "splunk/enterprise/latest"
     }
   },
   "Metadata": {
