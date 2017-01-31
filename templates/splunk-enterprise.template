@@ -290,6 +290,9 @@
             "eu-west-1": {
                 "SPLUNKENTHVM": "ami-0097d073"
             },
+            "eu-west-2": {
+                "SPLUNKENTHVM": "ami-ffc3c99b"
+            },
             "sa-east-1": {
                 "SPLUNKENTHVM": "ami-dd2ebdb1"
             },
