@@ -30,6 +30,15 @@
       "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
       "ConstraintDescription": "Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions."
     },
+    "HTTPLocation": {
+      "Description": "The IP address range that is allowed to connect to the Splunk web interface.",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "19",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions."
+    },
     "VPCID": {
       "Description": "VPC ID",
       "Type": "AWS::EC2::VPC::Id"
@@ -122,7 +131,7 @@
       [
         {
           "Label" : { "default" : "AWS Instance and Network Settings" },
-          "Parameters" : [ "InstanceType", "KeyName", "SSHLocation", "VPCID", "VPCCIDR", "PublicSubnet1ID", "PublicSubnet2ID"]
+          "Parameters" : [ "InstanceType", "KeyName", "SSHLocation","HTTPLocation" , "VPCID", "VPCCIDR", "PublicSubnet1ID", "PublicSubnet2ID"]
         },
         {
           "Label" : { "default" : "Splunk Settings" },
@@ -192,7 +201,7 @@
             "IpProtocol": "tcp",
             "FromPort": "8000",
             "ToPort": "8000",
-            "CidrIp": {"Ref": "SSHLocation"}
+            "CidrIp": {"Ref": "HTTPLocation"}
           },
           {
             "IpProtocol": "tcp",
