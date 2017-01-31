@@ -21,11 +21,10 @@
             "ConstraintDescription": "Must be the name of an existing EC2 KeyPair."
         },
         "SSHLocation": {
-            "Description": "The IP address range that is allowed to SSH to the EC2 instances",
+            "Description": "The IP address range that is allowed to SSH to the EC2 instances. Note: a value of 0.0.0.0/0 will allow access from ANY ip address",
             "Type": "String",
             "MinLength": "9",
             "MaxLength": "19",
-            "Default": "0.0.0.0/0",
             "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
             "ConstraintDescription": "Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions."
         },
@@ -160,7 +159,60 @@
                         "QSS3KeyPrefix"
                     ]
                 }
-            ]
+            ],
+            "ParameterLabels": {
+                "InstanceType": {
+                  "default": "Splunk Instance Type"
+                },
+                "KeyName": {
+                  "default": "Key Name"
+                },
+                "SSHLocation": {
+                  "default": "Permitted CIDR"
+                },
+                "VPCID": {
+                  "default": "VPC ID"
+                },
+                "VPCCIDR": {
+                  "default": "VPC CIDR"
+                },
+                "PublicSubnet1ID": {
+                  "default": "Public Subnet 1 ID"
+                },
+                "PublicSubnet2ID": {
+                  "default": "Public Subnet 2 ID"
+                },
+                "SplunkAdminPassword": {
+                  "default": "Splunk Admin Password"
+                },
+                "SplunkSecret": {
+                  "default": "Splunk Secret"
+                },
+                "SplunkLicenseBucket": {
+                  "default": "Splunk License Bucket"
+                },
+                "SplunkLicensePath": {
+                  "default": "Splunk License S3 Bucket Path"
+                },
+                "SplunkIndexerCount": {
+                  "default": "No. of Splunk Indexers"
+                },
+                "SplunkReplicationFactor": {
+                  "default": "Replication Factor"
+                },
+                "SplunkIndexerDiskSize": {
+                  "default": "Indexer Disk Size"
+                },
+                "SHCEnabled": {
+                  "default": "Enable Search Head Cluster?"
+                },
+                "QSS3BucketName": {
+                  "default": "QuickStart S3 Bucket Name"
+                },
+                "QSS3KeyPrefix": {
+                  "default": "QuickStart S3 Key Prefix"
+                }
+            }
         }
     },
     "Conditions": {
