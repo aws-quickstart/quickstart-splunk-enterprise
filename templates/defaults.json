@@ -14,5 +14,9 @@
   {
     "ParameterKey": "SplunkSecret",
     "ParameterValue": "$[alfred_genpass_10]"
+  },
+  {
+    "ParameterKey": "SSHLocation",
+    "ParameterValue": "0.0.0.0/0"
   }
 ]
