@@ -730,7 +730,7 @@
                         "SPLUNKENTHVM"
                     ]
                 },
-                "InstanceType": "c3.large",
+                "InstanceType": "c4.large",
                 "KeyName": {
                     "Ref": "KeyName"
                 },
