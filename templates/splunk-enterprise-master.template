@@ -333,7 +333,7 @@
                             {
                                 "Ref": "QSS3KeyPrefix"
                             },
-                            "templates/splunk_deployment_existing_vpc.template"
+                            "templates/splunk-enterprise.template"
                         ]
                     ]
                 },
