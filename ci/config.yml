@@ -1,5 +1,5 @@
 global:
-  marketplace-ami: false
+  marketplace-ami: true
   owner: quickstart-eng@amazon.com
   qsname: quickstart-splunk-enterprise
   regions:
@@ -20,8 +20,13 @@ global:
  
 tests:
   quickstart-splunk-enterpriset1:
-    parameter_input: quickstart-splunk-enterprise-example-params1.json
-    template_file: quickstart-splunk-enterprise-example1.template
-  quickstart-splunk-enterpriset2:
-    parameter_input: quickstart-splunk-enterprise-example-params2.json
-    template_file: quickstart-splunk-enterprise-example2.template
+    parameter_input: defaults.json
+    template_file: splunk-enterprise-master.template
+    regions:
+    - ap-northeast-1
+    - ap-southeast-1
+    - eu-central-1
+    - eu-west-1
+    - sa-east-1
+    - us-west-1
+    - us-west-2

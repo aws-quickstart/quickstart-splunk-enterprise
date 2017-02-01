@@ -1,0 +1,22 @@
+[
+  {
+    "ParameterKey": "AvailabilityZones",
+    "ParameterValue": "$[alfred_genaz_2]"
+  },
+  {
+    "ParameterKey": "KeyName",
+    "ParameterValue": "cikey"
+  },
+  {
+    "ParameterKey": "SplunkAdminPassword",
+    "ParameterValue": "$[alfred_genpass_10]"
+  },
+  {
+    "ParameterKey": "SplunkSecret",
+    "ParameterValue": "$[alfred_genpass_10]"
+  },
+  {
+    "ParameterKey": "SSHLocation",
+    "ParameterValue": "0.0.0.0/0"
+  }
+]
