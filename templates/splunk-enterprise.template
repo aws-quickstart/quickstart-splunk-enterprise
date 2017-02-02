@@ -810,7 +810,7 @@
                                     ]
                                 },
                                 "\n",
-                                "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -cluster_label SplunkASGtest -auth admin:",
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -cluster_label SplunkIndexersASG -auth admin:",
                                 {
                                     "Ref": "SplunkAdminPassword"
                                 },
@@ -833,6 +833,11 @@
                             ]
                         ]
                     }
+                }
+            },
+            "CreationPolicy": {
+                "ResourceSignal": {
+                    "Timeout": "PT30M"
                 }
             }
         },
