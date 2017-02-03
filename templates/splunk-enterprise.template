@@ -590,6 +590,9 @@
                                 },
                                 " -role admin -auth admin:changeme\n",
 
+                                "# Increase splunkweb connection timeout with splunkd\n",
+                                "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
+
                                 "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave -master_uri https://",
                                 {
@@ -815,6 +818,9 @@
                                 "mkdir -p /opt/splunk/etc/licenses/enterprise\n",
                                 "mv /etc/splunk/splunk.license /opt/splunk/etc/licenses/enterprise/\n",
 
+                                "# Increase splunkweb connection timeout with splunkd\n",
+                                "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
+
                                 "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN login -auth admin:",
                                 {
@@ -958,6 +964,9 @@
                                 },
                                 " -role admin -auth admin:changeme\n",
 
+                                "# Increase splunkweb connection timeout with splunkd\n",
+                                "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
+
                                 "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
                                 "-master_uri https://",
@@ -1099,7 +1108,10 @@
                                 },
                                 " -role admin -auth admin:changeme\n",
 
-                                "printf '\n%s\n%s = %s\n' [shclustering] register_replication_address $LOCALIP  >> /opt/splunk/etc/system/local/server.conf\n",
+                                "# Increase splunkweb connection timeout with splunkd\n",
+                                "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
+
+                                "printf '\n%s\n%s = %s\n' [shclustering] register_replication_address $LOCALIP  >> $SPLUNK_HOME/etc/system/local/server.conf\n",
 
                                 "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
@@ -1279,7 +1291,10 @@
                                 },
                                 " -role admin -auth admin:changeme\n",
 
-                                "printf '\n%s\n%s = %s\n' [shclustering] register_replication_address $LOCALIP  >> /opt/splunk/etc/system/local/server.conf\n",
+                                "# Increase splunkweb connection timeout with splunkd\n",
+                                "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
+
+                                "printf '\n%s\n%s = %s\n' [shclustering] register_replication_address $LOCALIP  >> $SPLUNK_HOME/etc/system/local/server.conf\n",
 
                                 "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
@@ -1459,7 +1474,10 @@
                                 },
                                 " -role admin -auth admin:changeme\n",
 
-                                "printf '\n%s\n%s = %s\n' [shclustering] register_replication_address $LOCALIP  >> /opt/splunk/etc/system/local/server.conf\n",
+                                "# Increase splunkweb connection timeout with splunkd\n",
+                                "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
+
+                                "printf '\n%s\n%s = %s\n' [shclustering] register_replication_address $LOCALIP  >> $SPLUNK_HOME/etc/system/local/server.conf\n",
 
                                 "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
@@ -1705,6 +1723,9 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 " -role admin -auth admin:changeme\n",
+
+                                "# Increase splunkweb connection timeout with splunkd\n",
+                                "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
 
                                 "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave -master_uri https://",
