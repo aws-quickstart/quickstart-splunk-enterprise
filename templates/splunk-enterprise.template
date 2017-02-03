@@ -1894,7 +1894,7 @@
     },
     "Outputs": {
         "SearchHeadURL": {
-            "Description": "Search Head URL",
+            "Description": "Splunk Enterprise URL",
             "Value": {
                 "Fn::Join": [
                     "",
@@ -1923,7 +1923,7 @@
             }
         },
         "ClusterMasterURL": {
-            "Description": "Cluster Master URL",
+            "Description": "Splunk Enterprise - Cluster Master URL",
             "Value": {
                 "Fn::Join": [
                     "",

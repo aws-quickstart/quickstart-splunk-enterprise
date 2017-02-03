@@ -556,6 +556,7 @@
     },
     "Outputs": {
         "SearchHeadURL": {
+            "Description": "Splunk Enterprise URL",
             "Value": {
                 "Fn::GetAtt": [
                     "SplunkStack",
@@ -564,7 +565,7 @@
             }
         },
         "ClusterMasterURL": {
-            "Description": "Cluster Master URL",
+            "Description": "Splunk Enterprise - Cluster Master URL",
             "Value": {
                 "Fn::GetAtt": [
                     "SplunkStack",
