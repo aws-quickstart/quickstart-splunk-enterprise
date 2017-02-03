@@ -1758,77 +1758,36 @@
                 }
             }
         },
-        "SplunkELBext": {
-            "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
-            "Properties": {
-                "Listeners": [
-                    {
-                        "LoadBalancerPort": "8000",
-                        "InstancePort": "8000",
-                        "Protocol": "tcp"
-                    }
-                ],
-                "Scheme": "internet-facing",
-                "SecurityGroups": [
-                    {
-                        "Ref": "SplunkSearchHeadSecurityGroup"
-                    }
-                ],
-                "Subnets": [
-                    {
-                        "Ref": "PublicSubnet1ID"
-                    },
-                    {
-                        "Ref": "PublicSubnet2ID"
-                    }
-                ],
-                "HealthCheck": {
-                    "Target": "TCP:8000",
-                    "HealthyThreshold": "2",
-                    "UnhealthyThreshold": "3",
-                    "Interval": "30",
-                    "Timeout": "5"
-                }
-            }
-        },
         "SplunkSHCLoadBalancer": {
             "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
             "Condition": "CreateSHC",
             "Properties": {
+                "ConnectionDrainingPolicy" : { "Enabled" : true, "Timeout" : 300 },
+                "LBCookieStickinessPolicy" : [ {
+                    "CookieExpirationPeriod" : "86400",
+                    "PolicyName" : "SplunkWebCookiePolicy"
+                } ],
                 "Instances": [
-                    {
-                        "Ref": "SplunkSHCMember1"
-                    },
-                    {
-                        "Ref": "SplunkSHCMember2"
-                    },
-                    {
-                        "Ref": "SplunkSHCMember3"
-                    }
+                    {"Ref": "SplunkSHCMember1"},
+                    {"Ref": "SplunkSHCMember2"},
+                    {"Ref": "SplunkSHCMember3"}
                 ],
                 "Listeners": [
                     {
                         "LoadBalancerPort": "8000",
                         "InstancePort": "8000",
-                        "Protocol": "tcp"
+                        "Protocol": "tcp",
+                        "PolicyNames" : [ "SplunkWebCookiePolicy" ]
                     }
                 ],
                 "Scheme": "internet-facing",
                 "SecurityGroups": [
-                    {
-                        "Ref": "SplunkSecurityGroup"
-                    },
-                    {
-                        "Ref": "SplunkSearchHeadSecurityGroup"
-                    }
+                    {"Ref": "SplunkSecurityGroup"},
+                    {"Ref": "SplunkSearchHeadSecurityGroup"}
                 ],
                 "Subnets": [
-                    {
-                        "Ref": "PublicSubnet1ID"
-                    },
-                    {
-                        "Ref": "PublicSubnet2ID"
-                    }
+                    {"Ref": "PublicSubnet1ID"},
+                    {"Ref": "PublicSubnet2ID"}
                 ],
                 "HealthCheck": {
                     "Target": "TCP:8089",
@@ -1844,25 +1803,13 @@
             "DependsOn": "SplunkCM",
             "Properties": {
                 "VPCZoneIdentifier": [
-                    {
-                        "Ref": "PublicSubnet1ID"
-                    },
-                    {
-                        "Ref": "PublicSubnet2ID"
-                    }
+                    {"Ref": "PublicSubnet1ID"},
+                    {"Ref": "PublicSubnet2ID"}
                 ],
-                "LaunchConfigurationName": {
-                    "Ref": "SplunkIndexerLaunchConfiguration"
-                },
-                "MinSize": {
-                    "Ref": "SplunkIndexerCount"
-                },
-                "MaxSize": {
-                    "Ref": "SplunkIndexerCount"
-                },
-                "DesiredCapacity": {
-                    "Ref": "SplunkIndexerCount"
-                },
+                "LaunchConfigurationName": {"Ref": "SplunkIndexerLaunchConfiguration"},
+                "MinSize": {"Ref": "SplunkIndexerCount"},
+                "MaxSize": {"Ref": "SplunkIndexerCount"},
+                "DesiredCapacity": {"Ref": "SplunkIndexerCount"},
                 "Tags": [
                     {
                         "Key": "Application",
@@ -1885,9 +1832,7 @@
             },
             "CreationPolicy": {
                 "ResourceSignal": {
-                    "Count": {
-                        "Ref": "SplunkIndexerCount"
-                    },
+                    "Count": {"Ref": "SplunkIndexerCount"},
                     "Timeout": "PT30M"
                 }
             }
