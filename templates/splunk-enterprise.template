@@ -821,7 +821,6 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
-                                "sudo -u $SPLUNK_USER $SPLUNK_BIN add licenses /opt/splunk/etc/licenses/enterprise/splunk.license\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode master -secret ",
                                 {
                                     "Ref": "SplunkSecret"
