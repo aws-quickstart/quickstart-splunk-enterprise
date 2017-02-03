@@ -5,7 +5,7 @@
   },
   {
     "ParameterKey": "KeyName",
-    "ParameterValue": "cikey"
+    "ParameterValue": "$[alfred_getkeypair]"
   },
   {
     "ParameterKey": "SplunkAdminPassword",
@@ -17,6 +17,6 @@
   },
   {
     "ParameterKey": "SSHLocation",
-    "ParameterValue": "0.0.0.0/0"
+    "ParameterValue": "10.0.0.0/16"
   }
 ]
