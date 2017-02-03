@@ -757,6 +757,22 @@
                 "KeyName": {
                     "Ref": "KeyName"
                 },
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": {
+                            "Ref": "AWS::StackId"
+                        }
+                    },
+                    {
+                        "Key": "Role",
+                        "Value": "splunk-indexer"
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": "cluster-master"
+                    }
+                ],
                 "UserData": {
                     "Fn::Base64": {
                         "Fn::Join": [
@@ -800,12 +816,12 @@
                                 "mv /etc/splunk/splunk.license /opt/splunk/etc/licenses/enterprise/\n",
 
                                 "service splunk start\n",
-                                "sudo -u $SPLUNK_USER $SPLUNK_BIN add licenses /opt/splunk/etc/licenses/enterprise/splunk.license\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN login -auth admin:",
                                 {
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN add licenses /opt/splunk/etc/licenses/enterprise/splunk.license\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode master -secret ",
                                 {
                                     "Ref": "SplunkSecret"
