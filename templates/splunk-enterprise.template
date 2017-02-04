@@ -18,7 +18,34 @@
         "KeyName": {
             "ConstraintDescription": "Must be the name of an existing EC2 KeyPair.",
             "Description": "Name of an existing EC2 KeyPair to enable SSH access to the instance",
-            "Type": "AWS::EC2::KeyPair::KeyName"
+            "Type": "AWS::EC2::KeyPair::KeyName",
+            "ConstraintDescription": "Must be the name of an existing EC2 KeyPair."
+        },
+        "SSHLocation": {
+            "Description": "The IP address range that is allowed to SSH to the EC2 instances. Note: a value of 0.0.0.0/0 will allow access from ANY ip address",
+            "Type": "String",
+            "MinLength": "9",
+            "MaxLength": "19",
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+            "ConstraintDescription": "Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions."
+        },
+        "HTTPLocation": {
+            "Description": "The IP address range that is allowed to connect to the Splunk web interface. Note: a value of 0.0.0.0/0 will allow access from ANY ip address",
+            "Type": "String",
+            "MinLength": "9",
+            "MaxLength": "19",
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+            "ConstraintDescription": "Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions."
+        },
+        "VPCID": {
+            "Description": "VPC ID",
+            "Type": "AWS::EC2::VPC::Id"
+        },
+        "VPCCIDR": {
+            "Description": "VPC CIDR Block (x.x.x.x/x notation)",
+            "Type": "String",
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+            "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
         },
         "PublicSubnet1ID": {
             "Description": "ID of Splunk public subnet 1 in Availability Zone 1 (e.g., subnet-xxxxxxxx)",
@@ -45,14 +72,6 @@
             ],
             "Default": "no",
             "Description": "Do you want to build a Splunk search head cluster?",
-            "Type": "String"
-        },
-        "SSHLocation": {
-            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
-            "ConstraintDescription": "Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions.",
-            "Description": "The IP address range that is allowed to SSH to the EC2 instances. Note: a value of 0.0.0.0/0 will allow access from ANY ip address",
-            "MaxLength": "19",
-            "MinLength": "9",
             "Type": "String"
         },
         "SplunkAdminPassword": {
@@ -129,6 +148,7 @@
                         "InstanceType",
                         "KeyName",
                         "SSHLocation",
+                        "HTTPLocation",
                         "VPCID",
                         "VPCCIDR",
                         "PublicSubnet1ID",
@@ -167,6 +187,12 @@
                 "KeyName": {
                     "default": "Key Name"
                 },
+                "SSHLocation": {
+                  "default": "Permitted CIDR for ssh"
+                },
+                "HTTPLocation": {
+                  "default": "Permitted CIDR for Splunk web interface"
+                },
                 "PublicSubnet1ID": {
                     "default": "Public Subnet 1 ID"
                 },
@@ -181,9 +207,6 @@
                 },
                 "SHCEnabled": {
                     "default": "Enable Search Head Cluster?"
-                },
-                "SSHLocation": {
-                    "default": "Permitted CIDR"
                 },
                 "SplunkAdminPassword": {
                     "default": "Splunk Admin Password"
@@ -390,7 +413,7 @@
                         "FromPort": "8000",
                         "ToPort": "8000",
                         "CidrIp": {
-                            "Ref": "SSHLocation"
+                            "Ref": "HTTPLocation"
                         }
                     },
                     {
@@ -547,28 +570,31 @@
                             [
                                 "#!/bin/bash -v\n",
                                 "yum update -y aws-cfn-bootstrap\n",
+                                "export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)\n",
+                                "export INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)\n",
                                 "export SPLUNK_USER=splunk\n",
                                 "export SPLUNK_BIN=/opt/splunk/bin/splunk\n",
                                 "export SPLUNK_HOME=/opt/splunk\n",
-                                "export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)\n",
-                                "export INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)\n",
+
                                 "printf '%s\t%s\n' \"$LOCALIP\" 'splunksearch' >> /etc/hosts\n",
                                 "hostname splunksearch\n",
-                                "$SPLUNK_BIN stop\n",
+
+                                "# Stop Splunk and reset password\n",
+                                "service splunk stop\n",
+                                "touch $SPLUNK_HOME/etc/.ui_login\n",
                                 "mv /opt/splunk/etc/passwd /opt/splunk/etc/passwd.bak\n",
-                                "mkdir -p /opt/splunk/.splunk ; chown splunk:splunk /opt/splunk/.splunk\n",
-                                "mkdir -p /opt/splunk/etc/licenses/enterprise\n",
-                                "chown -R splunk:splunk /opt/splunk/etc/\n",
-                                "$SPLUNK_BIN enable boot-start -user splunk --accept-license --answer-yes --no-prompt\n",
                                 "sed -i 's/force-change-pass true//' /etc/init.d/splunk\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN start\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit user admin -password ",
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN edit user admin -password ",
                                 {
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 " -role admin -auth admin:changeme\n",
-                                "touch /opt/splunk/etc/.ui_login\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave -master_uri https://",
+
+                                "# Increase splunkweb connection timeout with splunkd\n",
+                                "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
+
+                                "service splunk start\n",
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave -master_uri https://",
                                 {
                                     "Fn::GetAtt": [
                                         "SplunkCM",
@@ -580,7 +606,7 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -secret ",
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -secret ",
                                 {
                                     "Ref": "SplunkSecret"
                                 },
@@ -596,8 +622,8 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN stop\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN start --accept-license --answer-yes --no-prompt\n",
+                                "service splunk restart\n",
+
                                 "/opt/aws/bin/cfn-signal -e $? --stack ",
                                 {
                                     "Ref": "AWS::StackName"
@@ -734,6 +760,22 @@
                 "KeyName": {
                     "Ref": "KeyName"
                 },
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": {
+                            "Ref": "AWS::StackId"
+                        }
+                    },
+                    {
+                        "Key": "Role",
+                        "Value": "splunk-indexer"
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": "cluster-master"
+                    }
+                ],
                 "UserData": {
                     "Fn::Base64": {
                         "Fn::Join": [
@@ -746,10 +788,21 @@
                                 "export SPLUNK_USER=splunk\n",
                                 "export SPLUNK_BIN=/opt/splunk/bin/splunk\n",
                                 "export SPLUNK_HOME=/opt/splunk\n",
-                                "hostname splunklicense\n",
+
                                 "printf '%s\t%s\n' \"$LOCALIP\" 'splunklicense' >> /etc/hosts\n",
-                                "HOME=$SPLUNK_HOME $SPLUNK_BIN stop\n",
-                                "mkdir -p /opt/splunk/etc/licenses/enterprise\n",
+                                "hostname splunklicense\n",
+
+                                "# Stop Splunk and reset password\n",
+                                "service splunk stop\n",
+                                "touch $SPLUNK_HOME/etc/.ui_login\n",
+                                "mv $SPLUNK_HOME/etc/passwd $SPLUNK_HOME/etc/passwd.bak\n",
+                                "sed -i 's/force-change-pass true//' /etc/init.d/splunk\n",
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN edit user admin -password ",
+                                {
+                                    "Ref": "SplunkAdminPassword"
+                                },
+                                " -role admin -auth admin:changeme\n",
+
                                 "# Install files from the metadata\n",
                                 "/opt/aws/bin/cfn-init -v ",
                                 "         --stack ",
@@ -762,31 +815,24 @@
                                     "Ref": "AWS::Region"
                                 },
                                 "\n",
+                                "mkdir -p /opt/splunk/etc/licenses/enterprise\n",
                                 "mv /etc/splunk/splunk.license /opt/splunk/etc/licenses/enterprise/\n",
-                                "mv /opt/splunk/etc/passwd /opt/splunk/etc/passwd.bak\n",
-                                "mkdir -p /opt/splunk/.splunk\n",
-                                "chown -R splunk.splunk /opt/splunk/\n",
-                                "$SPLUNK_BIN enable boot-start -user splunk --accept-license --answer-yes --no-prompt\n",
-                                "sed -i 's/force-change-pass true//' /etc/init.d/splunk\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN start\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit user admin -password ",
-                                {
-                                    "Ref": "SplunkAdminPassword"
-                                },
-                                " -role admin -auth admin:changeme\n",
-                                "touch /opt/splunk/etc/.ui_login\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN add licenses /opt/splunk/etc/licenses/enterprise/splunk.license\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN login -auth admin:",
+
+                                "# Increase splunkweb connection timeout with splunkd\n",
+                                "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
+
+                                "service splunk start\n",
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN login -auth admin:",
                                 {
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode master -secret ",
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode master -secret ",
                                 {
                                     "Ref": "SplunkSecret"
                                 },
                                 "\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -replication_factor ",
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -replication_factor ",
                                 {
                                     "Ref": "SplunkReplicationFactor"
                                 },
@@ -799,14 +845,15 @@
                                     ]
                                 },
                                 "\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -cluster_label SplunkASGtest -auth admin:",
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -cluster_label SplunkIndexersASG -auth admin:",
                                 {
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -site default\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN stop\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN start\n",
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -site default\n",
+
+                                "service splunk restart\n",
+
                                 "/opt/aws/bin/cfn-signal -e $? --stack ",
                                 {
                                     "Ref": "AWS::StackName"
@@ -821,6 +868,11 @@
                             ]
                         ]
                     }
+                }
+            },
+            "CreationPolicy": {
+                "ResourceSignal": {
+                    "Timeout": "PT30M"
                 }
             }
         },
@@ -897,8 +949,10 @@
                                 "export SPLUNK_USER=splunk\n",
                                 "export SPLUNK_BIN=/opt/splunk/bin/splunk\n",
                                 "export SPLUNK_HOME=/opt/splunk\n",
+
                                 "printf '%s\t%s\n' \"$LOCALIP\" 'splunk-shc-deployer' >> /etc/hosts\n",
                                 "hostname splunk-shc-deployer\n",
+
                                 "# Stop Splunk and reset password\n",
                                 "service splunk stop\n",
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
@@ -909,7 +963,11 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 " -role admin -auth admin:changeme\n",
-                                "sudo -u $SPLUNK_USER $SPLUNK_BIN start\n",
+
+                                "# Increase splunkweb connection timeout with splunkd\n",
+                                "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
+
+                                "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
                                 "-master_uri https://",
                                 {
@@ -930,7 +988,9 @@
                                 },
                                 "'  >> /opt/splunk/etc/system/local/server.conf\n",
                                 "printf '%s = %s\n' shcluster_label SplunkSHC >> /opt/splunk/etc/system/local/server.conf\n",
-                                "sudo -u $SPLUNK_USER $SPLUNK_BIN restart\n",
+
+                                "service splunk restart\n",
+
                                 "/opt/aws/bin/cfn-signal -e $? --stack ",
                                 {
                                     "Ref": "AWS::StackName"
@@ -1033,21 +1093,27 @@
                                 "export SPLUNK_USER=splunk\n",
                                 "export SPLUNK_BIN=/opt/splunk/bin/splunk\n",
                                 "export SPLUNK_HOME=/opt/splunk\n",
+
                                 "printf '%s\t%s\n' \"$LOCALIP\" 'splunksearch' >> /etc/hosts\n",
                                 "hostname splunksearch\n",
+
                                 "# Stop Splunk and reset password\n",
                                 "service splunk stop\n",
-                                "sudo -u $SPLUNK_USER $SPLUNK_BIN enable boot-start -user splunk --accept-license --answer-yes --no-prompt\n",
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
                                 "mv $SPLUNK_HOME/etc/passwd $SPLUNK_HOME/etc/passwd.bak\n",
                                 "sed -i 's/force-change-pass true//' /etc/init.d/splunk\n",
-                                "printf '\n%s\n%s = %s\n' [shclustering] register_replication_address $LOCALIP  >> /opt/splunk/etc/system/local/server.conf\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit user admin -password ",
                                 {
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 " -role admin -auth admin:changeme\n",
-                                "sudo -u $SPLUNK_USER $SPLUNK_BIN start\n",
+
+                                "# Increase splunkweb connection timeout with splunkd\n",
+                                "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
+
+                                "printf '\n%s\n%s = %s\n' [shclustering] register_replication_address $LOCALIP  >> $SPLUNK_HOME/etc/system/local/server.conf\n",
+
+                                "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
                                 "-master_uri https://",
                                 {
@@ -1105,7 +1171,9 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
-                                "sudo -u $SPLUNK_USER $SPLUNK_BIN restart\n",
+
+                                "service splunk restart\n",
+
                                 "/opt/aws/bin/cfn-signal -e $? --stack ",
                                 {
                                     "Ref": "AWS::StackName"
@@ -1208,21 +1276,27 @@
                                 "export SPLUNK_USER=splunk\n",
                                 "export SPLUNK_BIN=/opt/splunk/bin/splunk\n",
                                 "export SPLUNK_HOME=/opt/splunk\n",
+
                                 "printf '%s\t%s\n' \"$LOCALIP\" 'splunksearch' >> /etc/hosts\n",
                                 "hostname splunksearch\n",
+
                                 "# Stop Splunk and reset password\n",
                                 "service splunk stop\n",
-                                "sudo -u $SPLUNK_USER $SPLUNK_BIN enable boot-start -user splunk --accept-license --answer-yes --no-prompt\n",
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
                                 "mv $SPLUNK_HOME/etc/passwd $SPLUNK_HOME/etc/passwd.bak\n",
                                 "sed -i 's/force-change-pass true//' /etc/init.d/splunk\n",
-                                "printf '\n%s\n%s = %s\n' [shclustering] register_replication_address $LOCALIP  >> /opt/splunk/etc/system/local/server.conf\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit user admin -password ",
                                 {
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 " -role admin -auth admin:changeme\n",
-                                "sudo -u $SPLUNK_USER $SPLUNK_BIN start\n",
+
+                                "# Increase splunkweb connection timeout with splunkd\n",
+                                "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
+
+                                "printf '\n%s\n%s = %s\n' [shclustering] register_replication_address $LOCALIP  >> $SPLUNK_HOME/etc/system/local/server.conf\n",
+
+                                "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
                                 "-master_uri https://",
                                 {
@@ -1280,7 +1354,9 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
-                                "sudo -u $SPLUNK_USER $SPLUNK_BIN restart\n",
+
+                                "service splunk restart\n",
+
                                 "/opt/aws/bin/cfn-signal -e $? --stack ",
                                 {
                                     "Ref": "AWS::StackName"
@@ -1383,21 +1459,27 @@
                                 "export SPLUNK_USER=splunk\n",
                                 "export SPLUNK_BIN=/opt/splunk/bin/splunk\n",
                                 "export SPLUNK_HOME=/opt/splunk\n",
+
                                 "printf '%s\t%s\n' \"$LOCALIP\" 'splunksearch' >> /etc/hosts\n",
                                 "hostname splunksearch\n",
+
                                 "# Stop Splunk and reset password\n",
                                 "service splunk stop\n",
-                                "sudo -u $SPLUNK_USER $SPLUNK_BIN enable boot-start -user splunk --accept-license --answer-yes --no-prompt\n",
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
                                 "mv $SPLUNK_HOME/etc/passwd $SPLUNK_HOME/etc/passwd.bak\n",
                                 "sed -i 's/force-change-pass true//' /etc/init.d/splunk\n",
-                                "printf '\n%s\n%s = %s\n' [shclustering] register_replication_address $LOCALIP  >> /opt/splunk/etc/system/local/server.conf\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit user admin -password ",
                                 {
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 " -role admin -auth admin:changeme\n",
-                                "sudo -u $SPLUNK_USER $SPLUNK_BIN start\n",
+
+                                "# Increase splunkweb connection timeout with splunkd\n",
+                                "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
+
+                                "printf '\n%s\n%s = %s\n' [shclustering] register_replication_address $LOCALIP  >> $SPLUNK_HOME/etc/system/local/server.conf\n",
+
+                                "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
                                 "-master_uri https://",
                                 {
@@ -1455,7 +1537,8 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
-                                "sudo -u $SPLUNK_USER $SPLUNK_BIN restart\n",
+
+                                "service splunk restart\n",
                                 "# Bootstrap SHC captain\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN bootstrap shcluster-captain ",
                                 "-servers_list \"",
@@ -1483,7 +1566,9 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
-                                "sudo -u $SPLUNK_USER $SPLUNK_BIN restart\n",
+
+                                "service splunk restart\n",
+
                                 "/opt/aws/bin/cfn-signal -e $? --stack ",
                                 {
                                     "Ref": "AWS::StackName"
@@ -1622,22 +1707,28 @@
                             [
                                 "#!/bin/bash -v\n",
                                 "yum update -y aws-cfn-bootstrap\n",
+                                "export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)\n",
+                                "export INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)\n",
                                 "export SPLUNK_USER=splunk\n",
                                 "export SPLUNK_BIN=/opt/splunk/bin/splunk\n",
                                 "export SPLUNK_HOME=/opt/splunk\n",
-                                "$SPLUNK_BIN stop\n",
-                                "mv /opt/splunk/etc/passwd /opt/splunk/etc/passwd.bak\n",
-                                "mkdir -p $SPLUNK_HOME/.splunk ; chown splunk:splunk $SPLUNK_HOME/.splunk\n",
-                                "export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)\n",
-                                "$SPLUNK_BIN enable boot-start -user splunk --accept-license --answer-yes --no-prompt\n",
+
+                                "# Stop Splunk and reset password\n",
+                                "service splunk stop\n",
+                                "touch $SPLUNK_HOME/etc/.ui_login\n",
+                                "mv $SPLUNK_HOME/etc/passwd $SPLUNK_HOME/etc/passwd.bak\n",
                                 "sed -i 's/force-change-pass true//' /etc/init.d/splunk\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN start\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit user admin -password ",
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN edit user admin -password ",
                                 {
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 " -role admin -auth admin:changeme\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave -master_uri https://",
+
+                                "# Increase splunkweb connection timeout with splunkd\n",
+                                "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
+
+                                "service splunk start\n",
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave -master_uri https://",
                                 {
                                     "Fn::GetAtt": [
                                         "SplunkCM",
@@ -1649,9 +1740,8 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN stop\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN start --accept-license --answer-yes --no-prompt\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode slave -master_uri https://",
+
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode slave -master_uri https://",
                                 {
                                     "Fn::GetAtt": [
                                         "SplunkCM",
@@ -1668,8 +1758,9 @@
                                 },
                                 "\n",
                                 "printf '\n%s\n%s = %s\n' [clustering] register_replication_address $LOCALIP  >> /opt/splunk/etc/system/local/server.conf\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN stop\n",
-                                "HOME=$SPLUNK_HOME sudo -u $SPLUNK_USER $SPLUNK_BIN start \n",
+
+                                "service splunk restart\n",
+
                                 "/opt/aws/bin/cfn-signal -e $? --stack ",
                                 {
                                     "Ref": "AWS::StackName"
@@ -1687,77 +1778,36 @@
                 }
             }
         },
-        "SplunkELBext": {
-            "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
-            "Properties": {
-                "Listeners": [
-                    {
-                        "LoadBalancerPort": "8000",
-                        "InstancePort": "8000",
-                        "Protocol": "tcp"
-                    }
-                ],
-                "Scheme": "internet-facing",
-                "SecurityGroups": [
-                    {
-                        "Ref": "SplunkSearchHeadSecurityGroup"
-                    }
-                ],
-                "Subnets": [
-                    {
-                        "Ref": "PublicSubnet1ID"
-                    },
-                    {
-                        "Ref": "PublicSubnet2ID"
-                    }
-                ],
-                "HealthCheck": {
-                    "Target": "TCP:8000",
-                    "HealthyThreshold": "2",
-                    "UnhealthyThreshold": "3",
-                    "Interval": "30",
-                    "Timeout": "5"
-                }
-            }
-        },
         "SplunkSHCLoadBalancer": {
             "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
             "Condition": "CreateSHC",
             "Properties": {
+                "ConnectionDrainingPolicy" : { "Enabled" : true, "Timeout" : 300 },
+                "LBCookieStickinessPolicy" : [ {
+                    "CookieExpirationPeriod" : "86400",
+                    "PolicyName" : "SplunkWebCookiePolicy"
+                } ],
                 "Instances": [
-                    {
-                        "Ref": "SplunkSHCMember1"
-                    },
-                    {
-                        "Ref": "SplunkSHCMember2"
-                    },
-                    {
-                        "Ref": "SplunkSHCMember3"
-                    }
+                    {"Ref": "SplunkSHCMember1"},
+                    {"Ref": "SplunkSHCMember2"},
+                    {"Ref": "SplunkSHCMember3"}
                 ],
                 "Listeners": [
                     {
                         "LoadBalancerPort": "8000",
                         "InstancePort": "8000",
-                        "Protocol": "tcp"
+                        "Protocol": "http",
+                        "PolicyNames" : [ "SplunkWebCookiePolicy" ]
                     }
                 ],
                 "Scheme": "internet-facing",
                 "SecurityGroups": [
-                    {
-                        "Ref": "SplunkSecurityGroup"
-                    },
-                    {
-                        "Ref": "SplunkSearchHeadSecurityGroup"
-                    }
+                    {"Ref": "SplunkSecurityGroup"},
+                    {"Ref": "SplunkSearchHeadSecurityGroup"}
                 ],
                 "Subnets": [
-                    {
-                        "Ref": "PublicSubnet1ID"
-                    },
-                    {
-                        "Ref": "PublicSubnet2ID"
-                    }
+                    {"Ref": "PublicSubnet1ID"},
+                    {"Ref": "PublicSubnet2ID"}
                 ],
                 "HealthCheck": {
                     "Target": "TCP:8089",
@@ -1773,25 +1823,13 @@
             "DependsOn": "SplunkCM",
             "Properties": {
                 "VPCZoneIdentifier": [
-                    {
-                        "Ref": "PublicSubnet1ID"
-                    },
-                    {
-                        "Ref": "PublicSubnet2ID"
-                    }
+                    {"Ref": "PublicSubnet1ID"},
+                    {"Ref": "PublicSubnet2ID"}
                 ],
-                "LaunchConfigurationName": {
-                    "Ref": "SplunkIndexerLaunchConfiguration"
-                },
-                "MinSize": {
-                    "Ref": "SplunkIndexerCount"
-                },
-                "MaxSize": {
-                    "Ref": "SplunkIndexerCount"
-                },
-                "DesiredCapacity": {
-                    "Ref": "SplunkIndexerCount"
-                },
+                "LaunchConfigurationName": {"Ref": "SplunkIndexerLaunchConfiguration"},
+                "MinSize": {"Ref": "SplunkIndexerCount"},
+                "MaxSize": {"Ref": "SplunkIndexerCount"},
+                "DesiredCapacity": {"Ref": "SplunkIndexerCount"},
                 "Tags": [
                     {
                         "Key": "Application",
@@ -1814,9 +1852,7 @@
             },
             "CreationPolicy": {
                 "ResourceSignal": {
-                    "Count": {
-                        "Ref": "SplunkIndexerCount"
-                    },
+                    "Count": {"Ref": "SplunkIndexerCount"},
                     "Timeout": "PT30M"
                 }
             }
@@ -1824,7 +1860,7 @@
     },
     "Outputs": {
         "SearchHeadURL": {
-            "Description": "Search Head URL",
+            "Description": "Splunk Enterprise URL",
             "Value": {
                 "Fn::Join": [
                     "",
@@ -1853,7 +1889,7 @@
             }
         },
         "ClusterMasterURL": {
-            "Description": "Cluster Master URL",
+            "Description": "Splunk Enterprise - Cluster Master URL",
             "Value": {
                 "Fn::Join": [
                     "",
