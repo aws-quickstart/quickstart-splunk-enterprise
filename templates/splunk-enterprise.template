@@ -1796,7 +1796,7 @@
                     {
                         "LoadBalancerPort": "8000",
                         "InstancePort": "8000",
-                        "Protocol": "tcp",
+                        "Protocol": "http",
                         "PolicyNames" : [ "SplunkWebCookiePolicy" ]
                     }
                 ],
