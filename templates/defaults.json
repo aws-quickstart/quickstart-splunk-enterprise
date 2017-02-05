@@ -18,5 +18,9 @@
   {
     "ParameterKey": "SSHLocation",
     "ParameterValue": "10.0.0.0/16"
+  },
+  {
+    "ParameterKey": "HTTPLocation",
+    "ParameterValue": "72.21.196.66/32"
   }
 ]
