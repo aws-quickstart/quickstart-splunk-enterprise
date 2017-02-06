@@ -586,7 +586,7 @@
                                 "# Stop Splunk and reset password\n",
                                 "service splunk stop\n",
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
-                                "mv /opt/splunk/etc/passwd /opt/splunk/etc/passwd.bak\n",
+                                "mv $SPLUNK_HOME/etc/passwd $SPLUNK_HOME/etc/passwd.bak\n",
                                 "sed -i 's/force-change-pass true//' /etc/init.d/splunk\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit user admin -password ",
                                 {
@@ -820,8 +820,8 @@
                                     "Ref": "AWS::Region"
                                 },
                                 "\n",
-                                "mkdir -p /opt/splunk/etc/licenses/enterprise\n",
-                                "mv /etc/splunk/splunk.license /opt/splunk/etc/licenses/enterprise/\n",
+                                "mkdir -p $SPLUNK_HOME/etc/licenses/enterprise\n",
+                                "mv /etc/splunk/splunk.license $SPLUNK_HOME/etc/licenses/enterprise/\n",
 
                                 "# Increase splunkweb connection timeout with splunkd\n",
                                 "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
@@ -974,8 +974,8 @@
                                 "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
                                 "chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/web.conf\n",
 
-                                "printf '\n%s\n%s = %s\n' [shclustering] pass4SymmKey  '", { "Ref": "SplunkSecret" }, "'  >> /opt/splunk/etc/system/local/server.conf\n",
-                                "printf '%s = %s\n' shcluster_label SplunkSHC >> /opt/splunk/etc/system/local/server.conf\n",
+                                "printf '\n%s\n%s = %s\n' [shclustering] pass4SymmKey  '", { "Ref": "SplunkSecret" }, "'  >> $SPLUNK_HOME/etc/system/local/server.conf\n",
+                                "printf '%s = %s\n' shcluster_label SplunkSHC >> $SPLUNK_HOME/etc/system/local/server.conf\n",
                                 "chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/server.conf\n",
 
                                 "service splunk start\n",
@@ -1739,7 +1739,7 @@
                                 "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
                                 "chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/web.conf\n",
 
-                                "printf '\n%s\n%s = %s\n' [clustering] register_replication_address $LOCALIP  >> /opt/splunk/etc/system/local/server.conf\n",
+                                "printf '\n%s\n%s = %s\n' [clustering] register_replication_address $LOCALIP  >> $SPLUNK_HOME/etc/system/local/server.conf\n",
                                 "chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/server.conf\n",
 
                                 "service splunk start\n",
