@@ -22,5 +22,9 @@
   {
     "ParameterKey": "HTTPLocation",
     "ParameterValue": "72.21.196.66/32"
+  },
+  {
+    "ParameterKey": "InstanceType",
+    "ParameterValue": "c4.2xlarge"
   }
 ]
