@@ -2,6 +2,14 @@
     "AWSTemplateFormatVersion": "2010-09-09",
     "Description": "Splunk deployment with indexer, search head clustering and cluster master. QS(5030)",
     "Parameters": {
+        "HTTPLocation": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+            "ConstraintDescription": "Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions.",
+            "Description": "The IP address range that is allowed to connect to the Splunk web interface. Note: a value of 0.0.0.0/0 will allow access from ANY ip address",
+            "MaxLength": "19",
+            "MinLength": "9",
+            "Type": "String"
+        },
         "InstanceType": {
             "AllowedValues": [
                 "c4.large",
@@ -147,6 +155,7 @@
                     "Parameters": [
                         "InstanceType",
                         "KeyName",
+                        "HTTPLocation",
                         "SSHLocation",
                         "HTTPLocation",
                         "VPCID",
@@ -181,6 +190,9 @@
                 }
             ],
             "ParameterLabels": {
+                "HTTPLocation": {
+                    "default": "Permitted CIDR for Splunk web interface"
+                },
                 "InstanceType": {
                     "default": "Splunk Instance Type"
                 },
@@ -587,6 +599,7 @@
                                 "service splunk stop\n",
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
                                 "mv $SPLUNK_HOME/etc/passwd $SPLUNK_HOME/etc/passwd.bak\n",
+
                                 "sed -i 's/force-change-pass true//' /etc/init.d/splunk\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit user admin -password ",
                                 {
@@ -1107,6 +1120,7 @@
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
                                 "mv $SPLUNK_HOME/etc/passwd $SPLUNK_HOME/etc/passwd.bak\n",
                                 "sed -i 's/force-change-pass true//' /etc/init.d/splunk\n",
+
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit user admin -password ",
                                 {
                                     "Ref": "SplunkAdminPassword"
@@ -1119,6 +1133,7 @@
 
                                 "printf '\n%s\n%s = %s\n' [shclustering] register_replication_address $LOCALIP  >> $SPLUNK_HOME/etc/system/local/server.conf\n",
                                 "chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/server.conf\n",
+
 
                                 "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
