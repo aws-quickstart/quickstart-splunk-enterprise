@@ -572,6 +572,15 @@
                     "Outputs.ClusterMasterURL"
                 ]
             }
+        },
+        "DeployerURL": {
+            "Description": "Splunk Enterprise - Search Head Cluster Deployer URL",
+            "Value": {
+                "Fn::GetAtt": [
+                    "SplunkStack",
+                    "Outputs.DeployerURL"
+                ]
+            }
         }
     }
 }

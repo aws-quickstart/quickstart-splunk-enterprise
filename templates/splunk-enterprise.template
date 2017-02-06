@@ -1919,6 +1919,31 @@
                     ]
                 ]
             }
+        },
+        "DeployerURL": {
+            "Description": "Splunk Enterprise - Search Head Cluster Deployer URL",
+            "Value": {
+                "Fn::If": [
+                    "CreateSHC",
+                    {
+                        "Fn::Join": [
+                            "",
+                            [
+
+                                "http://",
+                                {
+                                    "Fn::GetAtt": [
+                                        "SplunkSHCDeployer",
+                                        "PublicDnsName"
+                                    ]
+                                },
+                                ":8000"
+                            ]
+                        ]
+                    },
+                    "Applicable when Search Head Cluster is selected"
+                ]
+            }
         }
     }
 }
