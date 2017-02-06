@@ -396,7 +396,11 @@
             },
             "cluster-search-factor": {
                 "searchfactor": "2"
-            }
+            },
+            "labels": {
+                "cluster": "IndexerCluster",
+                "shcluster": "SearchHeadCluster"
+            } 
         }
     },
     "Resources": {
@@ -592,6 +596,7 @@
 
                                 "# Increase splunkweb connection timeout with splunkd\n",
                                 "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
+                                "chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/web.conf\n",
 
                                 "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave -master_uri https://",
@@ -820,6 +825,7 @@
 
                                 "# Increase splunkweb connection timeout with splunkd\n",
                                 "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
+                                "chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/web.conf\n",
 
                                 "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN login -auth admin:",
@@ -966,6 +972,11 @@
 
                                 "# Increase splunkweb connection timeout with splunkd\n",
                                 "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
+                                "chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/web.conf\n",
+
+                                "printf '\n%s\n%s = %s\n' [shclustering] pass4SymmKey  '", { "Ref": "SplunkSecret" }, "'  >> /opt/splunk/etc/system/local/server.conf\n",
+                                "printf '%s = %s\n' shcluster_label SplunkSHC >> /opt/splunk/etc/system/local/server.conf\n",
+                                "chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/server.conf\n",
 
                                 "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
@@ -982,12 +993,6 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
-                                "printf '\n%s\n%s = %s\n' [shclustering] pass4SymmKey  '",
-                                {
-                                    "Ref": "SplunkSecret"
-                                },
-                                "'  >> /opt/splunk/etc/system/local/server.conf\n",
-                                "printf '%s = %s\n' shcluster_label SplunkSHC >> /opt/splunk/etc/system/local/server.conf\n",
 
                                 "service splunk restart\n",
 
@@ -1110,8 +1115,10 @@
 
                                 "# Increase splunkweb connection timeout with splunkd\n",
                                 "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
+                                "chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/web.conf\n",
 
                                 "printf '\n%s\n%s = %s\n' [shclustering] register_replication_address $LOCALIP  >> $SPLUNK_HOME/etc/system/local/server.conf\n",
+                                "chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/server.conf\n",
 
                                 "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
@@ -1293,8 +1300,10 @@
 
                                 "# Increase splunkweb connection timeout with splunkd\n",
                                 "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
+                                "chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/web.conf\n",
 
                                 "printf '\n%s\n%s = %s\n' [shclustering] register_replication_address $LOCALIP  >> $SPLUNK_HOME/etc/system/local/server.conf\n",
+                                "chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/server.conf\n",
 
                                 "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
@@ -1476,8 +1485,10 @@
 
                                 "# Increase splunkweb connection timeout with splunkd\n",
                                 "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
+                                "chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/web.conf\n",
 
                                 "printf '\n%s\n%s = %s\n' [shclustering] register_replication_address $LOCALIP  >> $SPLUNK_HOME/etc/system/local/server.conf\n",
+                                "chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/server.conf\n",
 
                                 "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
@@ -1726,6 +1737,10 @@
 
                                 "# Increase splunkweb connection timeout with splunkd\n",
                                 "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
+                                "chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/web.conf\n",
+
+                                "printf '\n%s\n%s = %s\n' [clustering] register_replication_address $LOCALIP  >> /opt/splunk/etc/system/local/server.conf\n",
+                                "chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/server.conf\n",
 
                                 "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave -master_uri https://",
@@ -1741,7 +1756,7 @@
                                 },
                                 "\n",
 
-                                "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode slave -master_uri https://",
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -cluster_label SplunkIndexersASG -mode slave -master_uri https://",
                                 {
                                     "Fn::GetAtt": [
                                         "SplunkCM",
@@ -1757,7 +1772,6 @@
                                     "Ref": "SplunkSecret"
                                 },
                                 "\n",
-                                "printf '\n%s\n%s = %s\n' [clustering] register_replication_address $LOCALIP  >> /opt/splunk/etc/system/local/server.conf\n",
 
                                 "service splunk restart\n",
 
