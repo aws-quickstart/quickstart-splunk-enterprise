@@ -1112,7 +1112,6 @@
                                 "printf '\n%s\n%s = %s\n' [shclustering] register_replication_address $LOCALIP  >> $SPLUNK_HOME/etc/system/local/server.conf\n",
                                 "chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/server.conf\n",
 
-
                                 "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
                                 "-master_uri https://",
@@ -1772,7 +1771,7 @@
                                 "\n",
                                 "service splunk restart\n",
 
-                                "/opt/aws/bin/cfn-signal -e $? --stack ",
+                                "/opt/aws/bin/cfn-signal -s true --stack ",
                                 {
                                     "Ref": "AWS::StackName"
                                 },
