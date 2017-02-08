@@ -765,7 +765,7 @@
                     },
                     {
                         "Key": "Role",
-                        "Value": "splunk-indexer"
+                        "Value": "cluster-master"
                     },
                     {
                         "Key": "Name",
@@ -1765,7 +1765,11 @@
                                     "Ref": "SplunkSecret"
                                 },
                                 "\n",
-
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN enable listen 9997 -auth admin:",
+                                {
+                                    "Ref": "SplunkAdminPassword"
+                                },
+                                "\n",
                                 "service splunk restart\n",
 
                                 "/opt/aws/bin/cfn-signal -e $? --stack ",
