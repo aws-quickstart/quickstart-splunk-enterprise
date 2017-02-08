@@ -25,6 +25,6 @@
   },
   {
     "ParameterKey": "InstanceType",
-    "ParameterValue": "c4.2xlarge"
+    "ParameterValue": "c4.large"
   }
 ]
