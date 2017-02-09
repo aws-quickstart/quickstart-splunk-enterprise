@@ -1576,24 +1576,7 @@
             "Type": "AWS::IAM::User",
             "Condition": "ConfigureLicense",
             "Properties": {
-                "Path": "/",
-                "Policies": [
-                    {
-                        "PolicyName": "root",
-                        "PolicyDocument": {
-                            "Statement": [
-                                {
-                                    "Effect": "Allow",
-                                    "Action": [
-                                        "cloudformation:DescribeStackResource",
-                                        "s3:GetObject"
-                                    ],
-                                    "Resource": "*"
-                                }
-                            ]
-                        }
-                    }
-                ]
+                "Path": "/"
             }
         },
         "CfnKeys": {
