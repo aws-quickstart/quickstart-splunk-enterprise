@@ -100,7 +100,7 @@
         },
         "SplunkReplicationFactor": {
             "ConstraintDescription": "must be a valid number, 2-5",
-            "Default": "2",
+            "Default": "3",
             "Description": "How many copies of data should be stored in the Splunk clusters",
             "MaxValue": "5",
             "MinValue": "2",
