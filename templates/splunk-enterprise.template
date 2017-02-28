@@ -808,6 +808,7 @@
                                 },
                                 "\n",
                                 "mkdir -p $SPLUNK_HOME/etc/licenses/enterprise\n",
+                                "chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/licenses/enterprise\n",
                                 "mv /etc/splunk/splunk.license $SPLUNK_HOME/etc/licenses/enterprise/\n",
                                 "# Increase splunkweb connection timeout with splunkd\n",
                                 "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
