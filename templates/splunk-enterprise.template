@@ -1550,7 +1550,7 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
-                                "service splunk restart\n",
+
                                 "/opt/aws/bin/cfn-signal -e $? --stack ",
                                 {
                                     "Ref": "AWS::StackName"
