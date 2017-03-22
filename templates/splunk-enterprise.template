@@ -499,6 +499,11 @@
             "Type": "AWS::EC2::Instance",
             "Condition": "CreateSingleSearchHead",
             "DependsOn": "SplunkCM",
+            "CreationPolicy": {
+                "ResourceSignal": {
+                    "Timeout": "PT60M"
+                }
+            },
             "Properties": {
                 "ImageId": {
                     "Fn::FindInMap": [
@@ -508,17 +513,6 @@
                         },
                         "SPLUNKENTHVM"
                     ]
-                },
-                "SecurityGroupIds": [
-                    {
-                        "Ref": "SplunkSecurityGroup"
-                    },
-                    {
-                        "Ref": "SplunkSearchHeadSecurityGroup"
-                    }
-                ],
-                "SubnetId": {
-                    "Ref": "PublicSubnet1ID"
                 },
                 "InstanceType": {
                     "Ref": "InstanceType"
@@ -540,6 +534,24 @@
                     {
                         "Key": "Name",
                         "Value": "search-head"
+                    }
+                ],
+                "NetworkInterfaces": [
+                    {
+                        "GroupSet": [
+                            {
+                                "Ref": "SplunkSecurityGroup"
+                            },
+                            {
+                                "Ref": "SplunkSearchHeadSecurityGroup"
+                            }
+                        ],
+                        "AssociatePublicIpAddress": "true",
+                        "DeviceIndex": "0",
+                        "DeleteOnTermination": "true",
+                        "SubnetId": {
+                            "Ref": "PublicSubnet1ID"
+                        }
                     }
                 ],
                 "BlockDeviceMappings": [
@@ -631,15 +643,15 @@
                         ]
                     }
                 }
-            },
-            "CreationPolicy": {
-                "ResourceSignal": {
-                    "Timeout": "PT30M"
-                }
             }
         },
         "SplunkCM": {
             "Type": "AWS::EC2::Instance",
+            "CreationPolicy": {
+                "ResourceSignal": {
+                    "Timeout": "PT60M"
+                }
+            },
             "Metadata": {
                 "AWS::CloudFormation::Init": {
                     "Fn::If": [
@@ -859,17 +871,17 @@
                         ]
                     }
                 }
-            },
-            "CreationPolicy": {
-                "ResourceSignal": {
-                    "Timeout": "PT30M"
-                }
             }
         },
         "SplunkSHCDeployer": {
             "Type": "AWS::EC2::Instance",
             "Condition": "CreateSHC",
             "DependsOn": "SplunkCM",
+            "CreationPolicy": {
+                "ResourceSignal": {
+                    "Timeout": "PT60M"
+                }
+            },
             "Properties": {
                 "ImageId": {
                     "Fn::FindInMap": [
@@ -879,17 +891,6 @@
                         },
                         "SPLUNKENTHVM"
                     ]
-                },
-                "SecurityGroupIds": [
-                    {
-                        "Ref": "SplunkSecurityGroup"
-                    },
-                    {
-                        "Ref": "SplunkSearchHeadSecurityGroup"
-                    }
-                ],
-                "SubnetId": {
-                    "Ref": "PublicSubnet1ID"
                 },
                 "InstanceType": {
                     "Ref": "InstanceType"
@@ -911,6 +912,24 @@
                     {
                         "Key": "Name",
                         "Value": "deployer"
+                    }
+                ],
+                "NetworkInterfaces": [
+                    {
+                        "GroupSet": [
+                            {
+                                "Ref": "SplunkSecurityGroup"
+                            },
+                            {
+                                "Ref": "SplunkSearchHeadSecurityGroup"
+                            }
+                        ],
+                        "AssociatePublicIpAddress": "true",
+                        "DeviceIndex": "0",
+                        "DeleteOnTermination": "true",
+                        "SubnetId": {
+                            "Ref": "PublicSubnet1ID"
+                        }
                     }
                 ],
                 "BlockDeviceMappings": [
@@ -995,17 +1014,17 @@
                         ]
                     }
                 }
-            },
-            "CreationPolicy": {
-                "ResourceSignal": {
-                    "Timeout": "PT30M"
-                }
             }
         },
         "SplunkSHCMember1": {
             "Type": "AWS::EC2::Instance",
             "Condition": "CreateSHC",
             "DependsOn": "SplunkSHCDeployer",
+            "CreationPolicy": {
+                "ResourceSignal": {
+                    "Timeout": "PT60M"
+                }
+            },
             "Properties": {
                 "ImageId": {
                     "Fn::FindInMap": [
@@ -1176,17 +1195,17 @@
                         ]
                     }
                 }
-            },
-            "CreationPolicy": {
-                "ResourceSignal": {
-                    "Timeout": "PT30M"
-                }
             }
         },
         "SplunkSHCMember2": {
             "Type": "AWS::EC2::Instance",
             "Condition": "CreateSHC",
             "DependsOn": "SplunkSHCDeployer",
+            "CreationPolicy": {
+                "ResourceSignal": {
+                    "Timeout": "PT60M"
+                }
+            },
             "Properties": {
                 "ImageId": {
                     "Fn::FindInMap": [
@@ -1357,17 +1376,17 @@
                         ]
                     }
                 }
-            },
-            "CreationPolicy": {
-                "ResourceSignal": {
-                    "Timeout": "PT30M"
-                }
             }
         },
         "SplunkSHCMember3": {
             "Type": "AWS::EC2::Instance",
             "Condition": "CreateSHC",
             "DependsOn": "SplunkSHCDeployer",
+            "CreationPolicy": {
+                "ResourceSignal": {
+                    "Timeout": "PT60M"
+                }
+            },
             "Properties": {
                 "ImageId": {
                     "Fn::FindInMap": [
@@ -1565,11 +1584,6 @@
                             ]
                         ]
                     }
-                }
-            },
-            "CreationPolicy": {
-                "ResourceSignal": {
-                    "Timeout": "PT30M"
                 }
             }
         },
