@@ -558,6 +558,7 @@
                     {
                         "DeviceName": "/dev/xvda",
                         "Ebs": {
+                            "VolumeType": "gp2",
                             "VolumeSize": {
                                 "Fn::FindInMap": [
                                     "SplunkConfig",
@@ -729,6 +730,7 @@
                     {
                         "DeviceName": "/dev/xvda",
                         "Ebs": {
+                            "VolumeType": "gp2",
                             "VolumeSize": 50
                         }
                     }
@@ -936,6 +938,7 @@
                     {
                         "DeviceName": "/dev/xvda",
                         "Ebs": {
+                            "VolumeType": "gp2",
                             "VolumeSize": {
                                 "Fn::FindInMap": [
                                     "SplunkConfig",
@@ -1079,6 +1082,7 @@
                     {
                         "DeviceName": "/dev/xvda",
                         "Ebs": {
+                            "VolumeType": "gp2",
                             "VolumeSize": {
                                 "Fn::FindInMap": [
                                     "SplunkConfig",
@@ -1260,6 +1264,7 @@
                     {
                         "DeviceName": "/dev/xvda",
                         "Ebs": {
+                            "VolumeType": "gp2",
                             "VolumeSize": {
                                 "Fn::FindInMap": [
                                     "SplunkConfig",
@@ -1441,6 +1446,7 @@
                     {
                         "DeviceName": "/dev/xvda",
                         "Ebs": {
+                            "VolumeType": "gp2",
                             "VolumeSize": {
                                 "Fn::FindInMap": [
                                     "SplunkConfig",
@@ -1653,6 +1659,7 @@
                     {
                         "DeviceName": "/dev/xvda",
                         "Ebs": {
+                            "VolumeType": "gp2",
                             "VolumeSize": {
                                 "Ref": "SplunkIndexerDiskSize"
                             }
