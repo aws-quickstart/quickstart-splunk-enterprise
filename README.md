@@ -1,6 +1,6 @@
-#quickstart-splunk-enterprise
+# quickstart-splunk-enterprise
 
-#####**AWS CloudFormation templates for automated Splunk Enterprise deployments.**
+#### **AWS CloudFormation templates for automated Splunk Enterprise deployments.**
 
 
 ***Splunk License***
@@ -17,7 +17,6 @@ Before getting started with the template configuration, you will need to make yo
  8. Click "Start Upload" on the lower right of the page.
  9. Once the license has finished uploading, you'll need the bucket name and the filename to use with the CloudFormation template.
 
-<br>
 **Template Usage**
 -----
 The templates in this repo were created in conjunction with our [Splunk Enterprise AWS Quick Start](https://aws.amazon.com/quickstart/architecture/splunk-enterprise/) which explains everything you'll need to get started.
