@@ -276,49 +276,49 @@
     "Mappings": {
         "AWSAMIRegionMap": {
             "AMI": {
-                "SPLUNKENTHVM": "splunk_marketplace_AMI_2017-01-26_22_09_23-7b65de6c-5006-4ca2-bd75-fdba95ae5d9d-ami-89e81b9f.3"
+                "SPLUNKENTHVM": "splunk_marketplace_AMI_2017-04-29_17_32_52-7b65de6c-5006-4ca2-bd75-fdba95ae5d9d-ami-6a65047c.4"
             },
             "ap-northeast-1": {
-                "SPLUNKENTHVM": "ami-53b3f334"
+                "SPLUNKENTHVM": "ami-1db3807a"
             },
             "ap-northeast-2": {
-                "SPLUNKENTHVM": "ami-ba7faed4"
+                "SPLUNKENTHVM": "ami-f7f82599"
             },
             "ap-south-1": {
-                "SPLUNKENTHVM": "ami-5c473633"
+                "SPLUNKENTHVM": "ami-f31d609c"
             },
             "ap-southeast-1": {
-                "SPLUNKENTHVM": "ami-362a9e55"
+                "SPLUNKENTHVM": "ami-5466e337"
             },
             "ap-southeast-2": {
-                "SPLUNKENTHVM": "ami-68a8ae0b"
+                "SPLUNKENTHVM": "ami-f0686293"
             },
             "ca-central-1": {
-                "SPLUNKENTHVM": "ami-6fb5080b"
+                "SPLUNKENTHVM": "ami-10863a74"
             },
             "eu-central-1": {
-                "SPLUNKENTHVM": "ami-85c50dea"
+                "SPLUNKENTHVM": "ami-b9ee30d6"
             },
             "eu-west-1": {
-                "SPLUNKENTHVM": "ami-cbd3f6ad"
+                "SPLUNKENTHVM": "ami-bdeae5db"
             },
             "eu-west-2": {
-                "SPLUNKENTHVM": "ami-5e7d683a"
+                "SPLUNKENTHVM": "ami-825047e6"
             },
             "sa-east-1": {
-                "SPLUNKENTHVM": "ami-a9cca8c5"
+                "SPLUNKENTHVM": "ami-4f234c23"
             },
             "us-east-1": {
-                "SPLUNKENTHVM": "ami-707cbb66"
+                "SPLUNKENTHVM": "ami-1830440e"
             },
             "us-east-2": {
-                "SPLUNKENTHVM": "ami-4a11342f"
+                "SPLUNKENTHVM": "ami-61f1d604"
             },
             "us-west-1": {
-                "SPLUNKENTHVM": "ami-a83a66c8"
+                "SPLUNKENTHVM": "ami-b0e0c6d0"
             },
             "us-west-2": {
-                "SPLUNKENTHVM": "ami-93f673f3"
+                "SPLUNKENTHVM": "ami-c13ba1a1"
             }
         },
         "AWSInfoRegionMap": {
@@ -580,7 +580,6 @@
                                 "#!/bin/bash -v\n",
                                 "# First make clout-init output log readable by root only to protect sensitive parameter values\n",
                                 "chmod 600 /var/log/cloud-init-output.log\n",
-
                                 "yum update -y aws-cfn-bootstrap\n",
                                 "export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)\n",
                                 "export INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)\n",
@@ -793,7 +792,6 @@
                                 "#!/bin/bash -v\n",
                                 "# First make clout-init output log readable by root only to protect sensitive parameter values\n",
                                 "chmod 600 /var/log/cloud-init-output.log\n",
-
                                 "yum update -y aws-cfn-bootstrap\n",
                                 "export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)\n",
                                 "export INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null)\n",
@@ -960,7 +958,6 @@
                                 "#!/bin/bash -v\n",
                                 "# First make clout-init output log readable by root only to protect sensitive parameter values\n",
                                 "chmod 600 /var/log/cloud-init-output.log\n",
-
                                 "yum update -y aws-cfn-bootstrap\n",
                                 "export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)\n",
                                 "export INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)\n",
@@ -1104,7 +1101,6 @@
                                 "#!/bin/bash -v\n",
                                 "# First make clout-init output log readable by root only to protect sensitive parameter values\n",
                                 "chmod 600 /var/log/cloud-init-output.log\n",
-
                                 "yum update -y aws-cfn-bootstrap\n",
                                 "export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)\n",
                                 "export INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)\n",
@@ -1290,7 +1286,6 @@
                                 "#!/bin/bash -v\n",
                                 "# First make clout-init output log readable by root only to protect sensitive parameter values\n",
                                 "chmod 600 /var/log/cloud-init-output.log\n",
-
                                 "yum update -y aws-cfn-bootstrap\n",
                                 "export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)\n",
                                 "export INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)\n",
@@ -1476,7 +1471,6 @@
                                 "#!/bin/bash -v\n",
                                 "# First make clout-init output log readable by root only to protect sensitive parameter values\n",
                                 "chmod 600 /var/log/cloud-init-output.log\n",
-
                                 "yum update -y aws-cfn-bootstrap\n",
                                 "export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)\n",
                                 "export INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)\n",
@@ -1590,7 +1584,6 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
-
                                 "/opt/aws/bin/cfn-signal -e $? --stack ",
                                 {
                                     "Ref": "AWS::StackName"
@@ -1709,7 +1702,6 @@
                                 "#!/bin/bash -v\n",
                                 "# First make clout-init output log readable by root only to protect sensitive parameter values\n",
                                 "chmod 600 /var/log/cloud-init-output.log\n",
-
                                 "yum update -y aws-cfn-bootstrap\n",
                                 "export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)\n",
                                 "export INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)\n",
