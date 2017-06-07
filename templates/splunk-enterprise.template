@@ -28,6 +28,15 @@
             "Description": "Name of an existing EC2 KeyPair to enable SSH access to the instance",
             "Type": "AWS::EC2::KeyPair::KeyName"
         },
+        "NumberOfAZs": {
+            "AllowedValues": [
+                "2",
+                "3"
+            ],
+            "Default": "2",
+            "Description": "Number of Availability Zones to use in the VPC. This must match the number public subnet IDs entered as parameters",
+            "Type": "String"
+        },
         "PublicSubnet1ID": {
             "Description": "ID of Splunk public subnet 1 in Availability Zone 1 (e.g., subnet-xxxxxxxx)",
             "Type": "AWS::EC2::Subnet::Id"
@@ -35,6 +44,11 @@
         "PublicSubnet2ID": {
             "Description": "ID of Splunk public subnet 2 in Availability Zone 2 (e.g., subnet-xxxxxxxx)",
             "Type": "AWS::EC2::Subnet::Id"
+        },
+        "PublicSubnet3ID": {
+            "Description": "ID of Splunk public subnet 3 in Availability Zone 3 (e.g., subnet-xxxxxxxx)",
+            "Type": "AWS::EC2::Subnet::Id",
+            "Default": ""
         },
         "QSS3BucketName": {
             "Default": "quickstart-reference",
@@ -141,7 +155,9 @@
                         "VPCID",
                         "VPCCIDR",
                         "PublicSubnet1ID",
-                        "PublicSubnet2ID"
+                        "PublicSubnet2ID",
+                        "PublicSubnet3ID",
+                        "NumberOfAZs"
                     ]
                 },
                 {
@@ -184,6 +200,12 @@
                 },
                 "PublicSubnet2ID": {
                     "default": "Public Subnet 2 ID"
+                },
+                "PublicSubnet3ID": {
+                    "default": "Public Subnet 3 ID"
+                },
+                "NumberOfAZs": {
+                    "default": "Number of Availability Zones"
                 },
                 "QSS3BucketName": {
                     "default": "QuickStart S3 Bucket Name"
@@ -228,6 +250,14 @@
         }
     },
     "Conditions": {
+        "Create3AZ": {
+            "Fn::Equals": [
+                {
+                    "Ref": "NumberOfAZs"
+                },
+                "3"
+            ]
+        },
         "CreateSingleSearchHead": {
             "Fn::Equals": [
                 {
@@ -838,7 +868,7 @@
                                 "\n",
 
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode master -multisite true",
-                                    " -available_sites site1,site2",
+                                    " -available_sites ", { "Fn::If": [ "Create3AZ", "site1,site2,site3" , "site1,site2"] },
                                     " -site site1",
                                     " -site_replication_factor origin:1,total:", { "Ref": "SplunkReplicationFactor" },
                                     " -site_search_factor origin:1,total:3",
@@ -1235,7 +1265,7 @@
                         "DeviceIndex": "0",
                         "DeleteOnTermination": "true",
                         "SubnetId": {
-                            "Ref": "PublicSubnet1ID"
+                            "Ref": "PublicSubnet2ID"
                         }
                     }
                 ],
@@ -1407,8 +1437,12 @@
                         "AssociatePublicIpAddress": "true",
                         "DeviceIndex": "0",
                         "DeleteOnTermination": "true",
-                        "SubnetId": {
-                            "Ref": "PublicSubnet2ID"
+                        "SubnetId": { 
+                            "Fn::If": [
+                                "Create3AZ",
+                                { "Ref": "PublicSubnet3ID" },
+                                { "Ref": "PublicSubnet2ID" }
+                            ]
                         }
                     }
                 ],
@@ -1504,7 +1538,7 @@
                                 "\n",
 
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode searchhead",
-                                    " -site site2",
+                                    " -site ", { "Fn::If": [ "Create3AZ", "site3", "site2" ] },
                                     " -master_uri https://", { "Fn::GetAtt": [ "SplunkCM", "PrivateIp" ] }, ":8089 ",
                                     " -secret ", { "Ref": "SplunkSecret" }, "\n",
 
@@ -1700,6 +1734,9 @@
                                 "  ", { "Ref" : "PublicSubnet2ID" }, ")\n",
                                 "    site=\"site2\"\n",
                                 "    ;;\n",
+                                "  ", { "Ref" : "PublicSubnet3ID" }, ")\n",
+                                "    site=\"site3\"\n",
+                                "    ;;\n",
                                 "  *)\n",
                                 "    echo \"Unexpected subnet id\"\n",
                                 "    exit 1\n",
@@ -1778,14 +1815,20 @@
                         "Ref": "SplunkSearchHeadSecurityGroup"
                     }
                 ],
-                "Subnets": [
-                    {
-                        "Ref": "PublicSubnet1ID"
-                    },
-                    {
-                        "Ref": "PublicSubnet2ID"
-                    }
-                ],
+                "Subnets": {
+                    "Fn::If": [
+                        "Create3AZ",
+                        [
+                            { "Ref": "PublicSubnet1ID" },
+                            { "Ref": "PublicSubnet2ID" },
+                            { "Ref": "PublicSubnet3ID" }
+                        ],
+                        [
+                            { "Ref": "PublicSubnet1ID" },
+                            { "Ref": "PublicSubnet2ID" }
+                        ]
+                    ]
+                },
                 "HealthCheck": {
                     "Target": "TCP:8089",
                     "HealthyThreshold": "2",
@@ -1799,14 +1842,20 @@
             "Type": "AWS::AutoScaling::AutoScalingGroup",
             "DependsOn": "SplunkCM",
             "Properties": {
-                "VPCZoneIdentifier": [
-                    {
-                        "Ref": "PublicSubnet1ID"
-                    },
-                    {
-                        "Ref": "PublicSubnet2ID"
-                    }
-                ],
+                "VPCZoneIdentifier": {
+                    "Fn::If": [
+                        "Create3AZ",
+                        [
+                            { "Ref": "PublicSubnet1ID" },
+                            { "Ref": "PublicSubnet2ID" },
+                            { "Ref": "PublicSubnet3ID" }
+                        ],
+                        [
+                            { "Ref": "PublicSubnet1ID" },
+                            { "Ref": "PublicSubnet2ID" }
+                        ]
+                    ]
+                },
                 "LaunchConfigurationName": {
                     "Ref": "SplunkIndexerLaunchConfiguration"
                 },
