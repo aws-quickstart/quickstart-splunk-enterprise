@@ -1,6 +1,6 @@
 # quickstart-splunk-enterprise
 
-#### **AWS CloudFormation templates for automated Splunk Enterprise deployments.**
+#### **AWS CloudFormation templates for automated Splunk Enterprise HA deployments.**
 
 
 ***Splunk License***
@@ -19,6 +19,8 @@ Before getting started with the template configuration, you will need to make yo
 
 **Template Usage**
 -----
+Use these templates to deploy a highly available Splunk Enterprise environment across multiple AZ (up to 3) in a specific AWS region. AZ-aware indexer clustering is enabled for horizontal scaling and to guarantee data is available in every AZ. Search head clustering (3 nodes by default) can also be enabled for redundancy across all AZs for high availability of data searching and ease of scale.
+
 The templates in this repo were created in conjunction with our [Splunk Enterprise AWS Quick Start](https://aws.amazon.com/quickstart/architecture/splunk-enterprise/) which explains everything you'll need to get started.
 
 
