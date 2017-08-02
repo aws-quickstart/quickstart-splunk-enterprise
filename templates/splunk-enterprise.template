@@ -432,7 +432,7 @@
                 "VpcId": {
                     "Ref": "VPCID"
                 },
-                "GroupDescription": "Enable port 8000 for Splunk web interface",
+                "GroupDescription": "Enable port 8000 for Splunk web interface, and port 8090 for replication",
                 "SecurityGroupIngress": [
                     {
                         "IpProtocol": "tcp",
@@ -465,13 +465,68 @@
                 ]
             }
         },
+        "SplunkIndexerSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPCID"
+                },
+                "GroupDescription": "Enable port 9997 for splunktcp input, port 8088 for HEC input, port 514 for tcp/udp input, and port 9887 for data replication",
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "9997",
+                        "ToPort": "9997",
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8088",
+                        "ToPort": "8088",
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "514",
+                        "ToPort": "514",
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "udp",
+                        "FromPort": "514",
+                        "ToPort": "514",
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "9887",
+                        "ToPort": "9887",
+                        "CidrIp": {
+                            "Ref": "VPCCIDR"
+                        }
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": {
+                            "Ref": "AWS::StackId"
+                        }
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": "SplunkIndexerSecurityGroup"
+                    }
+                ]
+            }
+        },
         "SplunkSecurityGroup": {
             "Type": "AWS::EC2::SecurityGroup",
             "Properties": {
                 "VpcId": {
                     "Ref": "VPCID"
                 },
-                "GroupDescription": "Enable SSH, and all Splunk-related ports except web interface",
+                "GroupDescription": "Enable administrative ports like restricted SSH and management port",
                 "SecurityGroupIngress": [
                     {
                         "IpProtocol": "tcp",
@@ -485,30 +540,6 @@
                         "IpProtocol": "tcp",
                         "FromPort": "8089",
                         "ToPort": "8089",
-                        "CidrIp": {
-                            "Ref": "VPCCIDR"
-                        }
-                    },
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": "9997",
-                        "ToPort": "9997",
-                        "CidrIp": {
-                            "Ref": "VPCCIDR"
-                        }
-                    },
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": "9887",
-                        "ToPort": "9887",
-                        "CidrIp": {
-                            "Ref": "VPCCIDR"
-                        }
-                    },
-                    {
-                        "IpProtocol": "udp",
-                        "FromPort": "514",
-                        "ToPort": "514",
                         "CidrIp": {
                             "Ref": "VPCCIDR"
                         }
@@ -1666,6 +1697,9 @@
                 "SecurityGroups": [
                     {
                         "Ref": "SplunkSecurityGroup"
+                    },
+                    {
+                        "Ref": "SplunkIndexerSecurityGroup"
                     }
                 ],
                 "ImageId": {
