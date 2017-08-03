@@ -559,6 +559,35 @@
                 ]
             }
         },
+        "SplunkHttpEventCollectorElasticLoadBalancerSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPCID"
+                },
+                "GroupDescription": "Enable port 8088 on ELB for HEC input",
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8088",
+                        "ToPort": "8088",
+                        "CidrIp": "0.0.0.0/0"
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": {
+                            "Ref": "AWS::StackId"
+                        }
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": "SplunkHttpEventCollectorElasticLoadBalancerSecurityGroup"
+                    }
+                ]
+            }
+        },
         "SplunkSearchHeadInstance": {
             "Type": "AWS::EC2::Instance",
             "Condition": "CreateSingleSearchHead",
@@ -1858,6 +1887,7 @@
                         "Ref": "SplunkSearchHeadSecurityGroup"
                     }
                 ],
+                "CrossZone": true,
                 "Subnets": {
                     "Fn::If": [
                         "Create3AZ",
@@ -1879,6 +1909,61 @@
                     "Interval": "30",
                     "Timeout": "5"
                 }
+            }
+        },
+        "SplunkHttpEventCollectorLoadBalancer": {
+            "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+            "Properties": {
+                "ConnectionDrainingPolicy": {
+                    "Enabled": true,
+                    "Timeout": 60
+                },
+                "Listeners": [
+                    {
+                        "InstancePort": "8088",
+                        "InstanceProtocol": "HTTPS",
+                        "LoadBalancerPort": "8088",
+                        "Protocol": "HTTP"
+                    }
+                ],
+                "Scheme": "internet-facing",
+                "SecurityGroups": [
+                    {
+                        "Ref": "SplunkHttpEventCollectorElasticLoadBalancerSecurityGroup"
+                    }
+                ],
+                "CrossZone": true,
+                "Subnets": {
+                    "Fn::If": [
+                        "Create3AZ",
+                        [
+                            { "Ref": "PublicSubnet1ID" },
+                            { "Ref": "PublicSubnet2ID" },
+                            { "Ref": "PublicSubnet3ID" }
+                        ],
+                        [
+                            { "Ref": "PublicSubnet1ID" },
+                            { "Ref": "PublicSubnet2ID" }
+                        ]
+                    ]
+                },
+                "HealthCheck": {
+                    "Target": "TCP:8088",
+                    "HealthyThreshold": "2",
+                    "UnhealthyThreshold": "3",
+                    "Interval": "20",
+                    "Timeout": "5"
+                },
+                "Policies" : [
+                    {
+                        "PolicyName": "EnableProxyProtocol",
+                        "PolicyType": "ProxyProtocolPolicyType",
+                        "Attributes": [
+                            { "Name" : "ProxyProtocol", "Value": true }
+                        ],
+                        "InstancePorts": ["8088"]
+                    }
+                ]
             }
         },
         "SplunkIndexerNodesASG": {
@@ -1911,6 +1996,7 @@
                 "DesiredCapacity": {
                     "Ref": "SplunkIndexerCount"
                 },
+                "LoadBalancerNames": [ { "Ref": "SplunkHttpEventCollectorLoadBalancer" } ],
                 "Tags": [
                     {
                         "Key": "Application",
@@ -2010,6 +2096,25 @@
                         ]
                     },
                     "Applicable when Search Head Cluster is selected"
+                ]
+            }
+        },
+        "HttpEventCollectorURL": {
+            "Description": "HTTP Event Collector URL",
+            "Value": {
+                "Fn::Join": [
+                    "",
+                    [
+                        "http://",
+                        {
+                            "Fn::GetAtt": [
+                                "SplunkHttpEventCollectorLoadBalancer",
+                                "DNSName"
+                            ]
+                        },
+                        ":8088",
+                        "/services/collector"
+                    ]
                 ]
             }
         },

@@ -540,6 +540,15 @@
                 ]
             }
         },
+        "HttpEventCollectorURL": {
+            "Description": "HTTP Event Collector URL",
+            "Value": {
+                "Fn::GetAtt": [
+                    "SplunkStack",
+                    "Outputs.HttpEventCollectorURL"
+                ]
+            }
+        },
         "HttpEventCollectorToken": {
             "Description": "HTTP Event Collector Token",
             "Value": {
