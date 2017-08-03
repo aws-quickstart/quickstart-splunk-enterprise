@@ -514,7 +514,7 @@
     },
     "Outputs": {
         "SearchHeadURL": {
-            "Description": "Splunk Enterprise URL",
+            "Description": "Splunk Enterprise - Search Head URL",
             "Value": {
                 "Fn::GetAtt": [
                     "SplunkStack",
