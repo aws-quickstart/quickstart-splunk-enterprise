@@ -483,7 +483,7 @@
                         "IpProtocol": "tcp",
                         "FromPort": "8088",
                         "ToPort": "8088",
-                        "CidrIp": "0.0.0.0/0"
+                        "SourceSecurityGroupId": { "Ref": "SplunkHttpEventCollectorLoadBalancerSecurityGroup" }
                     },
                     {
                         "IpProtocol": "tcp",
@@ -559,7 +559,7 @@
                 ]
             }
         },
-        "SplunkHttpEventCollectorElasticLoadBalancerSecurityGroup": {
+        "SplunkHttpEventCollectorLoadBalancerSecurityGroup": {
             "Type": "AWS::EC2::SecurityGroup",
             "Properties": {
                 "VpcId": {
@@ -583,7 +583,7 @@
                     },
                     {
                         "Key": "Name",
-                        "Value": "SplunkHttpEventCollectorElasticLoadBalancerSecurityGroup"
+                        "Value": "SplunkHttpEventCollectorLoadBalancerSecurityGroup"
                     }
                 ]
             }
@@ -1929,7 +1929,7 @@
                 "Scheme": "internet-facing",
                 "SecurityGroups": [
                     {
-                        "Ref": "SplunkHttpEventCollectorElasticLoadBalancerSecurityGroup"
+                        "Ref": "SplunkHttpEventCollectorLoadBalancerSecurityGroup"
                     }
                 ],
                 "CrossZone": true,
