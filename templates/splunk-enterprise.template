@@ -1916,7 +1916,7 @@
             "Properties": {
                 "ConnectionDrainingPolicy": {
                     "Enabled": true,
-                    "Timeout": 60
+                    "Timeout": 300
                 },
                 "Listeners": [
                     {
@@ -1949,8 +1949,8 @@
                 },
                 "HealthCheck": {
                     "Target": "TCP:8088",
-                    "HealthyThreshold": "2",
-                    "UnhealthyThreshold": "3",
+                    "HealthyThreshold": "3",
+                    "UnhealthyThreshold": "2",
                     "Interval": "20",
                     "Timeout": "5"
                 },
