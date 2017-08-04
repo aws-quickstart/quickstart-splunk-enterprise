@@ -120,12 +120,21 @@
             "MinValue": "2",
             "Type": "Number"
         },
-        "SplunkSecret": {
+        "SplunkClusterSecret": {
             "AllowedPattern": "(?=^.{6,255}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
             "ConstraintDescription": "Must be at least 8 characters containing letters, numbers and symbols.",
-            "Description": "Shared cluster secret for Search Head and Indexer clusters. Must be at least 8 characters containing letters, numbers and symbols.",
+            "Description": "Shared cluster secret for Search Head and Indexer cluster nodes. Must be at least 8 characters containing letters, numbers and symbols.",
             "MaxLength": "32",
-            "MinLength": "6",
+            "MinLength": "8",
+            "NoEcho": "true",
+            "Type": "String"
+        },
+        "SplunkIndexerDiscoverySecret": {
+            "AllowedPattern": "(?=^.{6,255}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
+            "ConstraintDescription": "Must be at least 8 characters containing letters, numbers and symbols.",
+            "Description": "Security key used for communication between your forwarders and the cluster master. This value should also be used by forwarders in order to retrieve list of available peer nodes from cluster master. Must be at least 8 characters containing letters, numbers and symbols.",
+            "MaxLength": "32",
+            "MinLength": "8",
             "NoEcho": "true",
             "Type": "String"
         },
@@ -166,7 +175,8 @@
                     },
                     "Parameters": [
                         "SplunkAdminPassword",
-                        "SplunkSecret",
+                        "SplunkClusterSecret",
+                        "SplunkIndexerDiscoverySecret",
                         "SplunkLicenseBucket",
                         "SplunkLicensePath",
                         "SplunkIndexerCount",
@@ -237,8 +247,11 @@
                 "SplunkReplicationFactor": {
                     "default": "Replication Factor"
                 },
-                "SplunkSecret": {
-                    "default": "Splunk Secret"
+                "SplunkClusterSecret": {
+                    "default": "Shared security key for cluster nodes"
+                },
+                "SplunkIndexerDiscoverySecret": {
+                    "default": "Shared security key for forwarders using indexer discovery"
                 },
                 "VPCCIDR": {
                     "default": "VPC CIDR"
@@ -477,7 +490,9 @@
                         "IpProtocol": "tcp",
                         "FromPort": "9997",
                         "ToPort": "9997",
-                        "CidrIp": "0.0.0.0/0"
+                        "CidrIp": {
+                            "Ref": "VPCCIDR"
+                        }
                     },
                     {
                         "IpProtocol": "tcp",
@@ -489,13 +504,17 @@
                         "IpProtocol": "tcp",
                         "FromPort": "514",
                         "ToPort": "514",
-                        "CidrIp": "0.0.0.0/0"
+                        "CidrIp": {
+                            "Ref": "VPCCIDR"
+                        }
                     },
                     {
                         "IpProtocol": "udp",
                         "FromPort": "514",
                         "ToPort": "514",
-                        "CidrIp": "0.0.0.0/0"
+                        "CidrIp": {
+                            "Ref": "VPCCIDR"
+                        }
                     },
                     {
                         "IpProtocol": "tcp",
@@ -707,7 +726,7 @@
                                 "\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -secret ",
                                 {
-                                    "Ref": "SplunkSecret"
+                                    "Ref": "SplunkClusterSecret"
                                 },
                                 " -mode searchhead -site site1 -master_uri https://",
                                 {
@@ -926,16 +945,34 @@
                                     " -site site1",
                                     " -site_replication_factor origin:1,total:", { "Ref": "SplunkReplicationFactor" },
                                     " -site_search_factor origin:1,total:3",
-                                    " -secret ", { "Ref": "SplunkSecret" },
+                                    " -secret ", { "Ref": "SplunkClusterSecret" },
                                     " -cluster_label SplunkIndexersASG", "\n",
 
-                                "# Add HEC configuration under master-apps\n",
+                                "# Configure indexer discovery\n",
+                                "cat >>$SPLUNK_HOME/etc/system/local/server.conf <<end\n",
+                                "\n",
+                                "[indexer_discovery]\n",
+                                "pass4SymmKey = ", { "Ref": "SplunkIndexerDiscoverySecret" }, "\n",
+                                "indexerWeightByDiskCapacity = true\n",
+                                "end\n",
+                                "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/server.conf\n",
+
+                                "# Add base configs for peer nodes as an app under master-apps\n",
+                                "# Peer config 1: Enable HEC input\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN http-event-collector enable -uri https://localhost:8089\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN http-event-collector create default-token -uri https://localhost:8089 > /tmp/token\n",
                                 "TOKEN=`sed -n 's/\\ttoken=//p' /tmp/token` && rm /tmp/token\n",
                                 "echo $TOKEN\n",
                                 "mkdir -p $SPLUNK_HOME/etc/master-apps/peer-base-autogenerated/local\n",
                                 "mv $SPLUNK_HOME/etc/apps/splunk_httpinput/local/inputs.conf $SPLUNK_HOME/etc/master-apps/peer-base-autogenerated/local\n",
+
+                                "# Peer config 2: Enable splunktcp input\n",
+                                "cat >>$SPLUNK_HOME/etc/master-apps/peer-base-autogenerated/local/inputs.conf <<end\n",
+                                "\n",
+                                "[splunktcp://9997]\n",
+                                "disabled=0\n",
+                                "end\n",
+
                                 "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/master-apps/peer-base-autogenerated\n",
 
                                 "service splunk restart\n",
@@ -1068,7 +1105,7 @@
                                 "chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/web.conf\n",
                                 "printf '\n%s\n%s = %s\n' [shclustering] pass4SymmKey  '",
                                 {
-                                    "Ref": "SplunkSecret"
+                                    "Ref": "SplunkClusterSecret"
                                 },
                                 "'  >> $SPLUNK_HOME/etc/system/local/server.conf\n",
                                 "printf '%s = %s\n' shcluster_label SplunkSHC >> $SPLUNK_HOME/etc/system/local/server.conf\n",
@@ -1247,7 +1284,7 @@
                                 "-shcluster_label SplunkSHC ",
                                 "-secret ",
                                 {
-                                    "Ref": "SplunkSecret"
+                                    "Ref": "SplunkClusterSecret"
                                 },
                                 " ",
                                 "-auth admin:",
@@ -1259,7 +1296,7 @@
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode searchhead",
                                     " -site site1",
                                     " -master_uri https://", { "Fn::GetAtt": [ "SplunkCM", "PrivateIp" ] }, ":8089 ",
-                                    " -secret ", { "Ref": "SplunkSecret" }, "\n",
+                                    " -secret ", { "Ref": "SplunkClusterSecret" }, "\n",
 
                                 "service splunk restart\n",
                                 "/opt/aws/bin/cfn-signal -e $? --stack ",
@@ -1420,7 +1457,7 @@
                                 "-shcluster_label SplunkSHC ",
                                 "-secret ",
                                 {
-                                    "Ref": "SplunkSecret"
+                                    "Ref": "SplunkClusterSecret"
                                 },
                                 " ",
                                 "-auth admin:",
@@ -1432,7 +1469,7 @@
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode searchhead",
                                     " -site site2",
                                     " -master_uri https://", { "Fn::GetAtt": [ "SplunkCM", "PrivateIp" ] }, ":8089 ",
-                                    " -secret ", { "Ref": "SplunkSecret" }, "\n",
+                                    " -secret ", { "Ref": "SplunkClusterSecret" }, "\n",
 
                                 "service splunk restart\n",
                                 "/opt/aws/bin/cfn-signal -e $? --stack ",
@@ -1597,7 +1634,7 @@
                                 "-shcluster_label SplunkSHC ",
                                 "-secret ",
                                 {
-                                    "Ref": "SplunkSecret"
+                                    "Ref": "SplunkClusterSecret"
                                 },
                                 " ",
                                 "-auth admin:",
@@ -1609,7 +1646,7 @@
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode searchhead",
                                     " -site ", { "Fn::If": [ "Create3AZ", "site3", "site2" ] },
                                     " -master_uri https://", { "Fn::GetAtt": [ "SplunkCM", "PrivateIp" ] }, ":8089 ",
-                                    " -secret ", { "Ref": "SplunkSecret" }, "\n",
+                                    " -secret ", { "Ref": "SplunkClusterSecret" }, "\n",
 
                                 "service splunk restart\n",
                                 "# Bootstrap SHC captain\n",
@@ -1818,13 +1855,8 @@
                                     " -site $site",
                                     " -master_uri https://", { "Fn::GetAtt": [ "SplunkCM", "PrivateIp" ] }, ":8089 ",
                                     " -replication_port 9887",
-                                    " -secret ", { "Ref": "SplunkSecret" }, "\n",
+                                    " -secret ", { "Ref": "SplunkClusterSecret" }, "\n",
 
-                                "sudo -u $SPLUNK_USER $SPLUNK_BIN enable listen 9997 -auth admin:",
-                                {
-                                    "Ref": "SplunkAdminPassword"
-                                },
-                                "\n",
                                 "service splunk restart\n",
                                 "/opt/aws/bin/cfn-signal -s true --stack ",
                                 {

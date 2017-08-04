@@ -132,12 +132,21 @@
             "MinValue": "2",
             "Type": "Number"
         },
-        "SplunkSecret": {
+        "SplunkClusterSecret": {
             "AllowedPattern": "(?=^.{6,255}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
             "ConstraintDescription": "Must be at least 8 characters containing letters, numbers and symbols.",
             "Description": "Shared cluster secret for Search Head and Indexer clusters. Must be at least 8 characters containing letters, numbers and symbols.",
             "MaxLength": "32",
             "MinLength": "6",
+            "NoEcho": "true",
+            "Type": "String"
+        },
+        "SplunkIndexerDiscoverySecret": {
+            "AllowedPattern": "(?=^.{6,255}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
+            "ConstraintDescription": "Must be at least 8 characters containing letters, numbers and symbols.",
+            "Description": "Security key used for communication between your forwarders and the cluster master. This value should also be used by forwarders in order to retrieve list of available peer nodes from cluster master. Must be at least 8 characters containing letters, numbers and symbols.",
+            "MaxLength": "32",
+            "MinLength": "8",
             "NoEcho": "true",
             "Type": "String"
         },
@@ -177,7 +186,8 @@
                     },
                     "Parameters": [
                         "SplunkAdminPassword",
-                        "SplunkSecret",
+                        "SplunkClusterSecret",
+                        "SplunkIndexerDiscoverySecret",
                         "SplunkLicenseBucket",
                         "SplunkLicensePath",
                         "SplunkIndexerCount",
@@ -251,8 +261,11 @@
                 "SplunkReplicationFactor": {
                     "default": "Replication Factor"
                 },
-                "SplunkSecret": {
-                    "default": "Splunk Secret"
+                "SplunkClusterSecret": {
+                    "default": "Shared security key for cluster nodes"
+                },
+                "SplunkIndexerDiscoverySecret": {
+                    "default": "Shared security key for forwarders using indexer discovery"
                 },
                 "VPCCIDR": {
                     "default": "VPC CIDR"
@@ -471,8 +484,11 @@
                     "SplunkAdminPassword": {
                         "Ref": "SplunkAdminPassword"
                     },
-                    "SplunkSecret": {
-                        "Ref": "SplunkSecret"
+                    "SplunkClusterSecret": {
+                        "Ref": "SplunkClusterSecret"
+                    },
+                    "SplunkIndexerDiscoverySecret": {
+                        "Ref": "SplunkIndexerDiscoverySecret"
                     },
                     "SplunkLicenseBucket": {
                         "Ref": "SplunkLicenseBucket"
