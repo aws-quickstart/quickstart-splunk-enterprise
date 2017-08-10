@@ -10,17 +10,36 @@
             "MinLength": "9",
             "Type": "String"
         },
-        "InstanceType": {
+        "IndexerInstanceType": {
             "AllowedValues": [
-                "c4.large",
+                "c4.xlarge",
                 "c4.2xlarge",
                 "c4.4xlarge",
                 "c4.8xlarge",
-                "m4.10xlarge",
+                "m4.xlarge",
+                "m4.2xlarge",
+                "m4.4xlarge",
+                "m4.10xlarge"
+            ],
+            "Description": "EC2 instance type for Splunk Indexers",
+            "ConstraintDescription": "must be a valid EC2 instance type.",
+            "Default": "c4.xlarge",
+            "Type": "String"
+        },
+        "SearchHeadInstanceType": {
+            "AllowedValues": [
+                "c4.xlarge",
+                "c4.2xlarge",
+                "c4.4xlarge",
+                "c4.8xlarge",
+                "r4.xlarge",
+                "r4.2xlarge",
+                "r4.4xlarge",
                 "r4.8xlarge"
             ],
+            "Description": "EC2 instance type for Splunk Search Heads",
             "ConstraintDescription": "must be a valid EC2 instance type.",
-            "Default": "c4.large",
+            "Default": "c4.xlarge",
             "Type": "String"
         },
         "KeyName": {
@@ -157,7 +176,8 @@
                         "default": "AWS Instance and Network Settings"
                     },
                     "Parameters": [
-                        "InstanceType",
+                        "IndexerInstanceType",
+                        "SearchHeadInstanceType",
                         "KeyName",
                         "HTTPLocation",
                         "SSHLocation",
@@ -199,8 +219,11 @@
                 "HTTPLocation": {
                     "default": "Permitted CIDR for Splunk web interface"
                 },
-                "InstanceType": {
-                    "default": "Splunk Instance Type"
+                "IndexerInstanceType": {
+                    "default": "EC2 instance type for Splunk indexer"
+                },
+                "SearchHeadInstanceType": {
+                    "default": "EC2 instance type for Splunk search head"
                 },
                 "KeyName": {
                     "default": "Key Name"
@@ -423,6 +446,10 @@
             }
         },
         "SplunkConfig": {
+            "dedicated-instance-type": {
+                "clusterMaster": "c4.xlarge",
+                "shclusterDeployer": "c4.xlarge",
+            },
             "searchhead-disk-size": {
                 "gb": "100"
             },
@@ -626,9 +653,7 @@
                         "SPLUNKENTHVM"
                     ]
                 },
-                "InstanceType": {
-                    "Ref": "InstanceType"
-                },
+                "InstanceType": { "Ref": "SearchHeadInstanceType" },
                 "KeyName": {
                     "Ref": "KeyName"
                 },
@@ -874,7 +899,13 @@
                         "SPLUNKENTHVM"
                     ]
                 },
-                "InstanceType": "c4.large",
+                "InstanceType": {
+                    "Fn::FindInMap": [
+                        "SplunkConfig",
+                        "dedicated-instance-type",
+                        "clusterMaster"
+                    ]
+                },
                 "KeyName": {
                     "Ref": "KeyName"
                 },
@@ -1019,7 +1050,11 @@
                     ]
                 },
                 "InstanceType": {
-                    "Ref": "InstanceType"
+                    "Fn::FindInMap": [
+                        "SplunkConfig",
+                        "dedicated-instance-type",
+                        "shclusterDeployer"
+                    ]
                 },
                 "KeyName": {
                     "Ref": "KeyName"
@@ -1185,9 +1220,7 @@
                         "SPLUNKENTHVM"
                     ]
                 },
-                "InstanceType": {
-                    "Ref": "InstanceType"
-                },
+                "InstanceType": { "Ref": "SearchHeadInstanceType" },
                 "KeyName": {
                     "Ref": "KeyName"
                 },
@@ -1358,9 +1391,7 @@
                         "SPLUNKENTHVM"
                     ]
                 },
-                "InstanceType": {
-                    "Ref": "InstanceType"
-                },
+                "InstanceType": { "Ref": "SearchHeadInstanceType" },
                 "KeyName": {
                     "Ref": "KeyName"
                 },
@@ -1531,9 +1562,7 @@
                         "SPLUNKENTHVM"
                     ]
                 },
-                "InstanceType": {
-                    "Ref": "InstanceType"
-                },
+                "InstanceType": { "Ref": "SearchHeadInstanceType" },
                 "KeyName": {
                     "Ref": "KeyName"
                 },
@@ -1807,9 +1836,7 @@
                         "SPLUNKENTHVM"
                     ]
                 },
-                "InstanceType": {
-                    "Ref": "InstanceType"
-                },
+                "InstanceType": { "Ref": "IndexerInstanceType" },
                 "KeyName": {
                     "Ref": "KeyName"
                 },
