@@ -2,7 +2,7 @@
     "AWSTemplateFormatVersion": "2010-09-09",
     "Description": "Splunk deployment with indexer, search head clustering and cluster master. QS(5030)",
     "Parameters": {
-        "HTTPLocation": {
+        "WebClientLocation": {
             "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
             "ConstraintDescription": "Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions.",
             "Description": "The IP address range that is allowed to connect to the Splunk web interface. Note: a value of 0.0.0.0/0 will allow access from ANY ip address",
@@ -10,12 +10,22 @@
             "MinLength": "9",
             "Type": "String"
         },
+        "HECClientLocation": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+            "ConstraintDescription": "Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions.",
+            "Description": "The IP address range that is allowed to send data to Splunk HTTP Event Collector. Note: a value of 0.0.0.0/0 will allow access from ANY ip address",
+            "MaxLength": "19",
+            "MinLength": "9",
+            "Type": "String"
+        },
         "IndexerInstanceType": {
             "AllowedValues": [
+                "c4.large",
                 "c4.xlarge",
                 "c4.2xlarge",
                 "c4.4xlarge",
                 "c4.8xlarge",
+                "m4.large",
                 "m4.xlarge",
                 "m4.2xlarge",
                 "m4.4xlarge",
@@ -28,10 +38,12 @@
         },
         "SearchHeadInstanceType": {
             "AllowedValues": [
+                "c4.large",
                 "c4.xlarge",
                 "c4.2xlarge",
                 "c4.4xlarge",
                 "c4.8xlarge",
+                "r4.large",
                 "r4.xlarge",
                 "r4.2xlarge",
                 "r4.4xlarge",
@@ -88,7 +100,7 @@
             "Description": "Do you want to build a Splunk search head cluster?",
             "Type": "String"
         },
-        "SSHLocation": {
+        "SSHClientLocation": {
             "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
             "ConstraintDescription": "Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions.",
             "Description": "The IP address range that is allowed to SSH to the EC2 instances. Note: a value of 0.0.0.0/0 will allow access from ANY ip address",
@@ -179,8 +191,9 @@
                         "IndexerInstanceType",
                         "SearchHeadInstanceType",
                         "KeyName",
-                        "HTTPLocation",
-                        "SSHLocation",
+                        "WebClientLocation",
+                        "HECClientLocation",
+                        "SSHClientLocation",
                         "VPCID",
                         "VPCCIDR",
                         "PublicSubnet1ID",
@@ -216,8 +229,11 @@
                 }
             ],
             "ParameterLabels": {
-                "HTTPLocation": {
+                "WebClientLocation": {
                     "default": "Permitted CIDR for Splunk web interface"
+                },
+                "HECClientLocation": {
+                    "default": "Permitted CIDR for Splunk HTTP event collector input"
                 },
                 "IndexerInstanceType": {
                     "default": "EC2 instance type for Splunk indexer"
@@ -249,7 +265,7 @@
                 "SHCEnabled": {
                     "default": "Enable Search Head Cluster?"
                 },
-                "SSHLocation": {
+                "SSHClientLocation": {
                     "default": "Permitted CIDR for ssh"
                 },
                 "SplunkAdminPassword": {
@@ -448,7 +464,7 @@
         "SplunkConfig": {
             "dedicated-instance-type": {
                 "clusterMaster": "c4.xlarge",
-                "shclusterDeployer": "c4.xlarge",
+                "shclusterDeployer": "c4.xlarge"
             },
             "searchhead-disk-size": {
                 "gb": "100"
@@ -479,7 +495,7 @@
                         "FromPort": "8000",
                         "ToPort": "8000",
                         "CidrIp": {
-                            "Ref": "HTTPLocation"
+                            "Ref": "WebClientLocation"
                         }
                     },
                     {
@@ -579,7 +595,7 @@
                         "FromPort": "22",
                         "ToPort": "22",
                         "CidrIp": {
-                            "Ref": "SSHLocation"
+                            "Ref": "SSHClientLocation"
                         }
                     },
                     {
@@ -617,7 +633,9 @@
                         "IpProtocol": "tcp",
                         "FromPort": "8088",
                         "ToPort": "8088",
-                        "CidrIp": "0.0.0.0/0"
+                        "CidrIp": {
+                            "Ref": "HECClientLocation"
+                        }
                     }
                 ],
                 "Tags": [
