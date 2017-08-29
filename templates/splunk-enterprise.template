@@ -488,7 +488,7 @@
                 "VpcId": {
                     "Ref": "VPCID"
                 },
-                "GroupDescription": "Enable port 8000 for Splunk web interface, and port 8090 for replication",
+                "GroupDescription": "Enable port 8000 for Splunk web interface, port 8090 for SHC replication, and port 8191 for KV store replication",
                 "SecurityGroupIngress": [
                     {
                         "IpProtocol": "tcp",
@@ -502,6 +502,14 @@
                         "IpProtocol": "tcp",
                         "FromPort": "8090",
                         "ToPort": "8090",
+                        "CidrIp": {
+                            "Ref": "VPCCIDR"
+                        }
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8191",
+                        "ToPort": "8191",
                         "CidrIp": {
                             "Ref": "VPCCIDR"
                         }
