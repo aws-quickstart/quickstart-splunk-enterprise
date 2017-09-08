@@ -54,6 +54,16 @@
             "Default": "c4.xlarge",
             "Type": "String"
         },
+        "IndexerApps": {
+            "Description": "Comma separated list of URLs of Splunk App (or Add-on) tarballs (.spl) to pre-install on indexer(s)",
+            "Default": "",
+            "Type": "CommaDelimitedList"
+        },
+        "SearchHeadApps": {
+            "Description": "Comma separated list of URLs of Splunk App (or Add-on) tarballs (.spl) to pre-install on search head(s)",
+            "Default": "",
+            "Type": "CommaDelimitedList"
+        },
         "KeyName": {
             "ConstraintDescription": "Must be the name of an existing EC2 KeyPair.",
             "Description": "Name of an existing EC2 KeyPair to enable SSH access to the instance",
@@ -214,8 +224,10 @@
                         "SplunkLicensePath",
                         "SplunkIndexerCount",
                         "SplunkIndexerDiskSize",
+                        "SplunkReplicationFactor",
                         "SHCEnabled",
-                        "SplunkReplicationFactor"
+                        "IndexerApps",
+                        "SearchHeadApps"
                     ]
                 },
                 {
@@ -287,10 +299,16 @@
                     "default": "Replication Factor"
                 },
                 "SplunkClusterSecret": {
-                    "default": "Shared security key for cluster nodes"
+                    "default": "Shared Security Key for Cluster Nodes"
                 },
                 "SplunkIndexerDiscoverySecret": {
-                    "default": "Shared security key for forwarders using indexer discovery"
+                    "default": "Shared Security Key for Forwarders using Indexer Discovery"
+                },
+                "IndexerApps": {
+                    "default": "Apps/Add-ons to pre-Install on Splunk Indexers"
+                },
+                "SearchHeadApps": {
+                    "default": "Apps/Add-ons to pre-Install on Splunk Search Heads"
                 },
                 "VPCCIDR": {
                     "default": "VPC CIDR"
@@ -325,6 +343,28 @@
                 },
                 "yes"
             ]
+        },
+        "InstallIndexerApps": {
+            "Fn::Not": [{
+                "Fn::Equals": [{
+                    "Fn::Join": [
+                        "",
+                        { "Ref" : "IndexerApps" }
+                    ]},
+                    ""
+                ]
+            }]
+        },
+        "InstallSearchHeadApps": {
+            "Fn::Not": [{
+                "Fn::Equals": [{
+                    "Fn::Join": [
+                        "",
+                        { "Ref" : "SearchHeadApps" }
+                    ]},
+                    ""
+                ]
+            }]
         },
         "ConfigureLicense": {
             "Fn::And": [
@@ -790,6 +830,36 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
+
+                                {
+                                    "Fn::If": [
+                                        "InstallSearchHeadApps",
+                                        { "Fn::Join": [
+                                            "",
+                                            [
+                                "# Add user-provided apps for cluster members\n",
+                                "user_apps=( ", { "Fn::Join": [" ", { "Ref" : "SearchHeadApps" } ] } , " )\n",
+                                "for i in ${!user_apps[*]}\n",
+                                "do\n",
+                                "   echo \"Downloading app ${user_apps[$i]}\"\n",
+                                "   if wget --tries=3 ${user_apps[$i]} -O /tmp/app${i}.spl; then\n",
+                                "        echo \"Installing app...\"\n",
+                                "        tar -xvzf /tmp/app${i}.spl -C $SPLUNK_HOME/etc/apps/\n",
+                                "        if [ $? -ne 0 ]; then\n",
+                                "            echo \"Extracting tarball failed\"\n",
+                                "        fi\n",
+                                "        rm /tmp/app${i}.spl\n",
+                                "    else\n",
+                                "        echo \"Downloading tarball failed\"\n",
+                                "    fi\n",
+                                "done\n",
+                                "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/apps\n"
+                                            ]
+                                        ]},
+                                        ""
+                                    ]
+                                },
+
                                 "service splunk restart\n",
                                 "/opt/aws/bin/cfn-signal -e $? --stack ",
                                 {
@@ -1028,7 +1098,35 @@
                                 "disabled=0\n",
                                 "end\n",
 
-                                "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/master-apps/peer-base-autogenerated\n",
+                                {
+                                    "Fn::If": [
+                                        "InstallIndexerApps",
+                                        { "Fn::Join": [
+                                            "",
+                                            [
+                                "# Add user-provided apps for peer nodes\n",
+                                "user_apps=( ", { "Fn::Join": [" ", { "Ref" : "IndexerApps" } ] } , " )\n",
+                                "for i in ${!user_apps[*]}\n",
+                                "do\n",
+                                "   echo \"Downloading app ${user_apps[$i]}\"\n",
+                                "   if wget --tries=3 ${user_apps[$i]} -O /tmp/app${i}.spl; then\n",
+                                "        echo \"Installing app...\"\n",
+                                "        tar -xvzf /tmp/app${i}.spl -C $SPLUNK_HOME/etc/master-apps/\n",
+                                "        if [ $? -ne 0 ]; then\n",
+                                "            echo \"Extracting tarball failed\"\n",
+                                "        fi\n",
+                                "        rm /tmp/app${i}.spl\n",
+                                "    else\n",
+                                "        echo \"Downloading tarball failed\"\n",
+                                "    fi\n",
+                                "done\n"
+                                            ]
+                                        ]},
+                                        ""
+                                    ]
+                                },
+
+                                "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/master-apps\n",
 
                                 "service splunk restart\n",
                                 "/opt/aws/bin/cfn-signal -e $? --stack ", { "Ref": "AWS::StackName" },
@@ -1161,7 +1259,7 @@
                                 "# Increase splunkweb connection timeout with splunkd\n",
                                 "printf '\n%s\n%s = %s\n' [settings] splunkdConnectionTimeout 300  >> $SPLUNK_HOME/etc/system/local/web.conf\n",
                                 "chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/web.conf\n",
-                                "printf '\n%s\n%s = %s\n' [shclustering] pass4SymmKey  '",
+                                "printf '\n%s\n%s = %s\n' [shclustering] pass4SymmKey '",
                                 {
                                     "Ref": "SplunkClusterSecret"
                                 },
@@ -1189,7 +1287,36 @@
                                 "pass4SymmKey = ", { "Ref": "SplunkIndexerDiscoverySecret" }, "\n",
                                 "master_uri = https://", { "Fn::GetAtt": [ "SplunkCM", "PrivateIp" ] }, ":8089\n",
                                 "end\n",
-                                "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/shcluster/apps/member-base-autogenerated\n",
+
+                                {
+                                    "Fn::If": [
+                                        "InstallSearchHeadApps",
+                                        { "Fn::Join": [
+                                            "",
+                                            [
+                                "# Add user-provided apps for cluster members\n",
+                                "user_apps=( ", { "Fn::Join": [" ", { "Ref" : "SearchHeadApps" } ] } , " )\n",
+                                "for i in ${!user_apps[*]}\n",
+                                "do\n",
+                                "   echo \"Downloading app ${user_apps[$i]}\"\n",
+                                "   if wget --tries=3 ${user_apps[$i]} -O /tmp/app${i}.spl; then\n",
+                                "        echo \"Installing app...\"\n",
+                                "        tar -xvzf /tmp/app${i}.spl -C $SPLUNK_HOME/etc/shcluster/apps/\n",
+                                "        if [ $? -ne 0 ]; then\n",
+                                "            echo \"Extracting tarball failed\"\n",
+                                "        fi\n",
+                                "        rm /tmp/app${i}.spl\n",
+                                "    else\n",
+                                "        echo \"Downloading tarball failed\"\n",
+                                "    fi\n",
+                                "done\n"
+                                            ]
+                                        ]},
+                                        ""
+                                    ]
+                                },
+
+                                "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/shcluster/apps\n",
 
                                 "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",

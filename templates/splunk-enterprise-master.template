@@ -67,6 +67,16 @@
             "Default": "c4.xlarge",
             "Type": "String"
         },
+        "IndexerApps": {
+            "Description": "Comma separated list of URLs of Splunk App (or Add-on) tarballs (.spl) to pre-install on indexer(s)",
+            "Default": "",
+            "Type": "CommaDelimitedList"
+        },
+        "SearchHeadApps": {
+            "Description": "Comma separated list of URLs of Splunk App (or Add-on) tarballs (.spl) to pre-install on search head(s)",
+            "Default": "",
+            "Type": "CommaDelimitedList"
+        },
         "KeyName": {
             "ConstraintDescription": "Must be the name of an existing EC2 KeyPair.",
             "Description": "Name of an existing EC2 KeyPair to enable SSH access to the instance",
@@ -224,9 +234,11 @@
                         "SplunkLicenseBucket",
                         "SplunkLicensePath",
                         "SplunkIndexerCount",
-                        "SplunkReplicationFactor",
                         "SplunkIndexerDiskSize",
-                        "SHCEnabled"
+                        "SplunkReplicationFactor",
+                        "SHCEnabled",
+                        "IndexerApps",
+                        "SearchHeadApps"
                     ]
                 },
                 {
@@ -301,10 +313,16 @@
                     "default": "Replication Factor"
                 },
                 "SplunkClusterSecret": {
-                    "default": "Shared security key for cluster nodes"
+                    "default": "Shared Security Key for Cluster Nodes"
                 },
                 "SplunkIndexerDiscoverySecret": {
-                    "default": "Shared security key for forwarders using indexer discovery"
+                    "default": "Shared Security Key for Forwarders using Indexer Discovery"
+                },
+                "IndexerApps": {
+                    "default": "Apps/Add-ons to pre-Install on Splunk Indexers"
+                },
+                "SearchHeadApps": {
+                    "default": "Apps/Add-ons to pre-Install on Splunk Search Heads"
                 },
                 "VPCCIDR": {
                     "default": "VPC CIDR"
@@ -561,6 +579,12 @@
                     },
                     "SplunkReplicationFactor": {
                         "Ref": "SplunkReplicationFactor"
+                    },
+                    "IndexerApps": {
+                        "Ref": "IndexerApps"
+                    },
+                    "SearchHeadApps": {
+                        "Ref": "SearchHeadApps"
                     },
                     "QSS3BucketName": {
                         "Ref": "QSS3BucketName"
