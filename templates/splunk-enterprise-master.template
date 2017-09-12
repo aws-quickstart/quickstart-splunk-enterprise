@@ -477,10 +477,16 @@
                         "Ref": "SplunkReplicationFactor"
                     },
                     "IndexerApps": {
-                        "Ref": "IndexerApps"
+                        "Fn::Join": [
+                            ",",
+                            { "Ref": "IndexerApps" }
+                        ]
                     },
                     "SearchHeadApps": {
-                        "Ref": "SearchHeadApps"
+                        "Fn::Join": [
+                            ",",
+                            { "Ref": "SearchHeadApps" }
+                        ]
                     },
                     "QSS3BucketName": {
                         "Ref": "QSS3BucketName"
