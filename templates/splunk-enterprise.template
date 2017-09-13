@@ -2313,14 +2313,14 @@
                 "Fn::Join": [
                     "",
                     [
-                        "http://",
+                        "https://",
                         {
                             "Fn::GetAtt": [
                                 "SplunkCM",
                                 "PrivateIp"
                             ]
                         },
-                        ":8000"
+                        ":8089"
                     ]
                 ]
             }
