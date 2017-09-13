@@ -2307,15 +2307,24 @@
                 ]
             }
         },
-        "ClusterMasterIP": {
-            "Description": "Splunk Enterprise - Cluster Master Private IP",
+       "ClusterMasterManagementURL": {
+            "Description": "Splunk Enterprise - Cluster Master Management URL",
             "Value": {
-                "Fn::GetAtt": [
-                    "SplunkCM",
-                    "PublicDnsName"
+                "Fn::Join": [
+                    "",
+                    [
+                        "http://",
+                        {
+                            "Fn::GetAtt": [
+                                "SplunkCM",
+                                "PrivateIp"
+                            ]
+                        },
+                        ":8000"
+                    ]
                 ]
             }
-        },
+        },    
         "ClusterMasterURL": {
             "Description": "Splunk Enterprise - Cluster Master URL",
             "Value": {
