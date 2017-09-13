@@ -2306,6 +2306,15 @@
                 ]
             }
         },
+        "ClusterMasterIP": {
+            "Description": "Splunk Enterprise - Cluster Master Private IP",
+            "Value": {
+                "Fn::GetAtt": [
+                    "SplunkCM",
+                    "PublicDnsName"
+                ]
+            }
+        },
         "ClusterMasterURL": {
             "Description": "Splunk Enterprise - Cluster Master URL",
             "Value": {
