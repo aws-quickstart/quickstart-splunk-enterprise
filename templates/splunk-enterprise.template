@@ -1337,7 +1337,6 @@
                                 "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/shcluster/apps\n",
 
                                 "service splunk start\n",
-
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
                                 "-master_uri https://",
                                 {
