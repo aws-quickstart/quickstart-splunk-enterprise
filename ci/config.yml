@@ -1,6 +1,6 @@
 global:
   marketplace-ami: true
-  owner: quickstart-eng@amazon.com
+  owner: quickstart@amazon.com
   qsname: quickstart-splunk-enterprise
   regions:
     - ap-northeast-1
