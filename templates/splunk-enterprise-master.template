@@ -518,6 +518,15 @@
                 ]
             }
         },
+        "ClusterMasterManagementURL": {
+            "Description": "Splunk Enterprise - Cluster Master Management URL (required for Indexer Discovery)",
+            "Value": {
+                "Fn::GetAtt": [
+                    "SplunkStack",
+                    "Outputs.ClusterMasterManagementURL"
+                ]
+            }
+        },
         "DeployerURL": {
             "Description": "Splunk Enterprise - Search Head Cluster Deployer URL",
             "Value": {
