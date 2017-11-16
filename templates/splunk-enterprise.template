@@ -345,26 +345,38 @@
             ]
         },
         "InstallIndexerApps": {
-            "Fn::Not": [{
-                "Fn::Equals": [{
-                    "Fn::Join": [
-                        "",
-                        { "Ref" : "IndexerApps" }
-                    ]},
-                    ""
-                ]
-            }]
+            "Fn::Not": [
+                {
+                    "Fn::Equals": [
+                        {
+                            "Fn::Join": [
+                                "",
+                                {
+                                    "Ref": "IndexerApps"
+                                }
+                            ]
+                        },
+                        ""
+                    ]
+                }
+            ]
         },
         "InstallSearchHeadApps": {
-            "Fn::Not": [{
-                "Fn::Equals": [{
-                    "Fn::Join": [
-                        "",
-                        { "Ref" : "SearchHeadApps" }
-                    ]},
-                    ""
-                ]
-            }]
+            "Fn::Not": [
+                {
+                    "Fn::Equals": [
+                        {
+                            "Fn::Join": [
+                                "",
+                                {
+                                    "Ref": "SearchHeadApps"
+                                }
+                            ]
+                        },
+                        ""
+                    ]
+                }
+            ]
         },
         "ConfigureLicense": {
             "Fn::And": [
@@ -398,49 +410,49 @@
     "Mappings": {
         "AWSAMIRegionMap": {
             "AMI": {
-                "SPLUNKENTHVM": "splunk_marketplace_AMI_2017-07-19_00_24_14-7b65de6c-5006-4ca2-bd75-fdba95ae5d9d-ami-42eafd54.4"
+                "SPLUNKENTHVM": "splunk_marketplace_AMI_2017-10-17_01_26_27-7b65de6c-5006-4ca2-bd75-fdba95ae5d9d-ami-026fb978.4"
             },
             "ap-northeast-1": {
-                "SPLUNKENTHVM": "ami-e432dd82"
+                "SPLUNKENTHVM": "ami-6d94360b"
             },
             "ap-northeast-2": {
-                "SPLUNKENTHVM": "ami-bff029d1"
+                "SPLUNKENTHVM": "ami-a2c460cc"
             },
             "ap-south-1": {
-                "SPLUNKENTHVM": "ami-56592239"
+                "SPLUNKENTHVM": "ami-4a561b25"
             },
             "ap-southeast-1": {
-                "SPLUNKENTHVM": "ami-4bca5528"
+                "SPLUNKENTHVM": "ami-7f1f5d1c"
             },
             "ap-southeast-2": {
-                "SPLUNKENTHVM": "ami-a8d8c6cb"
+                "SPLUNKENTHVM": "ami-bf7996dd"
             },
             "ca-central-1": {
-                "SPLUNKENTHVM": "ami-24f14f40"
+                "SPLUNKENTHVM": "ami-0165dd65"
             },
             "eu-central-1": {
-                "SPLUNKENTHVM": "ami-7da20d12"
+                "SPLUNKENTHVM": "ami-4a259f25"
             },
             "eu-west-1": {
-                "SPLUNKENTHVM": "ami-ad16e3d4"
+                "SPLUNKENTHVM": "ami-ad02a5d4"
             },
             "eu-west-2": {
-                "SPLUNKENTHVM": "ami-1a3b2a7e"
+                "SPLUNKENTHVM": "ami-77514d13"
             },
             "sa-east-1": {
-                "SPLUNKENTHVM": "ami-4234422e"
+                "SPLUNKENTHVM": "ami-1b91e977"
             },
             "us-east-1": {
-                "SPLUNKENTHVM": "ami-79062202"
+                "SPLUNKENTHVM": "ami-a0c06cda"
             },
             "us-east-2": {
-                "SPLUNKENTHVM": "ami-31153554"
+                "SPLUNKENTHVM": "ami-7f456a1a"
             },
             "us-west-1": {
-                "SPLUNKENTHVM": "ami-59f7df39"
+                "SPLUNKENTHVM": "ami-e6b98586"
             },
             "us-west-2": {
-                "SPLUNKENTHVM": "ami-79658101"
+                "SPLUNKENTHVM": "ami-5b6ca523"
             }
         },
         "SplunkConfig": {
@@ -528,7 +540,9 @@
                         "IpProtocol": "tcp",
                         "FromPort": "8088",
                         "ToPort": "8088",
-                        "SourceSecurityGroupId": { "Ref": "SplunkHttpEventCollectorLoadBalancerSecurityGroup" }
+                        "SourceSecurityGroupId": {
+                            "Ref": "SplunkHttpEventCollectorLoadBalancerSecurityGroup"
+                        }
                     },
                     {
                         "IpProtocol": "tcp",
@@ -658,7 +672,9 @@
                         "SPLUNKENTHVM"
                     ]
                 },
-                "InstanceType": { "Ref": "SearchHeadInstanceType" },
+                "InstanceType": {
+                    "Ref": "SearchHeadInstanceType"
+                },
                 "KeyName": {
                     "Ref": "KeyName"
                 },
@@ -737,7 +753,6 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 " -role admin -auth admin:changeme\n",
-
                                 "# Increase splunkweb connection timeout with splunkd\n",
                                 "mkdir -p $SPLUNK_HOME/etc/apps/base-autogenerated/local\n",
                                 "cat >>$SPLUNK_HOME/etc/apps/base-autogenerated/local/web.conf <<end\n",
@@ -760,11 +775,21 @@
                                 "indexerDiscovery = cluster_master\n",
                                 "\n",
                                 "[indexer_discovery:cluster_master]\n",
-                                "pass4SymmKey = ", { "Ref": "SplunkIndexerDiscoverySecret" }, "\n",
-                                "master_uri = https://", { "Fn::GetAtt": [ "SplunkCM", "PrivateIp" ] }, ":8089\n",
+                                "pass4SymmKey = ",
+                                {
+                                    "Ref": "SplunkIndexerDiscoverySecret"
+                                },
+                                "\n",
+                                "master_uri = https://",
+                                {
+                                    "Fn::GetAtt": [
+                                        "SplunkCM",
+                                        "PrivateIp"
+                                    ]
+                                },
+                                ":8089\n",
                                 "end\n",
                                 "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/apps/base-autogenerated\n",
-
                                 "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave -master_uri https://",
                                 {
@@ -794,38 +819,46 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
-
                                 {
                                     "Fn::If": [
                                         "InstallSearchHeadApps",
-                                        { "Fn::Join": [
-                                            "",
-                                            [
-                                "# Add user-provided apps for cluster members\n",
-                                "user_apps=( ", { "Fn::Join": [" ", { "Ref" : "SearchHeadApps" } ] } , " )\n",
-                                "for i in ${!user_apps[*]}\n",
-                                "do\n",
-                                "   echo \"Downloading app ${user_apps[$i]}\"\n",
-                                "   if wget --tries=3 ${user_apps[$i]} -O /tmp/app${i}.spl; then\n",
-                                "        echo \"Installing app...\"\n",
-                                "        tar -xvzf /tmp/app${i}.spl -C $SPLUNK_HOME/etc/apps/\n",
-                                "        if [ $? -ne 0 ]; then\n",
-                                "            echo \"Extracting tarball failed\"\n",
-                                "        fi\n",
-                                "        rm /tmp/app${i}.spl\n",
-                                "    else\n",
-                                "        echo \"Downloading tarball failed\"\n",
-                                "    fi\n",
-                                "done\n",
-                                "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/apps\n"
+                                        {
+                                            "Fn::Join": [
+                                                "",
+                                                [
+                                                    "# Add user-provided apps for cluster members\n",
+                                                    "user_apps=( ",
+                                                    {
+                                                        "Fn::Join": [
+                                                            " ",
+                                                            {
+                                                                "Ref": "SearchHeadApps"
+                                                            }
+                                                        ]
+                                                    },
+                                                    " )\n",
+                                                    "for i in ${!user_apps[*]}\n",
+                                                    "do\n",
+                                                    "   echo \"Downloading app ${user_apps[$i]}\"\n",
+                                                    "   if wget --tries=3 ${user_apps[$i]} -O /tmp/app${i}.spl; then\n",
+                                                    "        echo \"Installing app...\"\n",
+                                                    "        tar -xvzf /tmp/app${i}.spl -C $SPLUNK_HOME/etc/apps/\n",
+                                                    "        if [ $? -ne 0 ]; then\n",
+                                                    "            echo \"Extracting tarball failed\"\n",
+                                                    "        fi\n",
+                                                    "        rm /tmp/app${i}.spl\n",
+                                                    "    else\n",
+                                                    "        echo \"Downloading tarball failed\"\n",
+                                                    "    fi\n",
+                                                    "done\n",
+                                                    "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/apps\n"
+                                                ]
                                             ]
-                                        ]},
+                                        },
                                         ""
                                     ]
                                 },
-
                                 "service splunk restart\n",
-
                                 "/opt/aws/bin/cfn-signal -e $? --stack ",
                                 {
                                     "Ref": "AWS::StackName"
@@ -1006,9 +1039,11 @@
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
                                 "mv $SPLUNK_HOME/etc/passwd $SPLUNK_HOME/etc/passwd.bak\n",
                                 "sed -i 's/force-change-pass true//' /etc/init.d/splunk\n",
-                                "sudo -u $SPLUNK_USER $SPLUNK_BIN edit user admin -password ", { "Ref": "SplunkAdminPassword" },
-                                    " -role admin -auth admin:changeme\n",
-
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN edit user admin -password ",
+                                {
+                                    "Ref": "SplunkAdminPassword"
+                                },
+                                " -role admin -auth admin:changeme\n",
                                 "# Install files from the metadata\n",
                                 "/opt/aws/bin/cfn-init -v ",
                                 "         --stack ",
@@ -1024,7 +1059,6 @@
                                 "mkdir -p $SPLUNK_HOME/etc/licenses/enterprise\n",
                                 "chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/licenses/enterprise\n",
                                 "mv /etc/splunk/splunk.license $SPLUNK_HOME/etc/licenses/enterprise/\n",
-
                                 "# Increase splunkweb connection timeout with splunkd\n",
                                 "mkdir -p $SPLUNK_HOME/etc/apps/base-autogenerated/local\n",
                                 "cat >>$SPLUNK_HOME/etc/apps/base-autogenerated/local/web.conf <<end\n",
@@ -1047,30 +1081,53 @@
                                 "indexerDiscovery = cluster_master\n",
                                 "\n",
                                 "[indexer_discovery:cluster_master]\n",
-                                "pass4SymmKey = ", { "Ref": "SplunkIndexerDiscoverySecret" }, "\n",
+                                "pass4SymmKey = ",
+                                {
+                                    "Ref": "SplunkIndexerDiscoverySecret"
+                                },
+                                "\n",
                                 "master_uri = https://127.0.0.1:8089\n",
                                 "end\n",
                                 "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/apps/base-autogenerated\n",
-
                                 "service splunk start\n",
-                                "sudo -u $SPLUNK_USER $SPLUNK_BIN login -auth admin:", { "Ref": "SplunkAdminPassword" },"\n",
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN login -auth admin:",
+                                {
+                                    "Ref": "SplunkAdminPassword"
+                                },
+                                "\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode master -multisite true",
-                                    " -available_sites ", { "Fn::If": [ "Create3AZ", "site1,site2,site3" , "site1,site2"] },
-                                    " -site site1",
-                                    " -site_replication_factor origin:1,total:", { "Ref": "SplunkReplicationFactor" },
-                                    " -site_search_factor origin:1,total:3",
-                                    " -secret ", { "Ref": "SplunkClusterSecret" },
-                                    " -cluster_label SplunkIndexersASG", "\n",
-
+                                " -available_sites ",
+                                {
+                                    "Fn::If": [
+                                        "Create3AZ",
+                                        "site1,site2,site3",
+                                        "site1,site2"
+                                    ]
+                                },
+                                " -site site1",
+                                " -site_replication_factor origin:1,total:",
+                                {
+                                    "Ref": "SplunkReplicationFactor"
+                                },
+                                " -site_search_factor origin:1,total:3",
+                                " -secret ",
+                                {
+                                    "Ref": "SplunkClusterSecret"
+                                },
+                                " -cluster_label SplunkIndexersASG",
+                                "\n",
                                 "# Configure indexer discovery\n",
                                 "cat >>$SPLUNK_HOME/etc/system/local/server.conf <<end\n",
                                 "\n",
                                 "[indexer_discovery]\n",
-                                "pass4SymmKey = ", { "Ref": "SplunkIndexerDiscoverySecret" }, "\n",
+                                "pass4SymmKey = ",
+                                {
+                                    "Ref": "SplunkIndexerDiscoverySecret"
+                                },
+                                "\n",
                                 "indexerWeightByDiskCapacity = true\n",
                                 "end\n",
                                 "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/server.conf\n",
-
                                 "# Add base configs for peer nodes as an app under master-apps\n",
                                 "# Peer config 1: Enable HEC input\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN http-event-collector enable -uri https://localhost:8089\n",
@@ -1079,51 +1136,67 @@
                                 "echo $TOKEN\n",
                                 "mkdir -p $SPLUNK_HOME/etc/master-apps/peer-base-autogenerated/local\n",
                                 "mv $SPLUNK_HOME/etc/apps/splunk_httpinput/local/inputs.conf $SPLUNK_HOME/etc/master-apps/peer-base-autogenerated/local\n",
-
                                 "# Peer config 2: Enable splunktcp input\n",
                                 "cat >>$SPLUNK_HOME/etc/master-apps/peer-base-autogenerated/local/inputs.conf <<end\n",
                                 "\n",
                                 "[splunktcp://9997]\n",
                                 "disabled=0\n",
                                 "end\n",
-
                                 {
                                     "Fn::If": [
                                         "InstallIndexerApps",
-                                        { "Fn::Join": [
-                                            "",
-                                            [
-                                "# Add user-provided apps for peer nodes\n",
-                                "user_apps=( ", { "Fn::Join": [" ", { "Ref" : "IndexerApps" } ] } , " )\n",
-                                "for i in ${!user_apps[*]}\n",
-                                "do\n",
-                                "   echo \"Downloading app ${user_apps[$i]}\"\n",
-                                "   if wget --tries=3 ${user_apps[$i]} -O /tmp/app${i}.spl; then\n",
-                                "        echo \"Installing app...\"\n",
-                                "        tar -xvzf /tmp/app${i}.spl -C $SPLUNK_HOME/etc/master-apps/\n",
-                                "        if [ $? -ne 0 ]; then\n",
-                                "            echo \"Extracting tarball failed\"\n",
-                                "        fi\n",
-                                "        rm /tmp/app${i}.spl\n",
-                                "    else\n",
-                                "        echo \"Downloading tarball failed\"\n",
-                                "    fi\n",
-                                "done\n"
+                                        {
+                                            "Fn::Join": [
+                                                "",
+                                                [
+                                                    "# Add user-provided apps for peer nodes\n",
+                                                    "user_apps=( ",
+                                                    {
+                                                        "Fn::Join": [
+                                                            " ",
+                                                            {
+                                                                "Ref": "IndexerApps"
+                                                            }
+                                                        ]
+                                                    },
+                                                    " )\n",
+                                                    "for i in ${!user_apps[*]}\n",
+                                                    "do\n",
+                                                    "   echo \"Downloading app ${user_apps[$i]}\"\n",
+                                                    "   if wget --tries=3 ${user_apps[$i]} -O /tmp/app${i}.spl; then\n",
+                                                    "        echo \"Installing app...\"\n",
+                                                    "        tar -xvzf /tmp/app${i}.spl -C $SPLUNK_HOME/etc/master-apps/\n",
+                                                    "        if [ $? -ne 0 ]; then\n",
+                                                    "            echo \"Extracting tarball failed\"\n",
+                                                    "        fi\n",
+                                                    "        rm /tmp/app${i}.spl\n",
+                                                    "    else\n",
+                                                    "        echo \"Downloading tarball failed\"\n",
+                                                    "    fi\n",
+                                                    "done\n"
+                                                ]
                                             ]
-                                        ]},
+                                        },
                                         ""
                                     ]
                                 },
-
                                 "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/master-apps\n",
-
                                 "service splunk restart\n",
-
-                                "/opt/aws/bin/cfn-signal -e $? --stack ", { "Ref": "AWS::StackName" },
-                                    " --resource SplunkCM", " --region ", { "Ref": "AWS::Region" },"\n",
-
-                                "/opt/aws/bin/cfn-signal -e 0 -i token -d \"$TOKEN\" '", { "Ref": "SplunkCMWaitHandle" }, "'\n",
-
+                                "/opt/aws/bin/cfn-signal -e $? --stack ",
+                                {
+                                    "Ref": "AWS::StackName"
+                                },
+                                " --resource SplunkCM",
+                                " --region ",
+                                {
+                                    "Ref": "AWS::Region"
+                                },
+                                "\n",
+                                "/opt/aws/bin/cfn-signal -e 0 -i token -d \"$TOKEN\" '",
+                                {
+                                    "Ref": "SplunkCMWaitHandle"
+                                },
+                                "'\n",
                                 "usermod --expiredate 1 splunk\n"
                             ]
                         ]
@@ -1131,16 +1204,18 @@
                 }
             }
         },
-        "SplunkCMWaitHandle" : {
-           "Type" : "AWS::CloudFormation::WaitConditionHandle"
+        "SplunkCMWaitHandle": {
+            "Type": "AWS::CloudFormation::WaitConditionHandle"
         },
-        "SplunkCMWaitCondition" : {
-           "Type" : "AWS::CloudFormation::WaitCondition",
-           "DependsOn" : "SplunkCM",
-           "Properties" : {
-              "Handle"  : { "Ref" : "SplunkCMWaitHandle" },
-              "Timeout" : "3600"
-           }
+        "SplunkCMWaitCondition": {
+            "Type": "AWS::CloudFormation::WaitCondition",
+            "DependsOn": "SplunkCM",
+            "Properties": {
+                "Handle": {
+                    "Ref": "SplunkCMWaitHandle"
+                },
+                "Timeout": "3600"
+            }
         },
         "SplunkSHCDeployer": {
             "Type": "AWS::EC2::Instance",
@@ -1246,7 +1321,6 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 " -role admin -auth admin:changeme\n",
-
                                 "# Increase splunkweb connection timeout with splunkd\n",
                                 "mkdir -p $SPLUNK_HOME/etc/apps/base-autogenerated/local\n",
                                 "cat >>$SPLUNK_HOME/etc/apps/base-autogenerated/local/web.conf <<end\n",
@@ -1257,7 +1331,11 @@
                                 "cat >>$SPLUNK_HOME/etc/apps/base-autogenerated/local/server.conf <<end\n",
                                 "\n",
                                 "[shclustering]\n",
-                                "pass4SymmKey = ", { "Ref": "SplunkClusterSecret" }, "\n",
+                                "pass4SymmKey = ",
+                                {
+                                    "Ref": "SplunkClusterSecret"
+                                },
+                                "\n",
                                 "shcluster_label = SplunkSHC\n",
                                 "end\n",
                                 "# Forward to indexer cluster using indexer discovery\n",
@@ -1276,14 +1354,23 @@
                                 "indexerDiscovery = cluster_master\n",
                                 "\n",
                                 "[indexer_discovery:cluster_master]\n",
-                                "pass4SymmKey = ", { "Ref": "SplunkIndexerDiscoverySecret" }, "\n",
-                                "master_uri = https://", { "Fn::GetAtt": [ "SplunkCM", "PrivateIp" ] }, ":8089\n",
+                                "pass4SymmKey = ",
+                                {
+                                    "Ref": "SplunkIndexerDiscoverySecret"
+                                },
+                                "\n",
+                                "master_uri = https://",
+                                {
+                                    "Fn::GetAtt": [
+                                        "SplunkCM",
+                                        "PrivateIp"
+                                    ]
+                                },
+                                ":8089\n",
                                 "end\n",
                                 "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/apps/base-autogenerated\n",
-
                                 "# Add base config for search head cluster members\n",
                                 "mkdir -p $SPLUNK_HOME/etc/shcluster/apps/member-base-autogenerated/local\n",
-
                                 "cat >>$SPLUNK_HOME/etc/shcluster/apps/member-base-autogenerated/local/outputs.conf <<end\n",
                                 "# Turn off indexing on the search head\n",
                                 "[indexAndForward]\n",
@@ -1299,40 +1386,59 @@
                                 "indexerDiscovery = cluster_master\n",
                                 "\n",
                                 "[indexer_discovery:cluster_master]\n",
-                                "pass4SymmKey = ", { "Ref": "SplunkIndexerDiscoverySecret" }, "\n",
-                                "master_uri = https://", { "Fn::GetAtt": [ "SplunkCM", "PrivateIp" ] }, ":8089\n",
+                                "pass4SymmKey = ",
+                                {
+                                    "Ref": "SplunkIndexerDiscoverySecret"
+                                },
+                                "\n",
+                                "master_uri = https://",
+                                {
+                                    "Fn::GetAtt": [
+                                        "SplunkCM",
+                                        "PrivateIp"
+                                    ]
+                                },
+                                ":8089\n",
                                 "end\n",
-
                                 {
                                     "Fn::If": [
                                         "InstallSearchHeadApps",
-                                        { "Fn::Join": [
-                                            "",
-                                            [
-                                "# Add user-provided apps for cluster members\n",
-                                "user_apps=( ", { "Fn::Join": [" ", { "Ref" : "SearchHeadApps" } ] } , " )\n",
-                                "for i in ${!user_apps[*]}\n",
-                                "do\n",
-                                "   echo \"Downloading app ${user_apps[$i]}\"\n",
-                                "   if wget --tries=3 ${user_apps[$i]} -O /tmp/app${i}.spl; then\n",
-                                "        echo \"Installing app...\"\n",
-                                "        tar -xvzf /tmp/app${i}.spl -C $SPLUNK_HOME/etc/shcluster/apps/\n",
-                                "        if [ $? -ne 0 ]; then\n",
-                                "            echo \"Extracting tarball failed\"\n",
-                                "        fi\n",
-                                "        rm /tmp/app${i}.spl\n",
-                                "    else\n",
-                                "        echo \"Downloading tarball failed\"\n",
-                                "    fi\n",
-                                "done\n"
+                                        {
+                                            "Fn::Join": [
+                                                "",
+                                                [
+                                                    "# Add user-provided apps for cluster members\n",
+                                                    "user_apps=( ",
+                                                    {
+                                                        "Fn::Join": [
+                                                            " ",
+                                                            {
+                                                                "Ref": "SearchHeadApps"
+                                                            }
+                                                        ]
+                                                    },
+                                                    " )\n",
+                                                    "for i in ${!user_apps[*]}\n",
+                                                    "do\n",
+                                                    "   echo \"Downloading app ${user_apps[$i]}\"\n",
+                                                    "   if wget --tries=3 ${user_apps[$i]} -O /tmp/app${i}.spl; then\n",
+                                                    "        echo \"Installing app...\"\n",
+                                                    "        tar -xvzf /tmp/app${i}.spl -C $SPLUNK_HOME/etc/shcluster/apps/\n",
+                                                    "        if [ $? -ne 0 ]; then\n",
+                                                    "            echo \"Extracting tarball failed\"\n",
+                                                    "        fi\n",
+                                                    "        rm /tmp/app${i}.spl\n",
+                                                    "    else\n",
+                                                    "        echo \"Downloading tarball failed\"\n",
+                                                    "    fi\n",
+                                                    "done\n"
+                                                ]
                                             ]
-                                        ]},
+                                        },
                                         ""
                                     ]
                                 },
-
                                 "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/shcluster/apps\n",
-
                                 "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
                                 "-master_uri https://",
@@ -1348,11 +1454,8 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
-
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN apply shcluster-bundle -action stage --answer-yes\n",
-
                                 "service splunk restart\n",
-
                                 "/opt/aws/bin/cfn-signal -e $? --stack ",
                                 {
                                     "Ref": "AWS::StackName"
@@ -1389,7 +1492,9 @@
                         "SPLUNKENTHVM"
                     ]
                 },
-                "InstanceType": { "Ref": "SearchHeadInstanceType" },
+                "InstanceType": {
+                    "Ref": "SearchHeadInstanceType"
+                },
                 "KeyName": {
                     "Ref": "KeyName"
                 },
@@ -1468,7 +1573,6 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 " -role admin -auth admin:changeme\n",
-
                                 "# Increase splunkweb connection timeout with splunkd\n",
                                 "cat >$SPLUNK_HOME/etc/system/local/web.conf <<end\n",
                                 "[settings]\n",
@@ -1480,7 +1584,6 @@
                                 "register_replication_address = $LOCALIP\n",
                                 "end\n",
                                 "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local\n",
-
                                 "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
                                 "-master_uri https://",
@@ -1524,14 +1627,22 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
-
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode searchhead",
-                                    " -site site1",
-                                    " -master_uri https://", { "Fn::GetAtt": [ "SplunkCM", "PrivateIp" ] }, ":8089 ",
-                                    " -secret ", { "Ref": "SplunkClusterSecret" }, "\n",
-
+                                " -site site1",
+                                " -master_uri https://",
+                                {
+                                    "Fn::GetAtt": [
+                                        "SplunkCM",
+                                        "PrivateIp"
+                                    ]
+                                },
+                                ":8089 ",
+                                " -secret ",
+                                {
+                                    "Ref": "SplunkClusterSecret"
+                                },
+                                "\n",
                                 "service splunk restart\n",
-
                                 "/opt/aws/bin/cfn-signal -e $? --stack ",
                                 {
                                     "Ref": "AWS::StackName"
@@ -1568,7 +1679,9 @@
                         "SPLUNKENTHVM"
                     ]
                 },
-                "InstanceType": { "Ref": "SearchHeadInstanceType" },
+                "InstanceType": {
+                    "Ref": "SearchHeadInstanceType"
+                },
                 "KeyName": {
                     "Ref": "KeyName"
                 },
@@ -1647,7 +1760,6 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 " -role admin -auth admin:changeme\n",
-
                                 "# Increase splunkweb connection timeout with splunkd\n",
                                 "cat >$SPLUNK_HOME/etc/system/local/web.conf <<end\n",
                                 "[settings]\n",
@@ -1659,7 +1771,6 @@
                                 "register_replication_address = $LOCALIP\n",
                                 "end\n",
                                 "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local\n",
-
                                 "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
                                 "-master_uri https://",
@@ -1703,14 +1814,22 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
-                                
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode searchhead",
-                                    " -site site2",
-                                    " -master_uri https://", { "Fn::GetAtt": [ "SplunkCM", "PrivateIp" ] }, ":8089 ",
-                                    " -secret ", { "Ref": "SplunkClusterSecret" }, "\n",
-
+                                " -site site2",
+                                " -master_uri https://",
+                                {
+                                    "Fn::GetAtt": [
+                                        "SplunkCM",
+                                        "PrivateIp"
+                                    ]
+                                },
+                                ":8089 ",
+                                " -secret ",
+                                {
+                                    "Ref": "SplunkClusterSecret"
+                                },
+                                "\n",
                                 "service splunk restart\n",
-
                                 "/opt/aws/bin/cfn-signal -e $? --stack ",
                                 {
                                     "Ref": "AWS::StackName"
@@ -1747,7 +1866,9 @@
                         "SPLUNKENTHVM"
                     ]
                 },
-                "InstanceType": { "Ref": "SearchHeadInstanceType" },
+                "InstanceType": {
+                    "Ref": "SearchHeadInstanceType"
+                },
                 "KeyName": {
                     "Ref": "KeyName"
                 },
@@ -1780,11 +1901,15 @@
                         "AssociatePublicIpAddress": "true",
                         "DeviceIndex": "0",
                         "DeleteOnTermination": "true",
-                        "SubnetId": { 
+                        "SubnetId": {
                             "Fn::If": [
                                 "Create3AZ",
-                                { "Ref": "PublicSubnet3ID" },
-                                { "Ref": "PublicSubnet2ID" }
+                                {
+                                    "Ref": "PublicSubnet3ID"
+                                },
+                                {
+                                    "Ref": "PublicSubnet2ID"
+                                }
                             ]
                         }
                     }
@@ -1830,7 +1955,6 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 " -role admin -auth admin:changeme\n",
-
                                 "# Increase splunkweb connection timeout with splunkd\n",
                                 "cat >$SPLUNK_HOME/etc/system/local/web.conf <<end\n",
                                 "[settings]\n",
@@ -1842,7 +1966,6 @@
                                 "register_replication_address = $LOCALIP\n",
                                 "end\n",
                                 "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local\n",
-
                                 "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
                                 "-master_uri https://",
@@ -1886,14 +2009,29 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
-
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode searchhead",
-                                    " -site ", { "Fn::If": [ "Create3AZ", "site3", "site2" ] },
-                                    " -master_uri https://", { "Fn::GetAtt": [ "SplunkCM", "PrivateIp" ] }, ":8089 ",
-                                    " -secret ", { "Ref": "SplunkClusterSecret" }, "\n",
-
+                                " -site ",
+                                {
+                                    "Fn::If": [
+                                        "Create3AZ",
+                                        "site3",
+                                        "site2"
+                                    ]
+                                },
+                                " -master_uri https://",
+                                {
+                                    "Fn::GetAtt": [
+                                        "SplunkCM",
+                                        "PrivateIp"
+                                    ]
+                                },
+                                ":8089 ",
+                                " -secret ",
+                                {
+                                    "Ref": "SplunkClusterSecret"
+                                },
+                                "\n",
                                 "service splunk restart\n",
-
                                 "# Bootstrap SHC captain\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN bootstrap shcluster-captain ",
                                 "-servers_list \"",
@@ -1921,7 +2059,6 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
-
                                 "/opt/aws/bin/cfn-signal -e $? --stack ",
                                 {
                                     "Ref": "AWS::StackName"
@@ -2029,7 +2166,9 @@
                         "SPLUNKENTHVM"
                     ]
                 },
-                "InstanceType": { "Ref": "IndexerInstanceType" },
+                "InstanceType": {
+                    "Ref": "IndexerInstanceType"
+                },
                 "KeyName": {
                     "Ref": "KeyName"
                 },
@@ -2057,7 +2196,6 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 " -role admin -auth admin:changeme\n",
-
                                 "# Increase splunkweb connection timeout with splunkd\n",
                                 "mkdir -p $SPLUNK_HOME/etc/apps/base-autogenerated/local\n",
                                 "cat >>$SPLUNK_HOME/etc/apps/base-autogenerated/local/web.conf <<end\n",
@@ -2070,7 +2208,6 @@
                                 "register_replication_address = ${LOCALIP}\n",
                                 "end\n",
                                 "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/apps/base-autogenerated\n",
-
                                 "service splunk start\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave -master_uri https://",
                                 {
@@ -2084,32 +2221,51 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
-
                                 "export INSTANCE_MAC_ADDR=$(curl -s http://169.254.169.254/latest/meta-data/mac)\n",
                                 "export INSTANCE_SUBNET_ID=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$INSTANCE_MAC_ADDR/subnet-id)\n",
                                 "case $INSTANCE_SUBNET_ID in\n",
-                                "  ", { "Ref" : "PublicSubnet1ID" }, ")\n",
+                                "  ",
+                                {
+                                    "Ref": "PublicSubnet1ID"
+                                },
+                                ")\n",
                                 "    site=\"site1\"\n",
                                 "    ;;\n",
-                                "  ", { "Ref" : "PublicSubnet2ID" }, ")\n",
+                                "  ",
+                                {
+                                    "Ref": "PublicSubnet2ID"
+                                },
+                                ")\n",
                                 "    site=\"site2\"\n",
                                 "    ;;\n",
-                                "  ", { "Ref" : "PublicSubnet3ID" }, ")\n",
+                                "  ",
+                                {
+                                    "Ref": "PublicSubnet3ID"
+                                },
+                                ")\n",
                                 "    site=\"site3\"\n",
                                 "    ;;\n",
                                 "  *)\n",
                                 "    echo \"Unexpected subnet id\"\n",
                                 "    exit 1\n",
                                 "esac\n",
-
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode slave",
-                                    " -site $site",
-                                    " -master_uri https://", { "Fn::GetAtt": [ "SplunkCM", "PrivateIp" ] }, ":8089 ",
-                                    " -replication_port 9887",
-                                    " -secret ", { "Ref": "SplunkClusterSecret" }, "\n",
-
+                                " -site $site",
+                                " -master_uri https://",
+                                {
+                                    "Fn::GetAtt": [
+                                        "SplunkCM",
+                                        "PrivateIp"
+                                    ]
+                                },
+                                ":8089 ",
+                                " -replication_port 9887",
+                                " -secret ",
+                                {
+                                    "Ref": "SplunkClusterSecret"
+                                },
+                                "\n",
                                 "service splunk restart\n",
-
                                 "/opt/aws/bin/cfn-signal -s true --stack ",
                                 {
                                     "Ref": "AWS::StackName"
@@ -2176,13 +2332,23 @@
                     "Fn::If": [
                         "Create3AZ",
                         [
-                            { "Ref": "PublicSubnet1ID" },
-                            { "Ref": "PublicSubnet2ID" },
-                            { "Ref": "PublicSubnet3ID" }
+                            {
+                                "Ref": "PublicSubnet1ID"
+                            },
+                            {
+                                "Ref": "PublicSubnet2ID"
+                            },
+                            {
+                                "Ref": "PublicSubnet3ID"
+                            }
                         ],
                         [
-                            { "Ref": "PublicSubnet1ID" },
-                            { "Ref": "PublicSubnet2ID" }
+                            {
+                                "Ref": "PublicSubnet1ID"
+                            },
+                            {
+                                "Ref": "PublicSubnet2ID"
+                            }
                         ]
                     ]
                 },
@@ -2221,13 +2387,23 @@
                     "Fn::If": [
                         "Create3AZ",
                         [
-                            { "Ref": "PublicSubnet1ID" },
-                            { "Ref": "PublicSubnet2ID" },
-                            { "Ref": "PublicSubnet3ID" }
+                            {
+                                "Ref": "PublicSubnet1ID"
+                            },
+                            {
+                                "Ref": "PublicSubnet2ID"
+                            },
+                            {
+                                "Ref": "PublicSubnet3ID"
+                            }
                         ],
                         [
-                            { "Ref": "PublicSubnet1ID" },
-                            { "Ref": "PublicSubnet2ID" }
+                            {
+                                "Ref": "PublicSubnet1ID"
+                            },
+                            {
+                                "Ref": "PublicSubnet2ID"
+                            }
                         ]
                     ]
                 },
@@ -2238,14 +2414,19 @@
                     "Interval": "20",
                     "Timeout": "5"
                 },
-                "Policies" : [
+                "Policies": [
                     {
                         "PolicyName": "EnableProxyProtocol",
                         "PolicyType": "ProxyProtocolPolicyType",
                         "Attributes": [
-                            { "Name" : "ProxyProtocol", "Value": true }
+                            {
+                                "Name": "ProxyProtocol",
+                                "Value": true
+                            }
                         ],
-                        "InstancePorts": ["8088"]
+                        "InstancePorts": [
+                            "8088"
+                        ]
                     }
                 ]
             }
@@ -2258,13 +2439,23 @@
                     "Fn::If": [
                         "Create3AZ",
                         [
-                            { "Ref": "PublicSubnet1ID" },
-                            { "Ref": "PublicSubnet2ID" },
-                            { "Ref": "PublicSubnet3ID" }
+                            {
+                                "Ref": "PublicSubnet1ID"
+                            },
+                            {
+                                "Ref": "PublicSubnet2ID"
+                            },
+                            {
+                                "Ref": "PublicSubnet3ID"
+                            }
                         ],
                         [
-                            { "Ref": "PublicSubnet1ID" },
-                            { "Ref": "PublicSubnet2ID" }
+                            {
+                                "Ref": "PublicSubnet1ID"
+                            },
+                            {
+                                "Ref": "PublicSubnet2ID"
+                            }
                         ]
                     ]
                 },
@@ -2280,7 +2471,11 @@
                 "DesiredCapacity": {
                     "Ref": "SplunkIndexerCount"
                 },
-                "LoadBalancerNames": [ { "Ref": "SplunkHttpEventCollectorLoadBalancer" } ],
+                "LoadBalancerNames": [
+                    {
+                        "Ref": "SplunkHttpEventCollectorLoadBalancer"
+                    }
+                ],
                 "Tags": [
                     {
                         "Key": "Application",
@@ -2340,7 +2535,7 @@
                     ]
                 ]
             }
-        },  
+        },
         "ClusterMasterURL": {
             "Description": "Splunk Enterprise - Cluster Master URL",
             "Value": {
@@ -2359,7 +2554,7 @@
                 ]
             }
         },
-       "ClusterMasterManagementURL": {
+        "ClusterMasterManagementURL": {
             "Description": "Splunk Enterprise - Cluster Master Management URL (required for Indexer Discovery)",
             "Value": {
                 "Fn::Join": [
