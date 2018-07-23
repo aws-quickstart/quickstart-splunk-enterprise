@@ -1,7 +1,7 @@
 [
   {
     "ParameterKey": "AvailabilityZones",
-    "ParameterValue": "$[alfred_genaz_2]"
+    "ParameterValue": "$[taskcat_genaz_2]"
   },
   {
     "ParameterKey": "WebClientLocation",
@@ -21,14 +21,14 @@
   },
   {
     "ParameterKey": "SplunkAdminPassword",
-    "ParameterValue": "$[alfred_genpass_10]"
+    "ParameterValue": "$[taskcat_genpass_10]"
   },
   {
     "ParameterKey": "SplunkClusterSecret",
-    "ParameterValue": "$[alfred_genpass_10]"
+    "ParameterValue": "$[taskcat_genpass_10]"
   },
   {
     "ParameterKey": "SplunkIndexerDiscoverySecret",
-    "ParameterValue": "$[alfred_genpass_10]"
+    "ParameterValue": "$[taskcat_genpass_10]"
   }
 ]
