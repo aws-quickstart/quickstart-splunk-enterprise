@@ -22,3 +22,6 @@ tests:
   defaults:
     parameter_input: defaults.json
     template_file: splunk-enterprise-master.template
+    regions:
+    - us-west-1
+    - us-east-2
