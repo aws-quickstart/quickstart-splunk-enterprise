@@ -410,49 +410,49 @@
     "Mappings": {
         "AWSAMIRegionMap": {
             "AMI": {
-                "SPLUNKENTHVM": "splunk_marketplace_AMI_2018-06-29_16_22_51-7b65de6c-5006-4ca2-bd75-fdba95ae5d9d-ami-a86c36d7.4"
+                "SPLUNKENTHVM": "splunk_marketplace_AMI_2018-07-11_17_22_52-7b65de6c-5006-4ca2-bd75-fdba95ae5d9d-ami-432e183c.4"
             },
             "ap-northeast-1": {
-                "SPLUNKENTHVM": "ami-223da7cf"
+                "SPLUNKENTHVM": "ami-4183eaac"
             },
             "ap-northeast-2": {
-                "SPLUNKENTHVM": "ami-d1ec58bf"
+                "SPLUNKENTHVM": "ami-4cb10622"
             },
             "ap-south-1": {
-                "SPLUNKENTHVM": "ami-cb4d7aa4"
+                "SPLUNKENTHVM": "ami-8f7b48e0"
             },
             "ap-southeast-1": {
-                "SPLUNKENTHVM": "ami-15cbc569"
+                "SPLUNKENTHVM": "ami-91591c7b"
             },
             "ap-southeast-2": {
-                "SPLUNKENTHVM": "ami-7de8331f"
+                "SPLUNKENTHVM": "ami-9808acfa"
             },
             "ca-central-1": {
-                "SPLUNKENTHVM": "ami-7d61e319"
+                "SPLUNKENTHVM": "ami-c2810ca6"
             },
             "eu-central-1": {
-                "SPLUNKENTHVM": "ami-3f7843d4"
+                "SPLUNKENTHVM": "ami-80cbca6b"
             },
             "eu-west-1": {
-                "SPLUNKENTHVM": "ami-7ae4f190"
+                "SPLUNKENTHVM": "ami-c82a3422"
             },
             "eu-west-2": {
-                "SPLUNKENTHVM": "ami-3e806859"
+                "SPLUNKENTHVM": "ami-83648fe4"
             },
             "sa-east-1": {
-                "SPLUNKENTHVM": "ami-9e3410f2"
+                "SPLUNKENTHVM": "ami-5fcbed33"
             },
             "us-east-1": {
-                "SPLUNKENTHVM": "ami-ab2809d4"
+                "SPLUNKENTHVM": "ami-105f656f"
             },
             "us-east-2": {
-                "SPLUNKENTHVM": "ami-e8fdc58d"
+                "SPLUNKENTHVM": "ami-fa78429f"
             },
             "us-west-1": {
-                "SPLUNKENTHVM": "ami-0446a767"
+                "SPLUNKENTHVM": "ami-8a17f5e9"
             },
             "us-west-2": {
-                "SPLUNKENTHVM": "ami-813165f9"
+                "SPLUNKENTHVM": "ami-b9abf7c1"
             }
         },
         "SplunkConfig": {
