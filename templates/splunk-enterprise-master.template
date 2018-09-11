@@ -104,12 +104,12 @@
             "Type": "String"
         },
         "QSS3BucketName": {
-            "Default": "quickstart-reference",
+            "Default": "aws-quickstart",
             "Description": "S3 bucket name for the Quick Start assets.",
             "Type": "String"
         },
         "QSS3KeyPrefix": {
-            "Default": "splunk/enterprise/latest/",
+            "Default": "quickstart-splunk-enterprise/",
             "Description": "S3 key prefix for the Quick Start assets.",
             "Type": "String"
         },

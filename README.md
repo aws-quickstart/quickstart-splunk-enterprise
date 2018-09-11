@@ -1,6 +1,6 @@
 # Splunk Enterprise on AWS - Quick Start
 
-Source code associated with [Splunk Enterprise AWS Quick Start](https://aws.amazon.com/quickstart/architecture/splunk-enterprise/)
+Source code associated with [Splunk Enterprise AWS Quick Start](https://fwd.aws/r7QNJ)
 
 ## Usage
 
@@ -8,7 +8,7 @@ Use these templates to deploy a highly available Splunk Enterprise environment a
 AZ-aware indexer clustering is enabled for horizontal scaling and to guarantee data is replicated in every AZ.
 AZ-aware Search head clustering (3 nodes by default) can also be enabled for horizontal scaling and to guarantee data is available for search in every AZ.
 
-View the accompanying [deployment guide](https://s3.amazonaws.com/quickstart-reference/splunk/enterprise/latest/doc/splunk-enterprise-on-the-aws-cloud.pdf) for everything you need to get started. Refer to 'Deployment Steps' section for a step-by-step walkthrough on how to use these templates in AWS console.
+View the accompanying [deployment guide](https://fwd.aws/bGBmy) for everything you need to get started. Refer to 'Deployment Steps' section for a step-by-step walkthrough on how to use these templates in AWS console.
 
 ### Prerequisites
 
