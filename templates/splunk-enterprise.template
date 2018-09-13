@@ -2450,7 +2450,7 @@
                     ]
                 },
                 "HealthCheck": {
-                    "Target": "TCP:8088",
+                    "Target": "HTTPS:8088/services/collector/health",
                     "HealthyThreshold": "3",
                     "UnhealthyThreshold": "2",
                     "Interval": "20",
