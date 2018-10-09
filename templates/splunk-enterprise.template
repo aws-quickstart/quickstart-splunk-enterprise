@@ -410,49 +410,49 @@
     "Mappings": {
         "AWSAMIRegionMap": {
             "AMI": {
-                "SPLUNKENTHVM": "splunk_marketplace_AMI_2018-07-11_17_22_52-7b65de6c-5006-4ca2-bd75-fdba95ae5d9d-ami-432e183c.4"
+                "SPLUNKENTHVM": "splunk_marketplace_AMI_2018-09-28_14_12_30-7b65de6c-5006-4ca2-bd75-fdba95ae5d9d-ami-0eb81c71a339bae4b.4"
             },
             "ap-northeast-1": {
-                "SPLUNKENTHVM": "ami-4183eaac"
+                "SPLUNKENTHVM": "ami-05988fc59bbc63b27"
             },
             "ap-northeast-2": {
-                "SPLUNKENTHVM": "ami-4cb10622"
+                "SPLUNKENTHVM": "ami-0da8401bb47d8f1a9"
             },
             "ap-south-1": {
-                "SPLUNKENTHVM": "ami-8f7b48e0"
+                "SPLUNKENTHVM": "ami-0019fafb4e24f4ea8"
             },
             "ap-southeast-1": {
-                "SPLUNKENTHVM": "ami-91591c7b"
+                "SPLUNKENTHVM": "ami-0eb463043df22155c"
             },
             "ap-southeast-2": {
-                "SPLUNKENTHVM": "ami-9808acfa"
+                "SPLUNKENTHVM": "ami-0eb66251d729be157"
             },
             "ca-central-1": {
-                "SPLUNKENTHVM": "ami-c2810ca6"
+                "SPLUNKENTHVM": "ami-040b83d72c8266fc4"
             },
             "eu-central-1": {
-                "SPLUNKENTHVM": "ami-80cbca6b"
+                "SPLUNKENTHVM": "ami-0de54f638198985f3"
             },
             "eu-west-1": {
-                "SPLUNKENTHVM": "ami-c82a3422"
+                "SPLUNKENTHVM": "ami-02f2b3efb65d80899"
             },
             "eu-west-2": {
-                "SPLUNKENTHVM": "ami-83648fe4"
+                "SPLUNKENTHVM": "ami-0fa40c2c26b903958"
             },
             "sa-east-1": {
-                "SPLUNKENTHVM": "ami-5fcbed33"
+                "SPLUNKENTHVM": "ami-0c47e224b5fb3aab1"
             },
             "us-east-1": {
-                "SPLUNKENTHVM": "ami-105f656f"
+                "SPLUNKENTHVM": "ami-061573a27231c6d25"
             },
             "us-east-2": {
-                "SPLUNKENTHVM": "ami-fa78429f"
+                "SPLUNKENTHVM": "ami-05bac189f9000c8dd"
             },
             "us-west-1": {
-                "SPLUNKENTHVM": "ami-8a17f5e9"
+                "SPLUNKENTHVM": "ami-0b33e4f2e2a69fe78"
             },
             "us-west-2": {
-                "SPLUNKENTHVM": "ami-b9abf7c1"
+                "SPLUNKENTHVM": "ami-0a0953cb115acca26"
             }
         },
         "SplunkConfig": {
@@ -753,7 +753,7 @@
                                 },
                                 "\n",
                                 "end\n",
-					            "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
+                                "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
                                 "sed -i 's/ENFORCE_PWD_CHANGE=1//' /etc/init.d/splunk\n",
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
                                 "service splunk restart\n",
@@ -1047,7 +1047,7 @@
                                 },
                                 "\n",
                                 "end\n",
-					            "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
+                                "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
                                 "sed -i 's/ENFORCE_PWD_CHANGE=1//' /etc/init.d/splunk\n",
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
                                 "service splunk restart\n",
@@ -1333,7 +1333,7 @@
                                 },
                                 "\n",
                                 "end\n",
-					            "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
+                                "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
                                 "sed -i 's/ENFORCE_PWD_CHANGE=1//' /etc/init.d/splunk\n",
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
                                 "service splunk restart\n",
@@ -1587,7 +1587,7 @@
                                 },
                                 "\n",
                                 "end\n",
-					            "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
+                                "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
                                 "sed -i 's/ENFORCE_PWD_CHANGE=1//' /etc/init.d/splunk\n",
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
                                 "service splunk restart\n",
@@ -1778,7 +1778,7 @@
                                 },
                                 "\n",
                                 "end\n",
-					            "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
+                                "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
                                 "sed -i 's/ENFORCE_PWD_CHANGE=1//' /etc/init.d/splunk\n",
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
                                 "service splunk restart\n",
@@ -1977,7 +1977,7 @@
                                 },
                                 "\n",
                                 "end\n",
-					            "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
+                                "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
                                 "sed -i 's/ENFORCE_PWD_CHANGE=1//' /etc/init.d/splunk\n",
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
                                 "service splunk restart\n",
@@ -2228,7 +2228,7 @@
                                 },
                                 "\n",
                                 "end\n",
-					            "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
+                                "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
                                 "sed -i 's/ENFORCE_PWD_CHANGE=1//' /etc/init.d/splunk\n",
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
                                 "service splunk restart\n",
