@@ -491,6 +491,14 @@
                     },
                     {
                         "IpProtocol": "tcp",
+                        "FromPort": "8000",
+                        "ToPort": "8000",
+                        "CidrIp": {
+                            "Ref": "VPCCIDR"
+                        }
+                    },
+                    {
+                        "IpProtocol": "tcp",
                         "FromPort": "8090",
                         "ToPort": "8090",
                         "CidrIp": {
