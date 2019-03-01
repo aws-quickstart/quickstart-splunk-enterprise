@@ -91,16 +91,6 @@
             "Type": "AWS::EC2::Subnet::Id",
             "Default": ""
         },
-        "QSS3BucketName": {
-            "Default": "aws-quickstart",
-            "Description": "S3 bucket name for the Quick Start assets.",
-            "Type": "String"
-        },
-        "QSS3KeyPrefix": {
-            "Default": "quickstart-splunk-enterprise/",
-            "Description": "S3 key prefix for the Quick Start assets.",
-            "Type": "String"
-        },
         "SHCEnabled": {
             "AllowedValues": [
                 "yes",
@@ -229,15 +219,6 @@
                         "IndexerApps",
                         "SearchHeadApps"
                     ]
-                },
-                {
-                    "Label": {
-                        "default": "Quickstart Settings"
-                    },
-                    "Parameters": [
-                        "QSS3BucketName",
-                        "QSS3KeyPrefix"
-                    ]
                 }
             ],
             "ParameterLabels": {
@@ -267,12 +248,6 @@
                 },
                 "NumberOfAZs": {
                     "default": "Number of Availability Zones"
-                },
-                "QSS3BucketName": {
-                    "default": "QuickStart S3 Bucket Name"
-                },
-                "QSS3KeyPrefix": {
-                    "default": "QuickStart S3 Key Prefix"
                 },
                 "SHCEnabled": {
                     "default": "Enable Search Head Cluster?"
@@ -483,24 +458,24 @@
                 "SecurityGroupIngress": [
                     {
                         "IpProtocol": "tcp",
-                        "FromPort": "8000",
-                        "ToPort": "8000",
+                        "FromPort": 8000,
+                        "ToPort": 8000,
                         "CidrIp": {
                             "Ref": "WebClientLocation"
                         }
                     },
                     {
                         "IpProtocol": "tcp",
-                        "FromPort": "8090",
-                        "ToPort": "8090",
+                        "FromPort": 8090,
+                        "ToPort": 8090,
                         "CidrIp": {
                             "Ref": "VPCCIDR"
                         }
                     },
                     {
                         "IpProtocol": "tcp",
-                        "FromPort": "8191",
-                        "ToPort": "8191",
+                        "FromPort": 8191,
+                        "ToPort": 8191,
                         "CidrIp": {
                             "Ref": "VPCCIDR"
                         }
@@ -530,40 +505,40 @@
                 "SecurityGroupIngress": [
                     {
                         "IpProtocol": "tcp",
-                        "FromPort": "9997",
-                        "ToPort": "9997",
+                        "FromPort": 9997,
+                        "ToPort": 9997,
                         "CidrIp": {
                             "Ref": "VPCCIDR"
                         }
                     },
                     {
                         "IpProtocol": "tcp",
-                        "FromPort": "8088",
-                        "ToPort": "8088",
+                        "FromPort": 8088,
+                        "ToPort": 8088,
                         "SourceSecurityGroupId": {
                             "Ref": "SplunkHttpEventCollectorLoadBalancerSecurityGroup"
                         }
                     },
                     {
                         "IpProtocol": "tcp",
-                        "FromPort": "514",
-                        "ToPort": "514",
+                        "FromPort": 514,
+                        "ToPort": 514,
                         "CidrIp": {
                             "Ref": "VPCCIDR"
                         }
                     },
                     {
                         "IpProtocol": "udp",
-                        "FromPort": "514",
-                        "ToPort": "514",
+                        "FromPort": 514,
+                        "ToPort": 514,
                         "CidrIp": {
                             "Ref": "VPCCIDR"
                         }
                     },
                     {
                         "IpProtocol": "tcp",
-                        "FromPort": "9887",
-                        "ToPort": "9887",
+                        "FromPort": 9887,
+                        "ToPort": 9887,
                         "CidrIp": {
                             "Ref": "VPCCIDR"
                         }
@@ -593,16 +568,16 @@
                 "SecurityGroupIngress": [
                     {
                         "IpProtocol": "tcp",
-                        "FromPort": "22",
-                        "ToPort": "22",
+                        "FromPort": 22,
+                        "ToPort": 22,
                         "CidrIp": {
                             "Ref": "SSHClientLocation"
                         }
                     },
                     {
                         "IpProtocol": "tcp",
-                        "FromPort": "8089",
-                        "ToPort": "8089",
+                        "FromPort": 8089,
+                        "ToPort": 8089,
                         "CidrIp": {
                             "Ref": "VPCCIDR"
                         }
@@ -632,8 +607,8 @@
                 "SecurityGroupIngress": [
                     {
                         "IpProtocol": "tcp",
-                        "FromPort": "8088",
-                        "ToPort": "8088",
+                        "FromPort": 8088,
+                        "ToPort": 8088,
                         "CidrIp": {
                             "Ref": "HECClientLocation"
                         }
@@ -656,7 +631,6 @@
         "SplunkSearchHeadInstance": {
             "Type": "AWS::EC2::Instance",
             "Condition": "CreateSingleSearchHead",
-            "DependsOn": "SplunkCM",
             "CreationPolicy": {
                 "ResourceSignal": {
                     "Timeout": "PT60M"
@@ -704,9 +678,9 @@
                                 "Ref": "SplunkSearchHeadSecurityGroup"
                             }
                         ],
-                        "AssociatePublicIpAddress": "true",
+                        "AssociatePublicIpAddress": true,
                         "DeviceIndex": "0",
-                        "DeleteOnTermination": "true",
+                        "DeleteOnTermination": true,
                         "SubnetId": {
                             "Ref": "PublicSubnet1ID"
                         }
@@ -754,7 +728,7 @@
                                 "\n",
                                 "end\n",
                                 "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
-                                "sed -i 's/ENFORCE_PWD_CHANGE=1//' /etc/init.d/splunk\n",
+                                "sed -i 's/ENFORCE_PWD_CHANGE=1/ENFORCE_PWD_CHANGE=0/' /etc/init.d/splunk\n",
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
                                 "service splunk restart\n",
                                 "# Increase splunkweb connection timeout with splunkd\n",
@@ -978,9 +952,9 @@
                                 "Ref": "SplunkSearchHeadSecurityGroup"
                             }
                         ],
-                        "AssociatePublicIpAddress": "true",
+                        "AssociatePublicIpAddress": true,
                         "DeviceIndex": "0",
-                        "DeleteOnTermination": "true",
+                        "DeleteOnTermination": true,
                         "SubnetId": {
                             "Ref": "PublicSubnet1ID"
                         }
@@ -1048,7 +1022,7 @@
                                 "\n",
                                 "end\n",
                                 "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
-                                "sed -i 's/ENFORCE_PWD_CHANGE=1//' /etc/init.d/splunk\n",
+                                "sed -i 's/ENFORCE_PWD_CHANGE=1/ENFORCE_PWD_CHANGE=0/' /etc/init.d/splunk\n",
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
                                 "service splunk restart\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit user admin -password ",
@@ -1232,7 +1206,6 @@
         "SplunkSHCDeployer": {
             "Type": "AWS::EC2::Instance",
             "Condition": "CreateSHC",
-            "DependsOn": "SplunkCM",
             "CreationPolicy": {
                 "ResourceSignal": {
                     "Timeout": "PT60M"
@@ -1284,9 +1257,9 @@
                                 "Ref": "SplunkSearchHeadSecurityGroup"
                             }
                         ],
-                        "AssociatePublicIpAddress": "true",
+                        "AssociatePublicIpAddress": true,
                         "DeviceIndex": "0",
-                        "DeleteOnTermination": "true",
+                        "DeleteOnTermination": true,
                         "SubnetId": {
                             "Ref": "PublicSubnet1ID"
                         }
@@ -1490,7 +1463,6 @@
         "SplunkSHCMember1": {
             "Type": "AWS::EC2::Instance",
             "Condition": "CreateSHC",
-            "DependsOn": "SplunkSHCDeployer",
             "CreationPolicy": {
                 "ResourceSignal": {
                     "Timeout": "PT60M"
@@ -1538,9 +1510,9 @@
                                 "Ref": "SplunkSearchHeadSecurityGroup"
                             }
                         ],
-                        "AssociatePublicIpAddress": "true",
+                        "AssociatePublicIpAddress": true,
                         "DeviceIndex": "0",
-                        "DeleteOnTermination": "true",
+                        "DeleteOnTermination": true,
                         "SubnetId": {
                             "Ref": "PublicSubnet1ID"
                         }
@@ -1681,7 +1653,6 @@
         "SplunkSHCMember2": {
             "Type": "AWS::EC2::Instance",
             "Condition": "CreateSHC",
-            "DependsOn": "SplunkSHCDeployer",
             "CreationPolicy": {
                 "ResourceSignal": {
                     "Timeout": "PT60M"
@@ -1729,9 +1700,9 @@
                                 "Ref": "SplunkSearchHeadSecurityGroup"
                             }
                         ],
-                        "AssociatePublicIpAddress": "true",
+                        "AssociatePublicIpAddress": true,
                         "DeviceIndex": "0",
-                        "DeleteOnTermination": "true",
+                        "DeleteOnTermination": true,
                         "SubnetId": {
                             "Ref": "PublicSubnet2ID"
                         }
@@ -1872,7 +1843,6 @@
         "SplunkSHCMember3": {
             "Type": "AWS::EC2::Instance",
             "Condition": "CreateSHC",
-            "DependsOn": "SplunkSHCDeployer",
             "CreationPolicy": {
                 "ResourceSignal": {
                     "Timeout": "PT60M"
@@ -1920,9 +1890,9 @@
                                 "Ref": "SplunkSearchHeadSecurityGroup"
                             }
                         ],
-                        "AssociatePublicIpAddress": "true",
+                        "AssociatePublicIpAddress": true,
                         "DeviceIndex": "0",
-                        "DeleteOnTermination": "true",
+                        "DeleteOnTermination": true,
                         "SubnetId": {
                             "Fn::If": [
                                 "Create3AZ",
@@ -2129,7 +2099,7 @@
             "Condition": "ConfigureLicense",
             "Properties": {
                 "PolicyDocument": {
-                    "Version": "2008-10-17",
+                    "Version": "2012-10-17",
                     "Id": "MyPolicy",
                     "Statement": [
                         {
