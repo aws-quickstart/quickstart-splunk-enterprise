@@ -20,16 +20,14 @@
         },
         "IndexerInstanceType": {
             "AllowedValues": [
-                "c4.large",
-                "c4.xlarge",
-                "c4.2xlarge",
-                "c4.4xlarge",
-                "c4.8xlarge",
-                "m4.large",
-                "m4.xlarge",
-                "m4.2xlarge",
-                "m4.4xlarge",
-                "m4.10xlarge"
+                "c5.xlarge",
+                "c5.2xlarge",
+                "c5.4xlarge",
+                "c5.9xlarge",
+                "i3.xlarge",
+                "i3.2xlarge",
+                "i3.4xlarge",
+                "i3.10xlarge"
             ],
             "Description": "EC2 instance type for Splunk Indexers",
             "ConstraintDescription": "must be a valid EC2 instance type.",
@@ -38,16 +36,10 @@
         },
         "SearchHeadInstanceType": {
             "AllowedValues": [
-                "c4.large",
-                "c4.xlarge",
-                "c4.2xlarge",
-                "c4.4xlarge",
-                "c4.8xlarge",
-                "r4.large",
-                "r4.xlarge",
-                "r4.2xlarge",
-                "r4.4xlarge",
-                "r4.8xlarge"
+                "c5.xlarge",
+                "c5.2xlarge",
+                "c5.4xlarge",
+                "c5.9xlarge"
             ],
             "Description": "EC2 instance type for Splunk Search Heads",
             "ConstraintDescription": "must be a valid EC2 instance type.",
@@ -136,11 +128,20 @@
             "Type": "Number"
         },
         "SplunkIndexerDiskSize": {
-            "ConstraintDescription": "must be a valid number, 50-16000",
-            "Default": "200",
+            "ConstraintDescription": "must be a valid number, 320-16000",
+            "Default": "320",
             "Description": "The size of the attached EBS volume to the Splunk indexers.  (in GB)",
             "MaxValue": "16000",
-            "MinValue": "50",
+            "MinValue": "320",
+            "Type": "Number"
+        },
+
+        "SplunkSearchHeadDiskSize": {
+            "ConstraintDescription": "must be a valid number, 320-16000",
+            "Default": "320",
+            "Description": "The size of the attached EBS volume to the Splunk indexers.  (in GB)",
+            "MaxValue": "16000",
+            "MinValue": "320",
             "Type": "Number"
         },
         "SplunkLicenseBucket": {
@@ -155,7 +156,7 @@
         },
         "SplunkReplicationFactor": {
             "ConstraintDescription": "must be a valid number, 2-5",
-            "Default": "3",
+            "Default": "2",
             "Description": "How many copies of data should be stored in the Splunk clusters",
             "MaxValue": "5",
             "MinValue": "2",
@@ -224,6 +225,7 @@
                         "SplunkLicensePath",
                         "SplunkIndexerCount",
                         "SplunkIndexerDiskSize",
+                        "SplunkSearchHeadDiskSize",
                         "SplunkReplicationFactor",
                         "SHCEnabled",
                         "IndexerApps",
@@ -457,13 +459,10 @@
         },
         "SplunkConfig": {
             "dedicated-instance-type": {
-                "clusterMaster": "c4.xlarge",
-                "shclusterDeployer": "c4.xlarge"
+                "clusterMaster": "c5.xlarge",
+                "shclusterDeployer": "c5.xlarge"
             },
-            "searchhead-disk-size": {
-                "gb": "100"
-            },
-            "shcluster-replication-factor": {
+           "shcluster-replication-factor": {
                 "num": "3"
             },
             "labels": {
