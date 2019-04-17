@@ -49,7 +49,7 @@
             ],
             "Description": "EC2 instance type for Splunk Indexers",
             "ConstraintDescription": "must be a valid EC2 instance type.",
-            "Default": "c4.xlarge",
+            "Default": "c5.4xlarge",
             "Type": "String"
         },
         "SearchHeadInstanceType": {
@@ -69,7 +69,7 @@
             ],
             "Description": "EC2 instance type for Splunk Search Heads",
             "ConstraintDescription": "must be a valid EC2 instance type.",
-            "Default": "c4.xlarge",
+            "Default": "c5.4xlarge",
             "Type": "String"
         },
         "IndexerApps": {
