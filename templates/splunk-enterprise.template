@@ -97,7 +97,7 @@
             "Default": ""
         },
         "QSS3BucketName": {
-            "Default": "aws-quickstart",
+            "Default": "splk-quickstart-testing",
             "Description": "S3 bucket name for the Quick Start assets.",
             "Type": "String"
         },
@@ -152,7 +152,7 @@
         "SplunkSearchHeadDiskSize": {
             "ConstraintDescription": "must be a valid number, 320-16000",
             "Default": "320",
-            "Description": "The size of the attached EBS volume to the Splunk indexers.  (in GB)",
+            "Description": "The size of the attached EBS volume to the Splunk search head(s).  (in GB)",
             "MaxValue": "16000",
             "MinValue": "320",
             "Type": "Number"
@@ -168,10 +168,18 @@
             "Type": "String"
         },
         "SplunkReplicationFactor": {
-            "ConstraintDescription": "must be a valid number, 2-5",
+            "ConstraintDescription": "must be a valid number, 2-4",
             "Default": "2",
-            "Description": "How many copies of data should be stored in the Splunk clusters",
-            "MaxValue": "5",
+            "Description": "How many copies of data should be stored in the Splunk Indexer Cluster",
+            "MaxValue": "4",
+            "MinValue": "2",
+            "Type": "Number"
+        },
+        "SplunkSearchFactor": {
+            "ConstraintDescription": "must be a valid number, 2-4",
+            "Default": "2",
+            "Description": "How many copies of data should be searchable across the Splunk indexer clusters",
+            "MaxValue": "4",
             "MinValue": "2",
             "Type": "Number"
         },
@@ -240,6 +248,7 @@
                         "SplunkIndexerDiskSize",
                         "SplunkSearchHeadDiskSize",
                         "SplunkReplicationFactor",
+                        "SplunkSearchFactor",
                         "SHCEnabled",
                         "IndexerApps",
                         "SearchHeadApps"
@@ -304,6 +313,9 @@
                 "SplunkIndexerDiskSize": {
                     "default": "Indexer Disk Size"
                 },
+                "SplunkSearchHeadDiskSize": {
+                    "default": "Search Head(s) Disk Size"
+                },
                 "SplunkLicenseBucket": {
                     "default": "Splunk License Bucket"
                 },
@@ -311,7 +323,10 @@
                     "default": "Splunk License S3 Bucket Path"
                 },
                 "SplunkReplicationFactor": {
-                    "default": "Replication Factor"
+                    "default": "Index Cluster Replication Factor"
+                },
+                "SplunkSearchFactor": {
+                    "default": "Index Cluster Search Factor"
                 },
                 "SplunkClusterSecret": {
                     "default": "Shared Security Key for Cluster Nodes"
@@ -730,11 +745,7 @@
                         "Ebs": {
                             "VolumeType": "gp2",
                             "VolumeSize": {
-                                "Fn::FindInMap": [
-                                    "SplunkConfig",
-                                    "searchhead-disk-size",
-                                    "gb"
-                                ]
+                                "Ref": "SplunkSearchHeadDiskSize"
                             }
                         }
                     }
@@ -1120,6 +1131,10 @@
                                 },
                                 "\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode master -multisite true",
+                                "-replication_factor ",
+                                { 
+                                    "Ref": "SplunkReplicationFactor" 
+                                },
                                 " -available_sites ",
                                 {
                                     "Fn::If": [
@@ -1133,7 +1148,10 @@
                                 {
                                     "Ref": "SplunkReplicationFactor"
                                 },
-                                " -site_search_factor origin:1,total:3",
+                                " -site_search_factor origin:1,total:",
+                                { 
+                                    "Ref": "SplunkSearchFactor" 
+                                },
                                 " -secret ",
                                 {
                                     "Ref": "SplunkClusterSecret"
@@ -1310,11 +1328,7 @@
                         "Ebs": {
                             "VolumeType": "gp2",
                             "VolumeSize": {
-                                "Fn::FindInMap": [
-                                    "SplunkConfig",
-                                    "searchhead-disk-size",
-                                    "gb"
-                                ]
+                                "Ref": "SplunkSearchHeadDiskSize"
                             }
                         }
                     }
@@ -1563,12 +1577,8 @@
                         "DeviceName": "/dev/xvda",
                         "Ebs": {
                             "VolumeType": "gp2",
-                            "VolumeSize": {
-                                "Fn::FindInMap": [
-                                    "SplunkConfig",
-                                    "searchhead-disk-size",
-                                    "gb"
-                                ]
+                             "VolumeSize": {
+                                "Ref": "SplunkSearchHeadDiskSize"
                             }
                         }
                     }
@@ -1755,11 +1765,7 @@
                         "Ebs": {
                             "VolumeType": "gp2",
                             "VolumeSize": {
-                                "Fn::FindInMap": [
-                                    "SplunkConfig",
-                                    "searchhead-disk-size",
-                                    "gb"
-                                ]
+                                "Ref": "SplunkSearchHeadDiskSize"
                             }
                         }
                     }
@@ -1954,11 +1960,7 @@
                         "Ebs": {
                             "VolumeType": "gp2",
                             "VolumeSize": {
-                                "Fn::FindInMap": [
-                                    "SplunkConfig",
-                                    "searchhead-disk-size",
-                                    "gb"
-                                ]
+                                "Ref": "SplunkSearchHeadDiskSize"
                             }
                         }
                     }

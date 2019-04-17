@@ -160,6 +160,14 @@
             "MinValue": "50",
             "Type": "Number"
         },
+        "SplunkSearchHeadDiskSize": {
+            "ConstraintDescription": "must be a valid number, 320-16000",
+            "Default": "320",
+            "Description": "The size of the attached EBS volume to the Splunk search head(s).  (in GB)",
+            "MaxValue": "16000",
+            "MinValue": "320",
+            "Type": "Number"
+        },
         "SplunkLicenseBucket": {
             "Default": "",
             "Description": "Name of private S3 bucket with licenses to be accessed via authenticated requests",
@@ -171,10 +179,18 @@
             "Type": "String"
         },
         "SplunkReplicationFactor": {
-            "ConstraintDescription": "must be a valid number, 2-5",
-            "Default": "3",
+            "ConstraintDescription": "must be a valid number, 2-4",
+            "Default": "2",
             "Description": "How many copies of data should be stored in the Splunk Indexer Cluster",
-            "MaxValue": "5",
+            "MaxValue": "4",
+            "MinValue": "2",
+            "Type": "Number"
+        },
+        "SplunkSearchFactor": {
+            "ConstraintDescription": "must be a valid number, 2-4",
+            "Default": "2",
+            "Description": "How many copies of data should be searchable in the Splunk indexer clusters",
+            "MaxValue": "4",
             "MinValue": "2",
             "Type": "Number"
         },
@@ -240,7 +256,9 @@
                         "SplunkLicensePath",
                         "SplunkIndexerCount",
                         "SplunkIndexerDiskSize",
+                        "SplunkSearchHeadDiskSize",
                         "SplunkReplicationFactor",
+                        "SplunkSearchFactor",
                         "SHCEnabled",
                         "IndexerApps",
                         "SearchHeadApps"
@@ -315,7 +333,10 @@
                     "default": "Splunk License S3 Bucket Path"
                 },
                 "SplunkReplicationFactor": {
-                    "default": "Replication Factor"
+                    "default": "Index Cluster Replication Factor"
+                },
+                "SplunkSearchFactor": {
+                    "default": "Index Cluster Search Factor"
                 },
                 "SplunkClusterSecret": {
                     "default": "Shared Security Key for Cluster Nodes"
