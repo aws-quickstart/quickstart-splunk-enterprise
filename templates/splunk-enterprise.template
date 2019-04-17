@@ -178,7 +178,7 @@
         "SplunkSearchFactor": {
             "ConstraintDescription": "must be a valid number, 2-4",
             "Default": "2",
-            "Description": "How many copies of data should be searchable across the Splunk indexer clusters",
+            "Description": "How many copies of data should be searchable in the Splunk indexer clusters",
             "MaxValue": "4",
             "MinValue": "2",
             "Type": "Number"
@@ -1130,8 +1130,7 @@
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
-                                "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode master -multisite true",
-                                "-replication_factor ",
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode master -multisite true -replication_factor ",
                                 { 
                                     "Ref": "SplunkReplicationFactor" 
                                 },
