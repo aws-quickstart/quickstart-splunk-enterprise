@@ -181,6 +181,15 @@
         }
     },
     "Metadata": {
+      "AWSAMIRegionMap":{
+        "Filters":{
+          "SPLUNKENTHVM":{
+            "name":"splunk_marketplace_AMI_*",
+            "owner-alias":"aws-marketplace",
+            "product-code.type":"marketplace"
+          }
+        }
+      },
         "AWS::CloudFormation::Interface": {
             "ParameterGroups": [
                 {
