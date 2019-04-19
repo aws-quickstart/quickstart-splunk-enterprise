@@ -97,7 +97,7 @@
             "Default": ""
         },
         "QSS3BucketName": {
-            "Default": "aws-quickstart",
+            "Default": "splk-quickstart-testing",
             "Description": "S3 bucket name for the Quick Start assets.",
             "Type": "String"
         },
@@ -1610,9 +1610,11 @@
                                 },
                                 "\n",
                                 "end\n",
-					            					"sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
+					            "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
                                 "sed -i 's/ENFORCE_PWD_CHANGE=1/ENFORCE_PWD_CHANGE=0/' /etc/init.d/splunk\n",
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
+                                "# set splunk servername \n",
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN set servername SHC1\n",
                                 "service splunk restart\n",
                                 "# Increase splunkweb connection timeout with splunkd\n",
                                 "cat >$SPLUNK_HOME/etc/system/local/web.conf <<end\n",
@@ -1797,9 +1799,11 @@
                                 },
                                 "\n",
                                 "end\n",
-					                      "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
+					            "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
                                 "sed -i 's/ENFORCE_PWD_CHANGE=1/ENFORCE_PWD_CHANGE=0/' /etc/init.d/splunk\n",
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
+                                "# set splunk servername \n",
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN set servername SHC2\n",
                                 "service splunk restart\n",
                                 "# Increase splunkweb connection timeout with splunkd\n",
                                 "cat >$SPLUNK_HOME/etc/system/local/web.conf <<end\n",
@@ -1995,6 +1999,8 @@
 					            "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
                                 "sed -i 's/ENFORCE_PWD_CHANGE=1/ENFORCE_PWD_CHANGE=0/' /etc/init.d/splunk\n",
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
+                                "# set splunk servername \n",
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN set servername SHC3\n",
                                 "service splunk restart\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit user admin -password ",
                                 {
