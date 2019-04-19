@@ -19,7 +19,7 @@ global:
     - us-west-2
   reporting: true
 tests:
-  defaults:
+  splunk-enterprise:
     parameter_input: defaults.json
     template_file: splunk-enterprise-master.template
     regions:
