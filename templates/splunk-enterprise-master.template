@@ -402,12 +402,11 @@
                         "Ref": "VPCCIDR"
                     }
                 },
-                "TimeoutInMinutes": "15"
+                "TimeoutInMinutes": 15
             }
         },
         "SplunkStack": {
             "Type": "AWS::CloudFormation::Stack",
-            "DependsOn": "VPCStack",
             "Properties": {
                 "TemplateURL": {
                     "Fn::Sub": "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/splunk-enterprise.template"
@@ -513,15 +512,9 @@
                             ",",
                             { "Ref": "SearchHeadApps" }
                         ]
-                    },
-                    "QSS3BucketName": {
-                        "Ref": "QSS3BucketName"
-                    },
-                    "QSS3KeyPrefix": {
-                        "Ref": "QSS3KeyPrefix"
                     }
                 },
-                "TimeoutInMinutes": "60"
+                "TimeoutInMinutes": 60
             }
         }
     },

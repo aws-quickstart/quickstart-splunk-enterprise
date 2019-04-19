@@ -13,7 +13,7 @@
   },
   {
     "ParameterKey": "KeyName",
-    "ParameterValue": "$[alfred_getkeypair]"
+    "ParameterValue": "$[taskcat_getkeypair]"
   },
   {
     "ParameterKey": "SSHClientLocation",
@@ -30,5 +30,9 @@
   {
     "ParameterKey": "SplunkIndexerDiscoverySecret",
     "ParameterValue": "$[taskcat_genpass_10]"
+  },
+  {
+    "ParameterKey": "QSS3BucketName",
+    "ParameterValue": "$[taskcat_autobucket]"
   }
 ]
