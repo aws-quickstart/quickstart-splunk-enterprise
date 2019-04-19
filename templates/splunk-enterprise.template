@@ -1058,6 +1058,8 @@
                                 "export SPLUNK_USER=splunk\n",
                                 "export SPLUNK_BIN=/opt/splunk/bin/splunk\n",
                                 "export SPLUNK_HOME=/opt/splunk\n",
+                                "# remove stale splunkd.log that ships with AMI.\n",
+                                "rm -f $SPLUNK_HOME/var/log/splunk/splunkd.log\n",
                                 "printf '%s\t%s\n' \"$LOCALIP\" 'splunklicense' >> /etc/hosts\n",
                                 "hostname splunklicense\n",
                                 "mv $SPLUNK_HOME/etc/passwd $SPLUNK_HOME/etc/passwd.bak\n",
@@ -2581,7 +2583,7 @@
                                 {
                                     "Fn::GetAtt": [
                                         "SplunkSearchHeadInstance",
-                                        "PublicDnsName"
+                                        "PublicIp"
                                     ]
                                 }
                             ]
@@ -2601,7 +2603,7 @@
                         {
                             "Fn::GetAtt": [
                                 "SplunkCM",
-                                "PublicDnsName"
+                                "PublicIp"
                             ]
                         },
                         ":8000"
@@ -2640,7 +2642,7 @@
                                 {
                                     "Fn::GetAtt": [
                                         "SplunkSHCDeployer",
-                                        "PublicDnsName"
+                                        "PublicIp"
                                     ]
                                 },
                                 ":8000"

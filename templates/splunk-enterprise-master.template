@@ -153,11 +153,11 @@
             "Type": "Number"
         },
         "SplunkIndexerDiskSize": {
-            "ConstraintDescription": "must be a valid number, 50-16000",
-            "Default": "100",
+            "ConstraintDescription": "must be a valid number, 320-16000",
+            "Default": "320",
             "Description": "The size of the attached EBS volume to the Splunk indexers.  (in GB)",
             "MaxValue": "16000",
-            "MinValue": "50",
+            "MinValue": "320",
             "Type": "Number"
         },
         "SplunkSearchHeadDiskSize": {
