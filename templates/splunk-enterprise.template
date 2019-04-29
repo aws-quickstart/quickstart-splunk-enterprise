@@ -20,38 +20,43 @@
         },
         "IndexerInstanceType": {
             "AllowedValues": [
-                "c4.large",
-                "c4.xlarge",
-                "c4.2xlarge",
-                "c4.4xlarge",
-                "c4.8xlarge",
-                "m4.large",
-                "m4.xlarge",
-                "m4.2xlarge",
-                "m4.4xlarge",
-                "m4.10xlarge"
+              "c4.2xlarge",
+              "c4.4xlarge",
+              "c4.8xlarge",
+              "m4.2xlarge",
+              "m4.4xlarge",
+              "m4.10xlarge",
+              "c5.2xlarge",
+              "c5.4xlarge",
+              "c5.9xlarge",
+              "c5.18xlarge",
+              "i3.2xlarge",
+              "i3.4xlarge",
+              "i3.8xlarge"
             ],
             "Description": "EC2 instance type for Splunk Indexers",
             "ConstraintDescription": "must be a valid EC2 instance type.",
-            "Default": "c4.xlarge",
+            "Default": "c5.4xlarge",
             "Type": "String"
         },
         "SearchHeadInstanceType": {
             "AllowedValues": [
-                "c4.large",
-                "c4.xlarge",
-                "c4.2xlarge",
-                "c4.4xlarge",
-                "c4.8xlarge",
-                "r4.large",
-                "r4.xlarge",
-                "r4.2xlarge",
-                "r4.4xlarge",
-                "r4.8xlarge"
+              "c4.2xlarge",
+              "c4.4xlarge",
+              "c4.8xlarge",
+              "r4.4xlarge",
+              "r4.8xlarge",
+              "r4.16xlarge",
+              "c5.2xlarge",
+              "c5.4xlarge",
+              "c5.9xlarge",
+              "m5.2xlarge",
+              "m5.4xlarge",
+              "m5.12xlarge"
             ],
             "Description": "EC2 instance type for Splunk Search Heads",
             "ConstraintDescription": "must be a valid EC2 instance type.",
-            "Default": "c4.xlarge",
+            "Default": "c5.4xlarge",
             "Type": "String"
         },
         "IndexerApps": {
@@ -91,6 +96,16 @@
             "Type": "AWS::EC2::Subnet::Id",
             "Default": ""
         },
+        "QSS3BucketName": {
+            "Default": "splk-quickstart-testing",
+            "Description": "S3 bucket name for the Quick Start assets.",
+            "Type": "String"
+        },
+        "QSS3KeyPrefix": {
+            "Default": "quickstart-splunk-enterprise/",
+            "Description": "S3 key prefix for the Quick Start assets.",
+            "Type": "String"
+        },
         "SHCEnabled": {
             "AllowedValues": [
                 "yes",
@@ -126,11 +141,20 @@
             "Type": "Number"
         },
         "SplunkIndexerDiskSize": {
-            "ConstraintDescription": "must be a valid number, 50-16000",
-            "Default": "200",
+            "ConstraintDescription": "must be a valid number, 320-16000",
+            "Default": "320",
             "Description": "The size of the attached EBS volume to the Splunk indexers.  (in GB)",
             "MaxValue": "16000",
-            "MinValue": "50",
+            "MinValue": "320",
+            "Type": "Number"
+        },
+
+        "SplunkSearchHeadDiskSize": {
+            "ConstraintDescription": "must be a valid number, 320-16000",
+            "Default": "320",
+            "Description": "The size of the attached EBS volume to the Splunk search head(s).  (in GB)",
+            "MaxValue": "16000",
+            "MinValue": "320",
             "Type": "Number"
         },
         "SplunkLicenseBucket": {
@@ -144,10 +168,18 @@
             "Type": "String"
         },
         "SplunkReplicationFactor": {
-            "ConstraintDescription": "must be a valid number, 2-5",
-            "Default": "3",
-            "Description": "How many copies of data should be stored in the Splunk clusters",
-            "MaxValue": "5",
+            "ConstraintDescription": "must be a valid number, 2-4",
+            "Default": "2",
+            "Description": "How many copies of data should be stored in the Splunk Indexer Cluster",
+            "MaxValue": "4",
+            "MinValue": "2",
+            "Type": "Number"
+        },
+        "SplunkSearchFactor": {
+            "ConstraintDescription": "must be a valid number, 2-4",
+            "Default": "2",
+            "Description": "How many copies of data should be searchable in the Splunk indexer clusters",
+            "MaxValue": "4",
             "MinValue": "2",
             "Type": "Number"
         },
@@ -223,7 +255,9 @@
                         "SplunkLicensePath",
                         "SplunkIndexerCount",
                         "SplunkIndexerDiskSize",
+                        "SplunkSearchHeadDiskSize",
                         "SplunkReplicationFactor",
+                        "SplunkSearchFactor",
                         "SHCEnabled",
                         "IndexerApps",
                         "SearchHeadApps"
@@ -273,6 +307,9 @@
                 "SplunkIndexerDiskSize": {
                     "default": "Indexer Disk Size"
                 },
+                "SplunkSearchHeadDiskSize": {
+                    "default": "Search Head(s) Disk Size"
+                },
                 "SplunkLicenseBucket": {
                     "default": "Splunk License Bucket"
                 },
@@ -280,7 +317,10 @@
                     "default": "Splunk License S3 Bucket Path"
                 },
                 "SplunkReplicationFactor": {
-                    "default": "Replication Factor"
+                    "default": "Index Cluster Replication Factor"
+                },
+                "SplunkSearchFactor": {
+                    "default": "Index Cluster Search Factor"
                 },
                 "SplunkClusterSecret": {
                     "default": "Shared Security Key for Cluster Nodes"
@@ -441,13 +481,10 @@
         },
         "SplunkConfig": {
             "dedicated-instance-type": {
-                "clusterMaster": "c4.xlarge",
-                "shclusterDeployer": "c4.xlarge"
+                "clusterMaster": "c5.xlarge",
+                "shclusterDeployer": "c5.xlarge"
             },
-            "searchhead-disk-size": {
-                "gb": "100"
-            },
-            "shcluster-replication-factor": {
+           "shcluster-replication-factor": {
                 "num": "3"
             },
             "labels": {
@@ -701,11 +738,7 @@
                         "Ebs": {
                             "VolumeType": "gp2",
                             "VolumeSize": {
-                                "Fn::FindInMap": [
-                                    "SplunkConfig",
-                                    "searchhead-disk-size",
-                                    "gb"
-                                ]
+                                "Ref": "SplunkSearchHeadDiskSize"
                             }
                         }
                     }
@@ -1018,6 +1051,8 @@
                                 "export SPLUNK_USER=splunk\n",
                                 "export SPLUNK_BIN=/opt/splunk/bin/splunk\n",
                                 "export SPLUNK_HOME=/opt/splunk\n",
+                                "# remove stale splunkd.log that ships with AMI.\n",
+                                "rm -f $SPLUNK_HOME/var/log/splunk/splunkd.log\n",
                                 "printf '%s\t%s\n' \"$LOCALIP\" 'splunklicense' >> /etc/hosts\n",
                                 "hostname splunklicense\n",
                                 "mv $SPLUNK_HOME/etc/passwd $SPLUNK_HOME/etc/passwd.bak\n",
@@ -1084,13 +1119,16 @@
                                 "master_uri = https://127.0.0.1:8089\n",
                                 "end\n",
                                 "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/apps/base-autogenerated\n",
-                                "service splunk start\n",
+                                "service splunk restart\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN login -auth admin:",
                                 {
                                     "Ref": "SplunkAdminPassword"
                                 },
                                 "\n",
-                                "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode master -multisite true",
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode master -multisite true -replication_factor ",
+                                { 
+                                    "Ref": "SplunkReplicationFactor" 
+                                },
                                 " -available_sites ",
                                 {
                                     "Fn::If": [
@@ -1104,7 +1142,10 @@
                                 {
                                     "Ref": "SplunkReplicationFactor"
                                 },
-                                " -site_search_factor origin:1,total:3",
+                                " -site_search_factor origin:1,total:",
+                                { 
+                                    "Ref": "SplunkSearchFactor" 
+                                },
                                 " -secret ",
                                 {
                                     "Ref": "SplunkClusterSecret"
@@ -1280,11 +1321,7 @@
                         "Ebs": {
                             "VolumeType": "gp2",
                             "VolumeSize": {
-                                "Fn::FindInMap": [
-                                    "SplunkConfig",
-                                    "searchhead-disk-size",
-                                    "gb"
-                                ]
+                                "Ref": "SplunkSearchHeadDiskSize"
                             }
                         }
                     }
@@ -1315,8 +1352,8 @@
                                 },
                                 "\n",
                                 "end\n",
-                                "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
-                                "sed -i 's/ENFORCE_PWD_CHANGE=1//' /etc/init.d/splunk\n",
+					                      "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
+                                "sed -i 's/ENFORCE_PWD_CHANGE=1/ENFORCE_PWD_CHANGE=0/' /etc/init.d/splunk\n",
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
                                 "service splunk restart\n",
                                 "# Increase splunkweb connection timeout with splunkd\n",
@@ -1532,12 +1569,8 @@
                         "DeviceName": "/dev/xvda",
                         "Ebs": {
                             "VolumeType": "gp2",
-                            "VolumeSize": {
-                                "Fn::FindInMap": [
-                                    "SplunkConfig",
-                                    "searchhead-disk-size",
-                                    "gb"
-                                ]
+                             "VolumeSize": {
+                                "Ref": "SplunkSearchHeadDiskSize"
                             }
                         }
                     }
@@ -1568,9 +1601,12 @@
                                 },
                                 "\n",
                                 "end\n",
-                                "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
-                                "sed -i 's/ENFORCE_PWD_CHANGE=1//' /etc/init.d/splunk\n",
+					            "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
+                                "sed -i 's/ENFORCE_PWD_CHANGE=1/ENFORCE_PWD_CHANGE=0/' /etc/init.d/splunk\n",
+
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
+                                "# set splunk servername \n",
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN set servername SHC1\n",
                                 "service splunk restart\n",
                                 "# Increase splunkweb connection timeout with splunkd\n",
                                 "cat >$SPLUNK_HOME/etc/system/local/web.conf <<end\n",
@@ -1583,7 +1619,7 @@
                                 "register_replication_address = $LOCALIP\n",
                                 "end\n",
                                 "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local\n",
-                                "service splunk start\n",
+                                "service splunk restart\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
                                 "-master_uri https://",
                                 {
@@ -1723,11 +1759,7 @@
                         "Ebs": {
                             "VolumeType": "gp2",
                             "VolumeSize": {
-                                "Fn::FindInMap": [
-                                    "SplunkConfig",
-                                    "searchhead-disk-size",
-                                    "gb"
-                                ]
+                                "Ref": "SplunkSearchHeadDiskSize"
                             }
                         }
                     }
@@ -1758,9 +1790,12 @@
                                 },
                                 "\n",
                                 "end\n",
-                                "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
-                                "sed -i 's/ENFORCE_PWD_CHANGE=1//' /etc/init.d/splunk\n",
+					            "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
+                                "sed -i 's/ENFORCE_PWD_CHANGE=1/ENFORCE_PWD_CHANGE=0/' /etc/init.d/splunk\n",
+
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
+                                "# set splunk servername \n",
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN set servername SHC2\n",
                                 "service splunk restart\n",
                                 "# Increase splunkweb connection timeout with splunkd\n",
                                 "cat >$SPLUNK_HOME/etc/system/local/web.conf <<end\n",
@@ -1921,11 +1956,7 @@
                         "Ebs": {
                             "VolumeType": "gp2",
                             "VolumeSize": {
-                                "Fn::FindInMap": [
-                                    "SplunkConfig",
-                                    "searchhead-disk-size",
-                                    "gb"
-                                ]
+                                "Ref": "SplunkSearchHeadDiskSize"
                             }
                         }
                     }
@@ -1956,9 +1987,12 @@
                                 },
                                 "\n",
                                 "end\n",
-                                "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
-                                "sed -i 's/ENFORCE_PWD_CHANGE=1//' /etc/init.d/splunk\n",
+					                      "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
+                                "sed -i 's/ENFORCE_PWD_CHANGE=1/ENFORCE_PWD_CHANGE=0/' /etc/init.d/splunk\n",
+
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
+                                "# set splunk servername \n",
+                                "sudo -u $SPLUNK_USER $SPLUNK_BIN set servername SHC3\n",
                                 "service splunk restart\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit user admin -password ",
                                 {
@@ -2207,8 +2241,9 @@
                                 },
                                 "\n",
                                 "end\n",
-                                "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
-                                "sed -i 's/ENFORCE_PWD_CHANGE=1//' /etc/init.d/splunk\n",
+					                      "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
+                                "sed -i 's/ENFORCE_PWD_CHANGE=1/ENFORCE_PWD_CHANGE=0/' /etc/init.d/splunk\n",
+
                                 "touch $SPLUNK_HOME/etc/.ui_login\n",
                                 "service splunk restart\n",
                                 "# set splunk server name to local hostname.\n",
@@ -2547,7 +2582,7 @@
                                 {
                                     "Fn::GetAtt": [
                                         "SplunkSearchHeadInstance",
-                                        "PublicDnsName"
+                                        "PublicIp"
                                     ]
                                 }
                             ]
@@ -2567,7 +2602,7 @@
                         {
                             "Fn::GetAtt": [
                                 "SplunkCM",
-                                "PublicDnsName"
+                                "PublicIp"
                             ]
                         },
                         ":8000"
@@ -2606,7 +2641,7 @@
                                 {
                                     "Fn::GetAtt": [
                                         "SplunkSHCDeployer",
-                                        "PublicDnsName"
+                                        "PublicIp"
                                     ]
                                 },
                                 ":8000"
