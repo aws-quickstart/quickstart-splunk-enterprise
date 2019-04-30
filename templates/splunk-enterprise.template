@@ -126,7 +126,7 @@
         "SplunkAdminPassword": {
             "AllowedPattern": "(?=^.{6,255}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
             "ConstraintDescription": "Must be at least 8 characters containing letters, numbers and symbols.",
-            "Description": "Admin password for Splunk. Must be at least 8 characters containing letters, numbers and symbols.",
+            "Description": "Admin password for Splunk. Must be at least 6 characters containing letters, numbers and symbols.",
             "MaxLength": "32",
             "MinLength": "6",
             "NoEcho": "true",
@@ -265,6 +265,12 @@
                 }
             ],
             "ParameterLabels": {
+                "QSS3BucketName": {
+                    "default": "QuickStart S3 Bucket Name"
+                },
+                "QSS3KeyPrefix": {
+                    "default": "QuickStart S3 Key Prefix"
+                },
                 "WebClientLocation": {
                     "default": "Permitted CIDR for Splunk web interface"
                 },
