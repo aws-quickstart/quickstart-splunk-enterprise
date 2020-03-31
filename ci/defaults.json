@@ -13,7 +13,7 @@
   },
   {
     "ParameterKey": "KeyName",
-    "ParameterValue": "$[taskcat_getkeypair]"
+    "ParameterValue": "taskcat-test"
   },
   {
     "ParameterKey": "SSHClientLocation",
