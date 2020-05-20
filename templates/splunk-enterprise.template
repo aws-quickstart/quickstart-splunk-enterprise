@@ -899,7 +899,7 @@
             "Type": "AWS::EC2::Instance",
             "CreationPolicy": {
                 "ResourceSignal": {
-                    "Timeout": "PT60M"
+                    "Timeout": "PT15M"
                 }
             },
             "Metadata": {
@@ -1126,8 +1126,8 @@
                                 },
                                 "\n",
                                 "sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode master -multisite true -replication_factor ",
-                                { 
-                                    "Ref": "SplunkReplicationFactor" 
+                                {
+                                    "Ref": "SplunkReplicationFactor"
                                 },
                                 " -available_sites ",
                                 {
@@ -1143,8 +1143,8 @@
                                     "Ref": "SplunkReplicationFactor"
                                 },
                                 " -site_search_factor origin:1,total:",
-                                { 
-                                    "Ref": "SplunkSearchFactor" 
+                                {
+                                    "Ref": "SplunkSearchFactor"
                                 },
                                 " -secret ",
                                 {
