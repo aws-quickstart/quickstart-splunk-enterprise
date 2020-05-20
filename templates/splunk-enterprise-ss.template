@@ -1334,7 +1334,7 @@
         "Handle": {
           "Ref": "SplunkCMWaitHandle"
         },
-        "Timeout": "3600"
+        "Timeout": "900"
       }
     },
     "SplunkSHCDeployer": {
