@@ -923,16 +923,16 @@
                               }
                             ]
                           },
-                          " )\n",
-                          "# download user_data script\n",
-                          "wget $S3_USERDATA -O /tmp/user_data.sh && chmod +x /tmp/user_data.sh\n",
-                          "/tmp/user_data.sh single_sh\n"
+                          " )\n"
                         ]
                       ]
                     },
                     ""
                   ]
-                }
+                },
+                  "# download user_data script\n",
+                  "wget $S3_USERDATA -O /tmp/user_data.sh && chmod +x /tmp/user_data.sh\n",
+                  "/tmp/user_data.sh single_sh\n"
               ]
             ]
           }
