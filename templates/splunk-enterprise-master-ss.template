@@ -223,7 +223,7 @@
       "Type": "String"
     },
     "SmartStoreBucketName": {
-      "Default": "",
+      "Default": "bbartlett-smartstore-testing",
       "Description": "Name of bucket that will be created for SmartStore storage",
       "Type": "String"
     }
