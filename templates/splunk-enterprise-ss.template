@@ -946,7 +946,7 @@
       "Type": "AWS::EC2::Instance",
       "CreationPolicy": {
         "ResourceSignal": {
-          "Timeout": "PT60M"
+          "Timeout": "PT10M"
         }
       },
       "Metadata": {
@@ -1092,8 +1092,10 @@
                 "#!/bin/bash -v\n",
                 "cd /opt/splunk-ansible && sudo -u ec2-user -E -S bash -c \"SPLUNK_BUILD_URL=/tmp/splunk.tgz SPLUNK_ENABLE_SERVICE=true  SPLUNK_PASSWORD=SPLUNK-$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id) ansible-playbook -i inventory/environ.py site.yml\"\n",
                 "rm -f /etc/cloud/cloud.cfg.d/20_install_splunk.cfg\n",
-                "/bin/systemctl start Splunkd\n",
-                "/bin/systemctl stop Splunkd\n",
+                "#/bin/systemctl start Splunkd\n",
+                "#/bin/systemctl stop Splunkd\n",
+                "/opt/splunk/bin/splunk start\n",
+                "/opt/splunk/bin/splunk stop\n",
                 "# First make cloud-init output log readable by root only to protect sensitive parameter values\n",
                 "chmod 600 /var/log/cloud-init-output.log\n",
                 "yum update -y aws-cfn-bootstrap\n",
@@ -1334,7 +1336,7 @@
         "Handle": {
           "Ref": "SplunkCMWaitHandle"
         },
-        "Timeout": "900"
+        "Timeout": "600"
       }
     },
     "SplunkSHCDeployer": {
