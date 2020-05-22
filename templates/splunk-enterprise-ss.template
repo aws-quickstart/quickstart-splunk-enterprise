@@ -1096,7 +1096,7 @@
                 "rm -f /etc/cloud/cloud.cfg.d/20_install_splunk.cfg\n",
                 "rm -f /var/lib/cloud/instance/scripts/runcmd\n",
 
-                "cd /opt/splunk-ansible && sudo -u ec2-user -E -S bash -c \"SPLUNK_BUILD_URL=/tmp/splunk.tgz SPLUNK_ENABLE_SERVICE=true  SPLUNK_PASSWORD=SPLUNK-$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id) ansible-playbook -i inventory/environ.py site.yml\"\n",
+                "cd /opt/splunk-ansible && time sudo -u ec2-user -E -S bash -c \"SPLUNK_BUILD_URL=/tmp/splunk.tgz SPLUNK_ENABLE_SERVICE=true  SPLUNK_PASSWORD=SPLUNK-$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id) ansible-playbook -i inventory/environ.py site.yml\"\n",
 
                 "#/bin/systemctl start Splunkd\n",
                 "#/bin/systemctl stop Splunkd\n",
