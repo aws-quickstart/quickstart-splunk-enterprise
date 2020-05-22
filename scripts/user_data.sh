@@ -23,7 +23,7 @@ rm -f /var/lib/cloud/instance/scripts/runcmd
 #- user scripts. Without doing this first, the Splunk installer is ran after CloudFormation's
 #- cloud-init scripts, leaving no Splunk install to configure.
 
-(cd /opt/splunk-ansible && sudo -u ec2-user -E -S bash -c \"SPLUNK_BUILD_URL=/tmp/splunk.tgz SPLUNK_ENABLE_SERVICE=true  SPLUNK_PASSWORD=SPLUNK-$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id) ansible-playbook -i inventory/environ.py site.yml)
+(cd /opt/splunk-ansible && time sudo -u ec2-user -E -S bash -c "SPLUNK_BUILD_URL=/tmp/splunk.tgz SPLUNK_ENABLE_SERVICE=true  SPLUNK_PASSWORD=SPLUNK-$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id) ansible-playbook -i inventory/environ.py site.yml")
 
 # start splunk for initialization, and then stop to make edits.
 #/bin/systemctl start Splunkd
@@ -71,6 +71,26 @@ function restart_signal
 #####
 #### start user data functions
 #####
+
+function splunk_cm
+{
+  echo;
+}
+
+function indexer
+{
+  echo;
+}
+
+function splunk_cluster_sh
+{
+  echo;
+}
+
+function splunk_deployer
+{
+  echo;
+}
 
 ## splunk single search head
 function splunk_single_sh
@@ -124,18 +144,19 @@ end
   then
     for i in ${!USER_APPS[*]}
     do
-     echo "Downloading app ${user_apps[$i]}"
-     if wget --tries=3 ${user_apps[$i]} -O /tmp/app${i}.spl
-     then
-      echo "Installing app..."
-      tar -xvzf /tmp/app${i}.spl -C $SPLUNK_HOME/etc/apps/
-      if [ $? -ne 0 ]; then
-        echo "Extracting tarball failed"
+      echo "Downloading app ${user_apps[$i]}"
+      if wget --tries=3 ${user_apps[$i]} -O /tmp/app${i}.spl
+      then
+        echo "Installing app..."
+        tar -xvzf /tmp/app${i}.spl -C $SPLUNK_HOME/etc/apps/
+        if [ $? -ne 0 ]; then
+          echo "Extracting tarball failed"
+        fi
+        rm /tmp/app${i}.spl
+      else
+        echo "Downloading tarball failed"
       fi
-      rm /tmp/app${i}.spl
-    else
-      echo "Downloading tarball failed"
-    fi
+    done
     #- set ownership
     chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/apps
   fi
@@ -144,29 +165,7 @@ end
   restart_signal
 }
 
-function splunk_cm
-{
 
-
-}
-
-function indexer
-{
-
-
-}
-
-function splunk_cluster_sh
-{
-
-
-}
-
-function splunk_deployer
-{
-
-
-}
 
 
 case "$1" in
