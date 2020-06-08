@@ -1093,6 +1093,8 @@
                 "export SPLUNK_USER=splunk\n",
                 "export SPLUNK_BIN=/opt/splunk/bin/splunk\n",
                 "export SPLUNK_HOME=/opt/splunk\n",
+                "export INSTALL_INDEXER_APPS=0\n",
+                "export INSTALL_LICENSE=0\n",
                 "export SYMMKEY=\"",
                 {
                   "Ref": "SplunkIndexerDiscoverySecret"
@@ -1102,15 +1104,6 @@
                 "export ADMIN_PASSWORD=\"",
                 {
                   "Ref": "SplunkAdminPassword"
-                },
-                "\" \n",
-
-                "export CM_PRIVATEIP=\"",
-                {
-                  "Fn::GetAtt": [
-                    "SplunkCM",
-                    "PrivateIp"
-                  ]
                 },
                 "\" \n",
 
@@ -1171,7 +1164,20 @@
                   "Ref": "SplunkSearchFactor"
                 },
                 "\"\n",
-
+                {
+                  "Fn::If": [
+                  "ConfigureLicense",
+                  {
+                    "Fn::Join": [
+                    "",
+                      [
+                        "export INSTALL_LICENSE=1\n"
+                      ]
+                    ]
+                  },
+                  ""
+                ]
+                },
                 {
                   "Fn::If": [
                     "InstallIndexerApps",
