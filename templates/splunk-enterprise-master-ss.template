@@ -111,7 +111,6 @@
       "Type": "String"
     },
     "QSS3BucketName": {
-      "Default": "",
       "Description": "S3 bucket name for the Quick Start assets.",
       "Default": "splk-quickstart-testing",
       "Type": "String"
