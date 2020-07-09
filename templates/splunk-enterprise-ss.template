@@ -867,40 +867,18 @@
                 "#!/bin/bash \n",
                 "# setup variables\n",
                 "export INSTALL_SH_APPS=0\n",
-                "export SYMMKEY=\"",
+                "export SYMMKEY=\"", {"Ref": "SplunkIndexerDiscoverySecret"}, "\" \n",
+                "export ADMIN_PASSWORD=\"", {"Ref": "SplunkAdminPassword"}, "\" \n",
+                "export STACK_NAME=\"", {"Ref": "AWS::StackName"}, "\" \n",
+                "export AWS_REGION=\"", {"Ref": "AWS::Region"}, "\" \n",
+                "export SPLUNK_CLUSTER_SECRET=\"", {"Ref": "SplunkClusterSecret"}, "\" \n",
+
+                "export CM_PRIVATEIP=\"",
                 {
-                  "Ref": "SplunkIndexerDiscoverySecret"
+                  "Fn::GetAtt": ["SplunkCM", "PrivateIp"]
                 },
                 "\" \n",
 
-                "export ADMIN_PASSWORD=\"",
-                {
-                  "Ref": "SplunkAdminPassword"
-                },
-                "\" \n",
-                "export CM_PRIVATEIP=\"",
-                {
-                  "Fn::GetAtt": [
-                    "SplunkCM",
-                    "PrivateIp"
-                  ]
-                },
-                "\" \n",
-                "export STACK_NAME=\"",
-                {
-                  "Ref": "AWS::StackName"
-                },
-                "\" \n",
-                "export AWS_REGION=\"",
-                {
-                  "Ref": "AWS::Region"
-                },
-                "\" \n",
-                "export SPLUNK_CLUSTER_SECRET=\"",
-                {
-                  "Ref": "SplunkClusterSecret"
-                },
-                "\" \n",
                 "export S3_USERDATA=\"",
                 {
                   "Fn::Sub": "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}scripts/user_data.sh"
@@ -919,9 +897,7 @@
                           {
                             "Fn::Join": [
                               " ",
-                              {
-                                "Ref": "SearchHeadApps"
-                              }
+                              {"Ref": "SearchHeadApps"}
                             ]
                           },
                           " )\n"
@@ -1095,41 +1071,16 @@
                 "export SPLUNK_HOME=/opt/splunk\n",
                 "export INSTALL_INDEXER_APPS=0\n",
                 "export INSTALL_LICENSE=0\n",
-                "export SYMMKEY=\"",
-                {
-                  "Ref": "SplunkIndexerDiscoverySecret"
-                },
-                "\" \n",
 
-                "export ADMIN_PASSWORD=\"",
-                {
-                  "Ref": "SplunkAdminPassword"
-                },
-                "\" \n",
-
-                "export STACK_NAME=\"",
-                {
-                  "Ref": "AWS::StackName"
-                },
-                "\" \n",
-
-                "export AWS_REGION=\"",
-                {
-                  "Ref": "AWS::Region"
-                },
-                "\" \n",
-
-                "export SPLUNK_CLUSTER_SECRET=\"",
-                {
-                  "Ref": "SplunkClusterSecret"
-                },
-                "\" \n",
-
-                "export SMARTSTORE_BUCKET=\"",
-                {
-                  "Ref": "SmartStoreBucketName"
-                },
-                "\"\n",
+                "export SYMMKEY=\"", {"Ref": "SplunkIndexerDiscoverySecret"}, "\" \n",
+                "export ADMIN_PASSWORD=\"", {"Ref": "SplunkAdminPassword"}, "\" \n",
+                "export STACK_NAME=\"", {"Ref": "AWS::StackName"}, "\" \n",
+                "export AWS_REGION=\"", {"Ref": "AWS::Region"}, "\" \n",
+                "export SPLUNK_CLUSTER_SECRET=\"", {"Ref": "SplunkClusterSecret"}, "\" \n",
+                "export SMARTSTORE_BUCKET=\"", {"Ref": "SmartStoreBucketName"}, "\"\n",
+                "export SplunkCMWaitHandle=\"", {"Ref": "SplunkCMWaitHandle"}, "\"\n",
+                "export REPFACTOR=\"", {"Ref": "SplunkReplicationFactor"}, "\"\n",
+                "export SEARCHFACTOR=\"", {"Ref": "SplunkSearchFactor"}, "\"\n",
 
                 "export S3_USERDATA=\"",
                 {
@@ -1147,32 +1098,13 @@
                 },
                 "\"\n",
 
-                "export SplunkCMWaitHandle=\"",
-                {
-                  "Ref": "SplunkCMWaitHandle"
-                },
-                "\"\n",
-
-                "export REPFACTOR=\"",
-                {
-                  "Ref": "SplunkReplicationFactor"
-                },
-                "\"\n",
-
-                "export SEARCHFACTOR=\"",
-                {
-                  "Ref": "SplunkSearchFactor"
-                },
-                "\"\n",
                 {
                   "Fn::If": [
                   "ConfigureLicense",
                   {
                     "Fn::Join": [
                     "",
-                      [
-                        "export INSTALL_LICENSE=1\n"
-                      ]
+                      ["export INSTALL_LICENSE=1\n"]
                     ]
                   },
                   ""
@@ -1230,7 +1162,7 @@
       "Condition": "CreateSHC",
       "CreationPolicy": {
         "ResourceSignal": {
-          "Timeout": "PT60M"
+          "Timeout": "PT20M"
         }
       },
       "Properties": {
@@ -1262,7 +1194,7 @@
           },
           {
             "Key": "Role",
-            "Value": "splunk-search-head"
+            "Value": "splunk-deployer"
           },
           {
             "Key": "Name",
@@ -1304,111 +1236,31 @@
               "",
               [
                 "#!/bin/bash -v\n",
-                "cd /opt/splunk-ansible && sudo -u ec2-user -E -S bash -c \"SPLUNK_BUILD_URL=/tmp/splunk.tgz SPLUNK_ENABLE_SERVICE=true  SPLUNK_PASSWORD=SPLUNK-$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id) ansible-playbook -i inventory/environ.py site.yml\"\n",
-                "rm -f /etc/cloud/cloud.cfg.d/20_install_splunk.cfg\n",
-                "/bin/systemctl start Splunkd\n",
-                "/bin/systemctl stop Splunkd\n",
-                "# First make cloud-init output log readable by root only to protect sensitive parameter values\n",
-                "chmod 600 /var/log/cloud-init-output.log\n",
-                "yum update -y aws-cfn-bootstrap\n",
                 "export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)\n",
                 "export INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)\n",
                 "export SPLUNK_USER=splunk\n",
                 "export SPLUNK_BIN=/opt/splunk/bin/splunk\n",
                 "export SPLUNK_HOME=/opt/splunk\n",
-                "printf '%s\t%s\n' \"$LOCALIP\" 'splunk-shc-deployer' >> /etc/hosts\n",
-                "hostname splunk-shc-deployer\n",
-                "mv $SPLUNK_HOME/etc/passwd $SPLUNK_HOME/etc/passwd.bak\n",
-                "cat >>$SPLUNK_HOME/etc/system/local/user-seed.conf <<end\n",
-                "[user_info]\n",
-                "USERNAME = admin\n",
-                "PASSWORD = ",
+                "export INSTALL_SH_APPS=0\n",
+
+                "export S3_USERDATA=\"",
                 {
-                  "Ref": "SplunkAdminPassword"
+                  "Fn::Sub": "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}scripts/user_data.sh"
                 },
-                "\n",
-                "end\n",
-                "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n",
-                "sed -i 's/ENFORCE_PWD_CHANGE=1/ENFORCE_PWD_CHANGE=0/' /etc/init.d/splunk\n",
-                "touch $SPLUNK_HOME/etc/.ui_login\n",
-                "/opt/splunk/bin/splunk restart\n",
-                "# Increase splunkweb connection timeout with splunkd\n",
-                "mkdir -p $SPLUNK_HOME/etc/apps/base-autogenerated/local\n",
-                "cat >>$SPLUNK_HOME/etc/apps/base-autogenerated/local/web.conf <<end\n",
-                "[settings]\n",
-                "splunkdConnectionTimeout = 300\n",
-                "end\n",
-                "# Configure some SHC parameters\n",
-                "cat >>$SPLUNK_HOME/etc/apps/base-autogenerated/local/server.conf <<end\n",
-                "\n",
-                "[shclustering]\n",
-                "pass4SymmKey = ",
+                "\"\n",
+
+                "export SYMMKEY=\"", {"Ref": "SplunkIndexerDiscoverySecret"}, "\" \n",
+                "export ADMIN_PASSWORD=\"", {"Ref": "SplunkAdminPassword"}, "\" \n",
+                "export STACK_NAME=\"", {"Ref": "AWS::StackName"}, "\" \n",
+                "export AWS_REGION=\"", {"Ref": "AWS::Region"}, "\" \n",
+                "export SPLUNK_CLUSTER_SECRET=\"", {"Ref": "SplunkClusterSecret"}, "\" \n",
+
+                "export CM_PRIVATEIP=\"",
                 {
-                  "Ref": "SplunkClusterSecret"
+                  "Fn::GetAtt": ["SplunkCM", "PrivateIp"]
                 },
-                "\n",
-                "shcluster_label = SplunkSHC\n",
-                "end\n",
-                "# Forward to indexer cluster using indexer discovery\n",
-                "cat >>$SPLUNK_HOME/etc/apps/base-autogenerated/local/outputs.conf <<end\n",
-                "# Turn off indexing on the search head\n",
-                "[indexAndForward]\n",
-                "index = false\n",
-                "\n",
-                "[tcpout]\n",
-                "defaultGroup = indexer_cluster_peers\n",
-                "forwardedindex.filter.disable = true\n",
-                "indexAndForward = false\n",
-                "\n",
-                "[tcpout:indexer_cluster_peers]\n",
-                "indexerDiscovery = cluster_master\n",
-                "\n",
-                "[indexer_discovery:cluster_master]\n",
-                "pass4SymmKey = ",
-                {
-                  "Ref": "SplunkIndexerDiscoverySecret"
-                },
-                "\n",
-                "master_uri = https://",
-                {
-                  "Fn::GetAtt": [
-                    "SplunkCM",
-                    "PrivateIp"
-                  ]
-                },
-                ":8089\n",
-                "end\n",
-                "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/apps/base-autogenerated\n",
-                "# Add base config for search head cluster members\n",
-                "mkdir -p $SPLUNK_HOME/etc/shcluster/apps/member-base-autogenerated/local\n",
-                "cat >>$SPLUNK_HOME/etc/shcluster/apps/member-base-autogenerated/local/outputs.conf <<end\n",
-                "# Turn off indexing on the search head\n",
-                "[indexAndForward]\n",
-                "index = false\n",
-                "\n",
-                "[tcpout]\n",
-                "defaultGroup = indexer_cluster_peers\n",
-                "forwardedindex.filter.disable = true\n",
-                "indexAndForward = false\n",
-                "\n",
-                "[tcpout:indexer_cluster_peers]\n",
-                "indexerDiscovery = cluster_master\n",
-                "\n",
-                "[indexer_discovery:cluster_master]\n",
-                "pass4SymmKey = ",
-                {
-                  "Ref": "SplunkIndexerDiscoverySecret"
-                },
-                "\n",
-                "master_uri = https://",
-                {
-                  "Fn::GetAtt": [
-                    "SplunkCM",
-                    "PrivateIp"
-                  ]
-                },
-                ":8089\n",
-                "end\n",
+                "\" \n",
+
                 {
                   "Fn::If": [
                     "InstallSearchHeadApps",
@@ -1416,8 +1268,9 @@
                       "Fn::Join": [
                         "",
                         [
-                          "# Add user-provided apps for cluster members\n",
-                          "user_apps=( ",
+                          "# Add user-provided apps on the search head\n",
+                          "export INSTALL_SH_APPS=1\n",
+                          "export USER_APPS=( ",
                           {
                             "Fn::Join": [
                               " ",
@@ -1426,56 +1279,16 @@
                               }
                             ]
                           },
-                          " )\n",
-                          "for i in ${!user_apps[*]}\n",
-                          "do\n",
-                          "   echo \"Downloading app ${user_apps[$i]}\"\n",
-                          "   if wget --tries=3 ${user_apps[$i]} -O /tmp/app${i}.spl; then\n",
-                          "        echo \"Installing app...\"\n",
-                          "        tar -xvzf /tmp/app${i}.spl -C $SPLUNK_HOME/etc/shcluster/apps/\n",
-                          "        if [ $? -ne 0 ]; then\n",
-                          "            echo \"Extracting tarball failed\"\n",
-                          "        fi\n",
-                          "        rm /tmp/app${i}.spl\n",
-                          "    else\n",
-                          "        echo \"Downloading tarball failed\"\n",
-                          "    fi\n",
-                          "done\n"
+                          " )\n"
                         ]
                       ]
                     },
                     ""
                   ]
                 },
-                "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/shcluster/apps\n",
-                "/opt/splunk/bin/splunk start\n",
-                "sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave ",
-                "-master_uri https://",
-                {
-                  "Fn::GetAtt": [
-                    "SplunkCM",
-                    "PrivateIp"
-                  ]
-                },
-                ":8089 ",
-                "-auth admin:",
-                {
-                  "Ref": "SplunkAdminPassword"
-                },
-                "\n",
-                "sudo -u $SPLUNK_USER $SPLUNK_BIN apply shcluster-bundle -action stage --answer-yes\n",
-                "/opt/splunk/bin/splunk restart\n",
-                "/opt/aws/bin/cfn-signal -e $? --stack ",
-                {
-                  "Ref": "AWS::StackName"
-                },
-                " --resource SplunkSHCDeployer",
-                " --region ",
-                {
-                  "Ref": "AWS::Region"
-                },
-                "\n",
-                "usermod --expiredate 1 splunk\n"
+               "# download user_data script\n",
+                "wget $S3_USERDATA -O /tmp/user_data.sh && chmod +x /tmp/user_data.sh\n",
+                "/tmp/user_data.sh cm\n"
               ]
             ]
           }
@@ -2288,10 +2101,7 @@
                 "[license]\n",
                 "master_uri = https://",
                 {
-                  "Fn::GetAtt": [
-                    "SplunkCM",
-                    "PrivateIp"
-                  ]
+                  "Fn::GetAtt": ["SplunkCM", "PrivateIp"]
                 },
                 ":8089\n",
                 "end\n",
@@ -2329,10 +2139,7 @@
                 " -site $site",
                 " -master_uri https://",
                 {
-                  "Fn::GetAtt": [
-                    "SplunkCM",
-                    "PrivateIp"
-                  ]
+                  "Fn::GetAtt": ["SplunkCM", "PrivateIp"]
                 },
                 ":8089 -auth admin:",
                 {
@@ -2641,10 +2448,7 @@
           [
             "https://",
             {
-              "Fn::GetAtt": [
-                "SplunkCM",
-                "PrivateIp"
-              ]
+              "Fn::GetAtt": ["SplunkCM", "PrivateIp"]
             },
             ":8089"
           ]

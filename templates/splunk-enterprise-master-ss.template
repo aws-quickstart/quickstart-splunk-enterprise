@@ -170,12 +170,12 @@
       "Type": "Number"
     },
     "SplunkLicenseBucket": {
-      "Default": "",
+      "Default": "splk-quickstart-testing",
       "Description": "Name of private S3 bucket with licenses to be accessed via authenticated requests",
       "Type": "String"
     },
     "SplunkLicensePath": {
-      "Default": "",
+      "Default": "license/splunk.license",
       "Description": "Path to license file in S3 Bucket (without leading '/')",
       "Type": "String"
     },
