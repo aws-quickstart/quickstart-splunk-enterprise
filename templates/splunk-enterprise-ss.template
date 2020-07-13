@@ -930,7 +930,7 @@
             {
               "config": {
                 "files": {
-                  "/etc/splunk/splunk.license": {
+                  "/opt/splunk/etc/licenses/enterprise/splunk.license": {
                     "source": {
                       "Fn::If": [
                         "ConfigureLicense",
