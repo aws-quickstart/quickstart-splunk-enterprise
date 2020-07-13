@@ -1,63 +1,65 @@
 #!/bin/bash
 
-# https://splk-quickstart-testing.s3.us-west-2.amazonaws.com/quickstart-splunk-enterprise/templates/splunk-enterprise-master-ss.template
+#### start universal functions
+function base
+{
 
-# variables
-export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
-export INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
-export SPLUNK_USER=splunk
-export SPLUNK_BIN=/opt/splunk/bin/splunk
-export SPLUNK_HOME=/opt/splunk
+  # https://splk-quickstart-testing.s3.us-west-2.amazonaws.com/quickstart-splunk-enterprise/templates/splunk-enterprise-master-ss.template
 
-
-# make cloud-init output log readable by root only to protect sensitive parameter values
-chmod 600 /var/log/cloud-init-output.log
-
-
-
-#- The newer version of the Splunk AMI does not come with Splunk pre-installed.  Instead
-#- Splunk is installed via ansible as part of cloud-init.  The following code (line 28) is
-#- needed to ensure these install scripts are ran prior to the remainder of the Cloudformation
-#- user scripts. Without doing this first, the Splunk installer is ran after CloudFormation's
-#- cloud-init scripts, leaving no Splunk install to configure.
-
-# remove the cloud-init scripts from running
-rm -f /etc/cloud/cloud.cfg.d/20_install_splunk.cfg
-rm -f /var/lib/cloud/instance/scripts/runcmd
-
-# run the ansible manually
-(cd /opt/splunk-ansible && time sudo -u ec2-user -E -S bash -c "SPLUNK_BUILD_URL=/tmp/splunk.tgz SPLUNK_ENABLE_SERVICE=true  SPLUNK_PASSWORD=SPLUNK-$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id) ansible-playbook -i inventory/environ.py site.yml")
-
-# start splunk for initialization, and then stop to make edits.
-#/bin/systemctl start Splunkd
-#/bin/systemctl stop Splunkd
-# $SPLUNK_BIN stop
-
-# update cfn package
-yum update -y aws-cfn-bootstrap
+  # variables
+  export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
+  export INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+  export SPLUNK_USER=splunk
+  export SPLUNK_BIN=/opt/splunk/bin/splunk
+  export SPLUNK_HOME=/opt/splunk
 
 
-# setup auth with user-selected admin password
-mv $SPLUNK_HOME/etc/passwd $SPLUNK_HOME/etc/passwd.bak
-cat >>$SPLUNK_HOME/etc/system/local/user-seed.conf <<end
-[user_info]
-USERNAME = admin
-PASSWORD = $ADMIN_PASSWORD
+  # make cloud-init output log readable by root only to protect sensitive parameter values
+  chmod 600 /var/log/cloud-init-output.log
+
+
+
+  #- The newer version of the Splunk AMI does not come with Splunk pre-installed.  Instead
+  #- Splunk is installed via ansible as part of cloud-init.  The following code (line 28) is
+  #- needed to ensure these install scripts are ran prior to the remainder of the Cloudformation
+  #- user scripts. Without doing this first, the Splunk installer is ran after CloudFormation's
+  #- cloud-init scripts, leaving no Splunk install to configure.
+
+  # remove the cloud-init scripts from running
+  rm -f /etc/cloud/cloud.cfg.d/20_install_splunk.cfg
+  rm -f /var/lib/cloud/instance/scripts/runcmd
+
+  # run the ansible manually
+  (cd /opt/splunk-ansible && time sudo -u ec2-user -E -S bash -c "SPLUNK_BUILD_URL=/tmp/splunk.tgz SPLUNK_ENABLE_SERVICE=true  SPLUNK_PASSWORD=SPLUNK-$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id) ansible-playbook -i inventory/environ.py site.yml")
+
+  # start splunk for initialization, and then stop to make edits.
+  #/bin/systemctl start Splunkd
+  #/bin/systemctl stop Splunkd
+  # $SPLUNK_BIN stop
+
+  # update cfn package
+  yum update -y aws-cfn-bootstrap
+
+
+  # setup auth with user-selected admin password
+  mv $SPLUNK_HOME/etc/passwd $SPLUNK_HOME/etc/passwd.bak
+  cat >> $SPLUNK_HOME/etc/system/local/user-seed.conf << end
+  [user_info]
+  USERNAME = admin
+  PASSWORD = $ADMIN_PASSWORD
 end
 
-sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg
-touch $SPLUNK_HOME/etc/.ui_login
+  sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg
+  touch $SPLUNK_HOME/etc/.ui_login
 
-# restart Splunk for admin password update
-$SPLUNK_BIN restart
-
-#### start universal functions
+  # restart Splunk for admin password update
+  $SPLUNK_BIN restart
+}
 
 function restart_signal
 {
 
   # restart splunk
-  #/bin/systemctl restart Splunkd
   $SPLUNK_BIN restart
 
   # communicate back to CloudFormation the status of the instance creation
@@ -78,6 +80,9 @@ function restart_signal
 ###
 function splunk_cm
 {
+  # execute base install and configuration
+  base
+
   export RESOURCE="SplunkCM"
   printf '%s\t%s\n' "$LOCALIP" 'splunklicense' >> /etc/hosts
   hostname splunklicense
@@ -90,14 +95,10 @@ function splunk_cm
 
   # Install license from metadata.  This is only relevant if the user uploads a license file.
   if [ $INSTALL_LICENSE = 1 ]; then
+    mkdir -p $SPLUNK_HOME/etc/licenses/enterprise/
+    chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/licenses/enterprise
     /opt/aws/bin/cfn-init -v --stack $STACK_NAME --resource $RESOURCE --region $AWS_REGION
-    mkdir -p /opt/splunk/etc/licenses/enterprise/
-    mv /etc/splunk/splunk.license /opt/splunk/etc/licenses/enterprise/splunk.license
   fi
-
-  mkdir -p $SPLUNK_HOME/etc/licenses/enterprise
-  chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/licenses/enterprise
-  mv /etc/splunk/splunk.license $SPLUNK_HOME/etc/licenses/enterprise/
 
   # Increase splunkweb connection timeout with splunkd
   mkdir -p $SPLUNK_HOME/etc/apps/base-autogenerated/local
@@ -223,11 +224,17 @@ end
 
 function indexer
 {
+
+  # execute base install and configuration
+  #base
   echo;
 }
 
 function splunk_cluster_sh
 {
+
+  # execute base install and configuration
+  #base
   echo;
 }
 
@@ -236,6 +243,9 @@ function splunk_cluster_sh
 ###
 function splunk_deployer
 {
+  # execute base install and configuration
+  base
+
   export RESOURCE="SplunkSHCDeployer"
   printf "$LOCALIP \t splunk-shc-deployer\n" >> /etc/hosts
   hostname splunk-shc-deployer
@@ -337,6 +347,9 @@ end
 ## splunk single search head
 function splunk_single_sh
 {
+  # execute base install and configuration
+  base
+
   # sleep 20 seconds to make sure Splunk has restarted before applying the configuration
   echo "#### sleeping"
   sleep 20
