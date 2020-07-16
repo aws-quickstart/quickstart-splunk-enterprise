@@ -148,11 +148,11 @@
       "Type": "String"
     },
     "SplunkIndexerCount": {
-      "ConstraintDescription": "must be a valid number, 3-10",
-      "Default": "3",
-      "Description": "How many Splunk indexers to launch.  [3-10]",
+      "ConstraintDescription": "must be a valid number, 4-10",
+      "Default": "4",
+      "Description": "How many Splunk indexers to launch.  [4-10]",
       "MaxValue": "10",
-      "MinValue": "3",
+      "MinValue": "4",
       "Type": "Number"
     },
     "SplunkIndexerDiskSize": {
