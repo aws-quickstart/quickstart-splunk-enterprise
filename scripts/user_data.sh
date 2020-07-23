@@ -67,7 +67,7 @@ function restart_signal
 #### end universal config
 
 #####
-#### start user data functions
+#### start role-specific functions
 #####
 
 ###
@@ -151,7 +151,9 @@ end
 
   printf "** create HEC token\t" && date
   # generate the config file and HEC token
-  sudo -u $SPLUNK_USER $SPLUNK_BIN http-event-collector enable -uri https://localhost:8089
+  sudo -u $SPLUNK_USER $SPLUNK_BIN http-event-collector enable \
+  -uri https://localhost:8089
+
   sudo -u $SPLUNK_USER $SPLUNK_BIN http-event-collector create default-token \
   -uri https://localhost:8089 > /tmp/token
   TOKEN=`sed -n 's/\\ttoken=//p' /tmp/token` && rm /tmp/token
@@ -283,14 +285,25 @@ end
       -master_uri https://$CM_PRIVATEIP:8089
 
       # configure searchhead cluster
+      echo "### setup splunk search head cluster"
+      echo "### sudo -u $SPLUNK_USER $SPLUNK_BIN init shcluster-config -mgmt_uri https://$LOCALIP:8089 -replication_port 8090 -replication_factor $SH_REPLICATION_FACTOR -conf_deploy_fetch_url https://$SH_DEPLOYER_IP:8089 \ -shcluster_label SplunkSHC -secret $SPLUNK_CLUSTER_SECRET"
+
       sudo -u $SPLUNK_USER $SPLUNK_BIN init shcluster-config \
-      -mgmt_uri https://$LOCALIP:8089 -replication_port 8090 \
+      -auth admin:$ADMIN_PASSWORD \
+      -mgmt_uri https://$LOCALIP:8089 \
+      -replication_port 8090 \
       -replication_factor $SH_REPLICATION_FACTOR \
       -conf_deploy_fetch_url https://$SH_DEPLOYER_IP:8089 \
-      -shcluster_label SplunkSHC \
+      -shcluster_label SplunkSHC\
       -secret $SPLUNK_CLUSTER_SECRET
 
-      sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode searchhead \
+      $SPLUNK_BIN restart
+      sleep 10
+
+      echo "### sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode searchhead -site $sitenum -master_uri https://$CM_PRIVATEIP:8089 -secret $SPLUNK_CLUSTER_SECRET"
+
+      sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config \
+      -mode searchhead \
       -site $sitenum \
       -master_uri https://$CM_PRIVATEIP:8089 \
       -secret $SPLUNK_CLUSTER_SECRET
@@ -300,12 +313,16 @@ end
       # searchhead3 will be bootstrapped as the first searchhead cluster captain.
       if [ $num -eq 3 ]
       then
+        echo "### setup splunk search head captain"
+        export SH3_IP=$LOCALIP
+
+        echo "### sudo -u $SPLUNK_USER $SPLUNK_BIN bootstrap shcluster-captain -servers_list https://$SH1_IP:8089,https://$SH2_IP:8089,https://$SH3_IP:8089"
+
         sudo -u $SPLUNK_USER $SPLUNK_BIN bootstrap shcluster-captain \
-        -servers_list https://$SH1_IP:8089,https://$SH2_IP:8089,https://$SH3_IP:8089
+        -servers_list https://$SH1_IP:8089,https://$SH2_IP:8089,https://$SH3_IP:8089 \
+        -auth admin:$ADMIN_PASSWORD
       fi
-
       restart_signal
-
   else
     echo "Incorrect value passed.  \"$1\" is not 1, 2, or 3."
     # communicate back to CloudFormation the status of the instance creation
@@ -356,7 +373,6 @@ end
 
   [indexer_discovery:cluster_master]
   pass4SymmKey = $SYMMKEY
-
   master_uri = https://$CM_PRIVATEIP:8089
 end
 
@@ -387,16 +403,14 @@ end
   #- set ownership
   chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/apps
 
-  $SPLUNK_BIN start
+  $SPLUNK_BIN restart
   sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave \
-  -master_uri https://$CM_PRIVATEIP:8089 -auth admin:$ADMIN_PASSWORD
+  -master_uri https://$CM_PRIVATEIP:8089 \
+  -auth admin:$ADMIN_PASSWORD
 
   sudo -u $SPLUNK_USER $SPLUNK_BIN apply shcluster-bundle -action stage --answer-yes
 
-  $SPLUNK_BIN restart
-
   restart_signal
-
 }
 
 ## splunk single search head
@@ -453,8 +467,12 @@ end
   printf "#### clustering setup\t " && date
 
   # configure communication to the splunk indexer cluster
-  sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -secret $SPLUNK_CLUSTER_SECRET \
-  -mode searchhead -site site1 -master_uri https://$CM_PRIVATEIP:8089 -auth admin:$ADMIN_PASSWORD
+  sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config \
+  -secret $SPLUNK_CLUSTER_SECRET \
+  -mode searchhead \
+  -site site1 \
+  -master_uri https://$CM_PRIVATEIP:8089 \
+  -auth admin:$ADMIN_PASSWORD
 
   # install search head apps, if appropriate
   if [ $INSTALL_SH_APPS = 1 ];
@@ -481,9 +499,6 @@ end
   # final restart and cfn signal
   restart_signal
 }
-
-
-
 
 case "$1" in
   "single_sh")

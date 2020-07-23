@@ -1278,7 +1278,6 @@
     },
     "SplunkSHCMember1": {
       "Type": "AWS::EC2::Instance",
-      "DependsOn": "SplunkSHCDeployer",
       "Condition": "CreateSHC",
       "CreationPolicy": {
         "ResourceSignal": {
@@ -1377,11 +1376,7 @@
 
                 "export THREEAZ=\"",
                 {
-                  "Fn::If": [
-                    "Create3AZ",
-                    "1",
-                    "0"
-                  ]
+                  "Fn::If": ["Create3AZ", "1", "0"]
                 },
                 "\"\n",
 
@@ -1404,7 +1399,6 @@
     },
     "SplunkSHCMember2": {
       "Type": "AWS::EC2::Instance",
-      "DependsOn": "SplunkSHCMember1",
       "Condition": "CreateSHC",
       "CreationPolicy": {
         "ResourceSignal": {
@@ -1503,11 +1497,7 @@
 
                 "export THREEAZ=\"",
                 {
-                  "Fn::If": [
-                    "Create3AZ",
-                    "1",
-                    "0"
-                  ]
+                  "Fn::If": ["Create3AZ", "1", "0"]
                 },
                 "\"\n",
 
@@ -1530,7 +1520,6 @@
     },
     "SplunkSHCMember3": {
       "Type": "AWS::EC2::Instance",
-      "DependsOn": "SplunkSHCMember2",
       "Condition": "CreateSHC",
       "CreationPolicy": {
         "ResourceSignal": {
@@ -1637,11 +1626,7 @@
 
                 "export THREEAZ=\"",
                 {
-                  "Fn::If": [
-                    "Create3AZ",
-                    "1",
-                    "0"
-                  ]
+                  "Fn::If": ["Create3AZ", "1", "0"]
                 },
                 "\"\n",
 
@@ -1671,21 +1656,6 @@
                   ]
                 },
                 "\" \n",
-
-                "export SH3_IP=\"",
-                {
-                  "Fn::GetAtt": [
-                    "SplunkSHCMember3",
-                    "PrivateIp"
-                  ]
-                },
-                "\" \n",
-
-                " -auth admin:",
-                {
-                  "Ref": "SplunkAdminPassword"
-                },
-                "\n",
 
                 "# download user_data script\n",
                 "wget $S3_USERDATA -O /tmp/user_data.sh && chmod +x /tmp/user_data.sh\n",
