@@ -223,7 +223,6 @@ end
 
 function splunk_indexer
 {
-
   # execute base install and configuration
   base
 
@@ -256,6 +255,7 @@ end
 
   chown -R splunk:splunk $SPLUNK_HOME/etc/slave-apps/_cluster/
   $SPLUNK_BIN restart
+
 
   # set splunk server name to local hostname.
   sudo -u $SPLUNK_USER $SPLUNK_BIN set servername $HOSTNAME -auth admin:$ADMIN_PASSWORD
@@ -297,6 +297,9 @@ end
       exit 1
   esac
 
+
+  # sleep to ensure splunkd is up before modifying cluster config
+  sleep 10
 
   sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode slave \
     -site $site \
