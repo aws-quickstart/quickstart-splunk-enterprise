@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Splunk deployment with indexer, search head clustering and cluster master.
-  QS(5030)
+  (qs-1qup6ramp)
 Metadata:
   AWSAMIRegionMap:
     Filters:
