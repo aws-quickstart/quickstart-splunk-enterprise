@@ -71,6 +71,85 @@ function restart_signal
 #####
 
 ###
+# setup nvme drives for i3 indexers
+function nvme_setup
+{
+  # first, determine the instance type.
+  ec2_type=$(curl -s http://169.254.169.254/latest/meta-data/instance-type)
+
+  # this script is intended to run on i3* instance types.
+  if [[ "$ec2_type" != *"i3"* ]]
+  then
+    return 0
+  fi
+
+  # find the attached nvme drives.  lsblk could work here, but utilizing the nvme-list utility due to
+  # json formatting and simpler parsing.  install the nvme-cli and jq packages to accomplish this.
+  yum -y install nvme-cli jq >/dev/null
+
+  # save the nvme drive information to a temp file for parsing
+  nvme list --output-format=json > /tmp/nvme_drive.json
+
+  # declare the nvme device array
+  declare -a nvme_devices
+  unset nvme_devices
+
+  for nvme_device in $(jq '.Devices[] | .DevicePath' /tmp/nvme_drive.json)
+  do
+    # test to ensure that the storage device is instance storage.  in testing, I have
+    # seen EBS volues show as NVME.  this logic will ensure attached EBS devices are not
+    # added to the nvme raid0
+    nvme_model_type=$(jq -r '.Devices[] | select(.DevicePath=='$nvme_device') | .ModelNumber' /tmp/nvme_drive.json)
+    if [[ $nvme_model_type = *"NVMe Instance Storage"* ]]
+    then
+      # unfortunate 'hack' here to remove the quotes from the device name.  without them, the jq lookup
+      # will fail in the previous step.  however, they need to be removed for the md raid creation later.
+      # additionally, since there needs to be a space between device names for the md create, convert
+      # quotes to spaces, and remove leading space.  this leaves "$nvme_device " (note trailing space)
+      # stored in the array.  this will allow for simply using the contents of the array as an argument for
+      # building the raid0 device
+      nvme_device=$(echo $nvme_device|sed 's/"/ /g'| sed 's/^ //g')
+
+      # save device list in nvme_devices array
+      nvme_devices+=("$nvme_device")
+    else
+      # if the nvme model type is not instance storage, continue to the next iteration of the loop
+      continue
+    fi
+  done
+
+
+  # name of the raid device to create
+  raid_device="/dev/md0"
+
+  # mount point of the raid device
+  raid_mount="/opt/splunk"
+
+  # make directory for mount point
+  mkdir -p $raid_mount
+
+  # create the raid device
+  mdadm --create $raid_device --level=raid0 --raid-devices=${#nvme_devices[@]} ${nvme_devices[@]}
+
+  # create filesystem on raid device
+  if [ ${#nvme_devices[@]} -eq 1 ]
+   then
+      discardOption=""
+    else
+      discardOption="-E nodiscard"
+  fi
+
+  mkfs.ext4 -m 2 -F -F ${discardOption} $raid_device
+
+  # add entry to fstab for mounting on reboot
+  echo "$raid_device $raid_mount auto defaults,nofail,noatime 0 2" >>/etc/fstab
+
+  # mount device
+  mount $raid_device
+
+}
+
+###
 # Splunk Cluster Master / License Master
 ###
 function splunk_cm
@@ -223,6 +302,10 @@ end
 
 function splunk_indexer
 {
+  # run through setting up nvme raid device.
+  #  if the indexer is not an i3, the function immediately exits and continues to base config as normal
+  nvme_setup
+
   # execute base install and configuration
   base
 

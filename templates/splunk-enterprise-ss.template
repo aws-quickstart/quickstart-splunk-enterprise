@@ -20,16 +20,16 @@
     },
     "IndexerInstanceType": {
       "AllowedValues": [
-        "m5.2xlarge",
         "m5.4xlarge",
-        "m5.10xlarge",
-        "c5.2xlarge",
+        "m5.8xlarge",
         "c5.4xlarge",
         "c5.9xlarge",
         "c5.18xlarge",
-        "i3.2xlarge",
         "i3.4xlarge",
-        "i3.8xlarge"
+        "i3.8xlarge",
+        "i3en.3xlarge",
+        "i3en.6xlarge",
+        "i3en.12xlarge"
       ],
       "Description": "EC2 instance type for Splunk Indexers",
       "ConstraintDescription": "must be a valid EC2 instance type.",
@@ -41,11 +41,11 @@
         "r5.4xlarge",
         "r5.8xlarge",
         "r5.16xlarge",
-        "c5.2xlarge",
         "c5.4xlarge",
         "c5.9xlarge",
         "m5.2xlarge",
         "m5.4xlarge",
+        "m5.8xlarge",
         "m5.12xlarge"
       ],
       "Description": "EC2 instance type for Splunk Search Heads",
