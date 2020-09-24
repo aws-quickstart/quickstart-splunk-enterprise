@@ -1,1 +1,6 @@
-// placeholder
+
+=== Parameters for a new VPC
+include::splunk-enterprise-master.template.adoc[]
+
+=== Parameters for an existing VPC
+include::splunk-enterprise.template.adoc[]

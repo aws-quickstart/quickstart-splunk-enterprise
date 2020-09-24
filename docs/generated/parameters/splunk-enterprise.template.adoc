@@ -1,0 +1,36 @@
+
+.AWS Instance and Network Settings
+[width="100%",cols="16%,11%,73%",options="header",]
+|===
+|Parameter label (name) |Default value|Description|EC2 instance type for Splunk indexer
+(`IndexerInstanceType`)|`c5.4xlarge`|EC2 instance type for Splunk Indexers|EC2 instance type for Splunk search head
+(`SearchHeadInstanceType`)|`c5.4xlarge`|EC2 instance type for Splunk Search Heads|Key Name
+(`KeyName`)|`**__Requires input__**`|Name of an existing EC2 KeyPair to enable SSH access to the instance|Permitted CIDR for Splunk web interface
+(`WebClientLocation`)|`**__Requires input__**`|The IP address range that is allowed to connect to the Splunk web interface. Note: a value of 0.0.0.0/0 will allow access from ANY ip address|Permitted CIDR for Splunk HTTP event collector input
+(`HECClientLocation`)|`**__Requires input__**`|The IP address range that is allowed to send data to Splunk HTTP Event Collector. Note: a value of 0.0.0.0/0 will allow access from ANY ip address|Permitted CIDR for ssh
+(`SSHClientLocation`)|`**__Requires input__**`|The IP address range that is allowed to SSH to the EC2 instances. Note: a value of 0.0.0.0/0 will allow access from ANY ip address|VPC ID
+(`VPCID`)|`**__Requires input__**`|VPC ID|VPC CIDR
+(`VPCCIDR`)|`**__Requires input__**`|VPC CIDR Block (x.x.x.x/x notation)|Public Subnet 1 ID
+(`PublicSubnet1ID`)|`**__Requires input__**`|ID of Splunk public subnet 1 in Availability Zone 1 (e.g., subnet-xxxxxxxx)|Public Subnet 2 ID
+(`PublicSubnet2ID`)|`**__Requires input__**`|ID of Splunk public subnet 2 in Availability Zone 2 (e.g., subnet-xxxxxxxx)|Public Subnet 3 ID
+(`PublicSubnet3ID`)|`**__Blank string__**`|ID of Splunk public subnet 3 in Availability Zone 3 (e.g., subnet-xxxxxxxx)|Number of Availability Zones
+(`NumberOfAZs`)|`2`|Number of Availability Zones to use in the VPC. This must match the number public subnet IDs entered as parameters
+|===
+.Splunk Settings
+[width="100%",cols="16%,11%,73%",options="header",]
+|===
+|Parameter label (name) |Default value|Description|Splunk Admin Password
+(`SplunkAdminPassword`)|`**__Requires input__**`|Admin password for Splunk. Must be at least 6 characters containing letters, numbers and symbols.|Shared Security Key for Cluster Nodes
+(`SplunkClusterSecret`)|`**__Requires input__**`|Shared cluster secret for Search Head and Indexer cluster nodes. Must be at least 8 characters containing letters, numbers and symbols.|Shared Security Key for Forwarders using Indexer Discovery
+(`SplunkIndexerDiscoverySecret`)|`**__Requires input__**`|Security key used for communication between your forwarders and the cluster master. This value should also be used by forwarders in order to retrieve list of available peer nodes from cluster master. Must be at least 8 characters containing letters, numbers and symbols.|Splunk License Bucket
+(`SplunkLicenseBucket`)|`**__Blank string__**`|Name of private S3 bucket with licenses to be accessed via authenticated requests|Splunk License S3 Bucket Path
+(`SplunkLicensePath`)|`**__Blank string__**`|Path to license file in S3 Bucket (without leading '/')|No. of Splunk Indexers
+(`SplunkIndexerCount`)|`3`|How many Splunk indexers to launch.  [3-10]|Indexer Disk Size
+(`SplunkIndexerDiskSize`)|`320`|The size of the attached EBS volume to the Splunk indexers.  (in GB)|Search Head(s) Disk Size
+(`SplunkSearchHeadDiskSize`)|`320`|The size of the attached EBS volume to the Splunk search head(s).  (in GB)|Index Cluster Replication Factor
+(`SplunkReplicationFactor`)|`2`|How many copies of data should be stored in the Splunk Indexer Cluster|Index Cluster Search Factor
+(`SplunkSearchFactor`)|`2`|How many copies of data should be searchable in the Splunk indexer clusters|Enable Search Head Cluster?
+(`SHCEnabled`)|`no`|Do you want to build a Splunk search head cluster?|Apps/Add-ons to pre-Install on Splunk Indexers
+(`IndexerApps`)|`**__Blank string__**`|Comma separated list of URLs of Splunk App (or Add-on) tarballs (.spl) to pre-install on indexer(s)|Apps/Add-ons to pre-Install on Splunk Search Heads
+(`SearchHeadApps`)|`**__Blank string__**`|Comma separated list of URLs of Splunk App (or Add-on) tarballs (.spl) to pre-install on search head(s)
+|===

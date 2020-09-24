@@ -1,1 +1,18 @@
-// placeholder
+
+:template_autoscaling:
+:template_aws_autoscaling_autoscalinggroup:
+:template_aws_autoscaling_launchconfiguration:
+:template_aws_cloudformation_stack:
+:template_aws_cloudformation_waitcondition:
+:template_aws_cloudformation_waitconditionhandle:
+:template_aws_ec2_instance:
+:template_aws_ec2_securitygroup:
+:template_aws_elasticloadbalancing_loadbalancer:
+:template_aws_iam_accesskey:
+:template_aws_iam_user:
+:template_aws_s3_bucketpolicy:
+:template_cloudformation:
+:template_ec2:
+:template_elasticloadbalancing:
+:template_iam:
+:template_s3:

@@ -1,0 +1,44 @@
+
+.AWS Instance and Network Settings
+[width="100%",cols="16%,11%,73%",options="header",]
+|===
+|Parameter label (name) |Default value|Description|EC2 instance type for Splunk indexer
+(`IndexerInstanceType`)|`c5.4xlarge`|EC2 instance type for Splunk Indexers|EC2 instance type for Splunk search head
+(`SearchHeadInstanceType`)|`c5.4xlarge`|EC2 instance type for Splunk Search Heads|Key Name
+(`KeyName`)|`**__Requires input__**`|Name of an existing EC2 KeyPair to enable SSH access to the instance|Permitted CIDR for Splunk web interface
+(`WebClientLocation`)|`**__Requires input__**`|The IP address range that is allowed to connect to the Splunk web interface. Note: a value of 0.0.0.0/0 will allow access from ANY ip address|Permitted CIDR for Splunk HTTP event collector input
+(`HECClientLocation`)|`**__Requires input__**`|The IP address range that is allowed to send data to Splunk HTTP Event Collector. Note: a value of 0.0.0.0/0 will allow access from ANY ip address|Permitted CIDR for ssh
+(`SSHClientLocation`)|`**__Requires input__**`|The IP address range that is allowed to SSH to the EC2 instances. Note: a value of 0.0.0.0/0 will allow access from ANY ip address|Availability Zones
+(`AvailabilityZones`)|`**__Requires input__**`|List of Availability Zones to use for the subnets in the VPC (logical order preserved). This must match the Number of Availability Zones parameter value.|Number of Availability Zones
+(`NumberOfAZs`)|`2`|Number of Availability Zones to use in the VPC. This must match your selections in the list of Availability Zones parameter.|VPC CIDR
+(`VPCCIDR`)|`10.0.0.0/16`|The address space that will be assigned to the entire VPC where Splunk will reside. (Recommend at least a /16)|Public Subnet 1 CIDR
+(`PublicSubnet1CIDR`)|`10.0.1.0/24`|The address space that will be assigned to the first Splunk server subnet. (x.x.x.x/x notation)|Public Subnet 2 CIDR
+(`PublicSubnet2CIDR`)|`10.0.2.0/24`|The address space that will be assigned to the second Splunk server subnet. (x.x.x.x/x notation)|Public Subnet 3 CIDR
+(`PublicSubnet3CIDR`)|`10.0.3.0/24`|The address space that will be assigned to the second Splunk server subnet. (x.x.x.x/x notation)
+|===
+.Splunk Settings
+[width="100%",cols="16%,11%,73%",options="header",]
+|===
+|Parameter label (name) |Default value|Description|Splunk Admin Password
+(`SplunkAdminPassword`)|`**__Requires input__**`|Admin password for Splunk. Must be at least 6 characters containing letters, numbers and symbols|Shared Security Key for Cluster Nodes
+(`SplunkClusterSecret`)|`**__Requires input__**`|Shared cluster secret for Search Head and Indexer clusters. Must be at least 8 characters containing letters, numbers and symbols.|Shared Security Key for Forwarders using Indexer Discovery
+(`SplunkIndexerDiscoverySecret`)|`**__Requires input__**`|Security key used for communication between your forwarders and the cluster master. This value should also be used by forwarders in order to retrieve list of available peer nodes from cluster master. Must be at least 8 characters containing letters, numbers and symbols.|Splunk License Bucket
+(`SplunkLicenseBucket`)|`**__Blank string__**`|Name of private S3 bucket with licenses to be accessed via authenticated requests|Splunk License S3 Bucket Path
+(`SplunkLicensePath`)|`**__Blank string__**`|Path to license file in S3 Bucket (without leading '/')|No. of Splunk Indexers
+(`SplunkIndexerCount`)|`3`|How many Splunk indexers to launch.  [3-10]|Indexer Disk Size
+(`SplunkIndexerDiskSize`)|`320`|The size of the attached EBS volume to the Splunk indexers.  (in GB)|Search Head(s) Disk Size
+(`SplunkSearchHeadDiskSize`)|`320`|The size of the attached EBS volume to the Splunk search head(s).  (in GB)|Index Cluster Replication Factor
+(`SplunkReplicationFactor`)|`2`|How many copies of data should be stored in the Splunk Indexer Cluster|Index Cluster Search Factor
+(`SplunkSearchFactor`)|`2`|How many copies of data should be searchable in the Splunk indexer clusters|Enable Search Head Cluster?
+(`SHCEnabled`)|`no`|Do you want to build a Splunk search head cluster?|Apps/Add-ons to pre-Install on Splunk Indexers
+(`IndexerApps`)|`**__Blank string__**`|Comma separated list of URLs of Splunk App (or Add-on) tarballs (.spl) to pre-install on indexer(s)|Apps/Add-ons to pre-Install on Splunk Search Heads
+(`SearchHeadApps`)|`**__Blank string__**`|Comma separated list of URLs of Splunk App (or Add-on) tarballs (.spl) to pre-install on search head(s)
+|===
+.AWS Quick Start Configuration
+[width="100%",cols="16%,11%,73%",options="header",]
+|===
+|Parameter label (name) |Default value|Description|QuickStart S3 Bucket Name
+(`QSS3BucketName`)|`aws-quickstart`|S3 bucket name for the Quick Start assets.|Quick Start S3 bucket region
+(`QSS3BucketRegion`)|`us-east-1`|The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.|QuickStart S3 Key Prefix
+(`QSS3KeyPrefix`)|`quickstart-splunk-enterprise/`|S3 key prefix for the Quick Start assets.
+|===
