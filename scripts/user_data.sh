@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -xe
 
 #### start universal functions
 function base
@@ -464,7 +464,7 @@ end
       -secret $SPLUNK_CLUSTER_SECRET
 
       $SPLUNK_BIN restart
-      sleep 10
+      sleep 20
 
       echo "### sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode searchhead -site $sitenum -master_uri https://$CM_PRIVATEIP:8089 -secret $SPLUNK_CLUSTER_SECRET"
 
@@ -570,6 +570,8 @@ end
   chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/apps
 
   $SPLUNK_BIN restart
+  sleep 10
+
   sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave \
   -master_uri https://$CM_PRIVATEIP:8089 \
   -auth admin:$ADMIN_PASSWORD
