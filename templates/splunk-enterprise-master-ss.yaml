@@ -1,0 +1,364 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Splunk deployment with indexer, search head clustering and cluster master.
+Parameters:
+  AvailabilityZones:
+    Description: List of Availability Zones to use for the subnets in the VPC (logical order preserved). This must match the Number of Availability Zones parameter value.
+    Type: List<AWS::EC2::AvailabilityZone::Name>
+  NumberOfAZs:
+    AllowedValues:
+      - '2'
+      - '3'
+    Default: '2'
+    Description: Number of Availability Zones to use in the VPC. This must match your selections in the list of Availability Zones parameter.
+    Type: String
+  WebClientLocation:
+    Default: '0.0.0.0/0'
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+    ConstraintDescription: Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions.
+    Description: 'The IP address range that is allowed to connect to the Splunk web interface. Note: a value of 0.0.0.0/0 will allow access from ANY ip address.'
+    MaxLength: '19'
+    MinLength: '9'
+    Type: String
+  HECClientLocation:
+    Default: '0.0.0.0/0'
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+    ConstraintDescription: Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions.
+    Description: 'The IP address range that is allowed to send data to Splunk HTTP Event Collector. Note: a value of 0.0.0.0/0 will allow access from ANY ip address.'
+    MaxLength: '19'
+    MinLength: '9'
+    Type: String
+  IndexerInstanceType:
+    AllowedValues:
+      - m5.4xlarge
+      - m5.8xlarge
+      - c5.4xlarge
+      - c5.9xlarge
+      - c5.18xlarge
+      - i3.4xlarge
+      - i3.8xlarge
+      - i3en.3xlarge
+      - i3en.6xlarge
+      - i3en.12xlarge
+    Description: EC2 instance type for Splunk Indexers
+    ConstraintDescription: must be a valid EC2 instance type.
+    Default: c5.4xlarge
+    Type: String
+  SearchHeadInstanceType:
+    AllowedValues:
+      - r5.4xlarge
+      - r5.8xlarge
+      - r5.16xlarge
+      - c5.4xlarge
+      - c5.9xlarge
+      - m5.2xlarge
+      - m5.4xlarge
+      - m5.8xlarge
+      - m5.12xlarge
+    Description: EC2 instance type for Splunk Search Heads
+    ConstraintDescription: must be a valid EC2 instance type.
+    Default: c5.4xlarge
+    Type: String
+  IndexerApps:
+    Description: Comma separated list of URLs of Splunk App (or Add-on) tarballs (.spl) to pre-install on indexer(s)
+    Default: ''
+    Type: CommaDelimitedList
+  SearchHeadApps:
+    Description: Comma separated list of URLs of Splunk App (or Add-on) tarballs (.spl) to pre-install on search head(s)
+    Default: ''
+    Type: CommaDelimitedList
+  KeyName:
+    ConstraintDescription: Must be the name of an existing EC2 KeyPair.
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+  PublicSubnet1CIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+    Default: 10.0.1.0/24
+    Description: The address space that will be assigned to the first Splunk server subnet. (x.x.x.x/x notation)
+    Type: String
+  PublicSubnet2CIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x
+    Default: 10.0.2.0/24
+    Description: The address space that will be assigned to the second Splunk server subnet. (x.x.x.x/x notation)
+    Type: String
+  PublicSubnet3CIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+    Default: 10.0.3.0/24
+    Description: The address space that will be assigned to the second Splunk server subnet. (x.x.x.x/x notation)
+    Type: String
+  QSS3BucketName:
+    Description: S3 bucket name for the Quick Start assets.
+    Default: splk-quickstart-testing
+    Type: String
+  QSS3KeyPrefix:
+    Default: quickstart-splunk-enterprise/
+    Description: S3 key prefix for the Quick Start assets.
+    Type: String
+  SHCEnabled:
+    AllowedValues:
+      - 'yes'
+      - 'no'
+    Default: 'no'
+    Description: Do you want to build a Splunk search head cluster?
+    Type: String
+  SSHClientLocation:
+    Default: '0.0.0.0/0'
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+    ConstraintDescription: Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions.
+    Description: 'The IP address range that is allowed to SSH to the EC2 instances. Note: a value of 0.0.0.0/0 will allow access from ANY ip address'
+    MaxLength: '19'
+    MinLength: '9'
+    Type: String
+  SplunkAdminPassword:
+    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
+    ConstraintDescription: Must be at least 8 characters containing letters, numbers and symbols.
+    Description: Admin password for Splunk. Must be at least 8 characters containing letters, numbers and symbols
+    MaxLength: '32'
+    MinLength: '6'
+    NoEcho: 'true'
+    Type: String
+  SplunkIndexerCount:
+    ConstraintDescription: must be a valid number, 4-10
+    Default: '4'
+    Description: How many Splunk indexers to launch.  [4-10]
+    MaxValue: '10'
+    MinValue: '4'
+    Type: Number
+  SplunkIndexerDiskSize:
+    ConstraintDescription: must be a valid number, 320-16000
+    Default: '320'
+    Description: The size of the attached EBS volume to the Splunk indexers.  (in GB)
+    MaxValue: '16000'
+    MinValue: '320'
+    Type: Number
+  SplunkSearchHeadDiskSize:
+    ConstraintDescription: must be a valid number, 320-16000
+    Default: '320'
+    Description: The size of the attached EBS volume to the Splunk search head(s).  (in GB)
+    MaxValue: '16000'
+    MinValue: '320'
+    Type: Number
+  SplunkLicenseBucket:
+    Default: splk-quickstart-testing
+    Description: Name of private S3 bucket with licenses to be accessed via authenticated requests
+    Type: String
+  SplunkLicensePath:
+    Default: license/splunk.license
+    Description: Path to license file in S3 Bucket (without leading '/')
+    Type: String
+  SplunkReplicationFactor:
+    ConstraintDescription: must be a valid number, 2-4
+    Default: '2'
+    Description: How many copies of data should be stored in the Splunk Indexer Cluster
+    MaxValue: '4'
+    MinValue: '2'
+    Type: Number
+  SplunkSearchFactor:
+    ConstraintDescription: must be a valid number, 2-4
+    Default: '2'
+    Description: How many copies of data should be searchable in the Splunk indexer clusters
+    MaxValue: '4'
+    MinValue: '2'
+    Type: Number
+  SplunkClusterSecret:
+    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
+    ConstraintDescription: Must be at least 8 characters containing letters, numbers and symbols.
+    Description: Shared cluster secret for Search Head and Indexer clusters. Must be at least 8 characters containing letters, numbers and symbols.
+    MaxLength: '32'
+    MinLength: '6'
+    NoEcho: 'true'
+    Type: String
+  SplunkIndexerDiscoverySecret:
+    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
+    ConstraintDescription: Must be at least 8 characters containing letters, numbers and symbols.
+    Description: Security key used for communication between your forwarders and the cluster master. This value should also be used by forwarders in order to retrieve list of available peer nodes from cluster master. Must be at least 8 characters containing letters, numbers and symbols.
+    MaxLength: '32'
+    MinLength: '8'
+    NoEcho: 'true'
+    Type: String
+  VPCCIDR:
+    AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+    Default: 10.0.0.0/16
+    Description: The address space that will be assigned to the entire VPC where Splunk will reside. (Recommend at least a /16)
+    MaxLength: '19'
+    MinLength: '9'
+    Type: String
+  SmartStoreBucketName:
+    Default: bbartlett-smartstore-testing
+    Description: Name of bucket that will be created for SmartStore storage
+    Type: String
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: AWS Instance and Network Settings
+        Parameters:
+          - IndexerInstanceType
+          - SearchHeadInstanceType
+          - KeyName
+          - WebClientLocation
+          - HECClientLocation
+          - SSHClientLocation
+          - AvailabilityZones
+          - NumberOfAZs
+          - VPCCIDR
+          - PublicSubnet1CIDR
+          - PublicSubnet2CIDR
+          - PublicSubnet3CIDR
+      - Label:
+          default: Splunk Settings
+        Parameters:
+          - SplunkAdminPassword
+          - SplunkClusterSecret
+          - SplunkIndexerDiscoverySecret
+          - SplunkLicenseBucket
+          - SplunkLicensePath
+          - SplunkIndexerCount
+          - SplunkIndexerDiskSize
+          - SplunkSearchHeadDiskSize
+          - SplunkReplicationFactor
+          - SplunkSearchFactor
+          - SmartStoreBucketName
+          - SHCEnabled
+          - IndexerApps
+          - SearchHeadApps
+      - Label:
+          default: AWS Quick Start Configuration
+        Parameters:
+          - QSS3BucketName
+          - QSS3KeyPrefix
+    ParameterLabels:
+      AvailabilityZones:
+        default: Availability Zones
+      NumberOfAZs:
+        default: Number of Availability Zones
+      WebClientLocation:
+        default: Permitted CIDR for Splunk web interface
+      HECClientLocation:
+        default: Permitted CIDR for Splunk HTTP event collector input
+      IndexerInstanceType:
+        default: EC2 instance type for Splunk indexer
+      SearchHeadInstanceType:
+        default: EC2 instance type for Splunk search head
+      KeyName:
+        default: Key Name
+      PublicSubnet1CIDR:
+        default: Public Subnet 1 CIDR
+      PublicSubnet2CIDR:
+        default: Public Subnet 2 CIDR
+      PublicSubnet3CIDR:
+        default: Public Subnet 3 CIDR
+      QSS3BucketName:
+        default: QuickStart S3 Bucket Name
+      QSS3KeyPrefix:
+        default: QuickStart S3 Key Prefix
+      SHCEnabled:
+        default: Enable Search Head Cluster?
+      SSHClientLocation:
+        default: Permitted CIDR for ssh
+      SplunkAdminPassword:
+        default: Splunk Admin Password
+      SplunkIndexerCount:
+        default: No. of Splunk Indexers
+      SplunkIndexerDiskSize:
+        default: Indexer Disk Size
+      SplunkLicenseBucket:
+        default: Splunk License Bucket
+      SplunkLicensePath:
+        default: Splunk License S3 Bucket Path
+      SplunkReplicationFactor:
+        default: Index Cluster Replication Factor
+      SplunkSearchFactor:
+        default: Index Cluster Search Factor
+      SmartStoreBucketName:
+        default: Name of bucket that will be created for SmartStore storage
+      SplunkClusterSecret:
+        default: Shared Security Key for Cluster Nodes
+      SplunkIndexerDiscoverySecret:
+        default: Shared Security Key for Forwarders using Indexer Discovery
+      IndexerApps:
+        default: Apps/Add-ons to pre-Install on Splunk Indexers
+      SearchHeadApps:
+        default: Apps/Add-ons to pre-Install on Splunk Search Heads
+      VPCCIDR:
+        default: VPC CIDR
+Conditions:
+  Create3AZ: !Equals
+    - !Ref 'NumberOfAZs'
+    - '3'
+Resources:
+  VPCStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}submodules/quickstart-aws-vpc/templates/aws-vpc.template'
+      Parameters:
+        AvailabilityZones: !Join
+          - ','
+          - !Ref 'AvailabilityZones'
+        CreatePrivateSubnets: 'false'
+        KeyPairName: !Ref 'KeyName'
+        NumberOfAZs: !Ref 'NumberOfAZs'
+        PublicSubnet1CIDR: !Ref 'PublicSubnet1CIDR'
+        PublicSubnet2CIDR: !Ref 'PublicSubnet2CIDR'
+        PublicSubnet3CIDR: !Ref 'PublicSubnet3CIDR'
+        VPCCIDR: !Ref 'VPCCIDR'
+      TimeoutInMinutes: 15
+  SplunkStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/splunk-enterprise-ss.yaml'
+      Parameters:
+        VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
+        VPCCIDR: !GetAtt 'VPCStack.Outputs.VPCCIDR'
+        PublicSubnet1ID: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
+        PublicSubnet2ID: !GetAtt 'VPCStack.Outputs.PublicSubnet2ID'
+        PublicSubnet3ID: !If
+          - Create3AZ
+          - !GetAtt 'VPCStack.Outputs.PublicSubnet3ID'
+          - !GetAtt 'VPCStack.Outputs.PublicSubnet2ID'
+        NumberOfAZs: !Ref 'NumberOfAZs'
+        IndexerInstanceType: !Ref 'IndexerInstanceType'
+        SearchHeadInstanceType: !Ref 'SearchHeadInstanceType'
+        SplunkAdminPassword: !Ref 'SplunkAdminPassword'
+        SplunkClusterSecret: !Ref 'SplunkClusterSecret'
+        SplunkIndexerDiscoverySecret: !Ref 'SplunkIndexerDiscoverySecret'
+        SplunkLicenseBucket: !Ref 'SplunkLicenseBucket'
+        SplunkLicensePath: !Ref 'SplunkLicensePath'
+        KeyName: !Ref 'KeyName'
+        SSHClientLocation: !Ref 'SSHClientLocation'
+        HECClientLocation: !Ref 'HECClientLocation'
+        WebClientLocation: !Ref 'WebClientLocation'
+        SplunkIndexerCount: !Ref 'SplunkIndexerCount'
+        SHCEnabled: !Ref 'SHCEnabled'
+        SplunkIndexerDiskSize: !Ref 'SplunkIndexerDiskSize'
+        SmartStoreBucketName: !Ref 'SmartStoreBucketName'
+        SplunkReplicationFactor: !Ref 'SplunkReplicationFactor'
+        IndexerApps: !Join
+          - ','
+          - !Ref 'IndexerApps'
+        SearchHeadApps: !Join
+          - ','
+          - !Ref 'SearchHeadApps'
+      TimeoutInMinutes: 60
+Outputs:
+  SearchHeadURL:
+    Description: Splunk Enterprise - Search Head URL
+    Value: !GetAtt 'SplunkStack.Outputs.SearchHeadURL'
+  ClusterMasterURL:
+    Description: Splunk Enterprise - Cluster Master URL
+    Value: !GetAtt 'SplunkStack.Outputs.ClusterMasterURL'
+  ClusterMasterManagementURL:
+    Description: Splunk Enterprise - Cluster Master Management URL (required for Indexer Discovery)
+    Value: !GetAtt 'SplunkStack.Outputs.ClusterMasterManagementURL'
+  DeployerURL:
+    Description: Splunk Enterprise - Search Head Cluster Deployer URL
+    Value: !GetAtt 'SplunkStack.Outputs.DeployerURL'
+  HttpEventCollectorURL:
+    Description: HTTP Event Collector URL
+    Value: !GetAtt 'SplunkStack.Outputs.HttpEventCollectorURL'
+  HttpEventCollectorToken:
+    Description: HTTP Event Collector Token
+    Value: !GetAtt 'SplunkStack.Outputs.HttpEventCollectorToken'
