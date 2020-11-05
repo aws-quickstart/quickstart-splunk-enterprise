@@ -39,6 +39,6 @@
 |===
 |Parameter label (name) |Default value|Description|QuickStart S3 Bucket Name
 (`QSS3BucketName`)|`aws-quickstart`|S3 bucket name for the Quick Start assets.|Quick Start S3 bucket region
-(`QSS3BucketRegion`)|`us-east-1`|The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.|QuickStart S3 Key Prefix
+(`QSS3BucketRegion`)|`us-west-2`|The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.|QuickStart S3 Key Prefix
 (`QSS3KeyPrefix`)|`quickstart-splunk-enterprise/`|S3 key prefix for the Quick Start assets.
 |===
