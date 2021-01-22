@@ -1,0 +1,5 @@
+This Quick Start deploys {partner-product-name} on the AWS Cloud in in a matter of minutes.
+
+{partner-product-name} is a platform that makes machine data accessible and usable. By monitoring and analyzing everything from customer clickstreams and transactions to security events and network activity, {partner-product-name} software helps customers gain valuable operational intelligence from their machine-generated data. With a full range of powerful search, analysis, alert, and visualization capabilities along with prepackaged content for many typical use cases, users can quickly discover and share insights.
+
+For more details about the features and functionality of {partner-product-name}, see the https://docs.splunk.com/Documentation/Splunk[Splunk Enterprise documentation^].
