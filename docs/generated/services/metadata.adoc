@@ -12,6 +12,7 @@
 :template_aws_iam_user:
 :template_aws_s3_bucketpolicy:
 :template_cloudformation:
+:template_deterministic_ec2_instances:
 :template_ec2:
 :template_elasticloadbalancing:
 :template_iam:
