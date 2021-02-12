@@ -46,14 +46,6 @@ Parameters:
     ConstraintDescription: 'Must be a valid EC2 instance type.'
     Default: c5.4xlarge
     Type: String
-  IndexerApps:
-    Description: 'Comma separated list of URLs of Splunk App (or Add-on) tarballs (.spl) to pre-install on indexer(s)'
-    Default: ''
-    Type: CommaDelimitedList
-  SearchHeadApps:
-    Description: 'Comma separated list of URLs of Splunk App (or Add-on) tarballs (.spl) to pre-install on search head(s)'
-    Default: ''
-    Type: CommaDelimitedList
   KeyName:
     ConstraintDescription: 'Must be the name of an existing EC2 KeyPair.'
     Description: 'Name of an existing EC2 KeyPair to enable SSH access to the instance.'
@@ -113,18 +105,18 @@ Parameters:
     MinValue: '3'
     Type: Number
   SplunkIndexerDiskSize:
-    ConstraintDescription: 'Must be a valid number, 320-16000'
-    Default: '320'
+    ConstraintDescription: 'Must be a valid number, 300-16000'
+    Default: '334'
     Description: 'The size of the attached EBS volume to the Splunk indexers.  (in GB)'
     MaxValue: '16000'
-    MinValue: '320'
+    MinValue: '300'
     Type: Number
   SplunkSearchHeadDiskSize:
-    ConstraintDescription: 'Must be a valid number, 320-16000'
-    Default: '320'
+    ConstraintDescription: 'Must be a valid number, 300-16000'
+    Default: '334'
     Description: 'The size of the attached EBS volume to the Splunk search head(s).  (in GB)'
     MaxValue: '16000'
-    MinValue: '320'
+    MinValue: '300'
     Type: Number
   SmartStoreBucketName:
     Default: ''
@@ -216,8 +208,6 @@ Metadata:
           - SplunkSearchFactor
           - SmartStoreBucketName
           - SHCEnabled
-          - IndexerApps
-          - SearchHeadApps
     ParameterLabels:
       WebClientLocation:
         default: Permitted CIDR for Splunk web interface
@@ -263,10 +253,6 @@ Metadata:
         default: Shared Security Key for Cluster Nodes
       SplunkIndexerDiscoverySecret:
         default: Shared Security Key for Forwarders using Indexer Discovery
-      IndexerApps:
-        default: Apps/Add-ons to pre-Install on Splunk Indexers
-      SearchHeadApps:
-        default: Apps/Add-ons to pre-Install on Splunk Search Heads
       VPCCIDR:
         default: VPC CIDR
       VPCID:
@@ -281,18 +267,6 @@ Conditions:
   CreateSHC: !Equals
     - !Ref 'SHCEnabled'
     - 'yes'
-  InstallIndexerApps: !Not
-    - !Equals
-      - !Join
-        - ''
-        - !Ref 'IndexerApps'
-      - ''
-  InstallSearchHeadApps: !Not
-    - !Equals
-      - !Join
-        - ''
-        - !Ref 'SearchHeadApps'
-      - ''
   ConfigureLicense: !And
     - !Not
       - !Equals
@@ -305,35 +279,39 @@ Conditions:
 Mappings:
   AWSAMIRegionMap:
     AMI:
-      SPLUNKENTHVM: splunk_marketplace_AMI_2018-10-16_22_07_36-7b65de6c-5006-4ca2-bd75-fdba95ae5d9d-ami-0d494b5a999e1c49f.4
-    ap-northeast-1:
-      SPLUNKENTHVM: ami-0db36f11d65f551fb
-    ap-northeast-2:
-      SPLUNKENTHVM: ami-09c7965888207979b
-    ap-south-1:
-      SPLUNKENTHVM: ami-07c20db6edfd45f98
-    ap-southeast-1:
-      SPLUNKENTHVM: ami-0e7b7ca1bdcdd93a6
-    ap-southeast-2:
-      SPLUNKENTHVM: ami-0c8a4d5bdf83f0df8
-    ca-central-1:
-      SPLUNKENTHVM: ami-02f085f4514fa7145
-    eu-central-1:
-      SPLUNKENTHVM: ami-09ce965c3b1a9a1cb
-    eu-west-1:
-      SPLUNKENTHVM: ami-0fafe9e81915f154e
-    eu-west-2:
-      SPLUNKENTHVM: ami-060d9e50d310e0ebb
-    sa-east-1:
-      SPLUNKENTHVM: ami-0dacd4005280936e5
-    us-east-1:
-      SPLUNKENTHVM: ami-0db9d414307afccce
-    us-east-2:
-      SPLUNKENTHVM: ami-04b6874c649721f0a
+      SPLUNKENTHVM: splunk_AMI_8.1.1_2020-12-15_04-19-04-7b65de6c-5006-4ca2-bd75-fdba95ae5d9d
     us-west-1:
-      SPLUNKENTHVM: ami-0377011a3f771e353
+        SPLUNKENTHVM: ami-05efe3c52a42bf862
     us-west-2:
-      SPLUNKENTHVM: ami-098f3b1d228f57491
+        SPLUNKENTHVM: ami-0f7a62ef867109fe1
+    us-east-1:
+        SPLUNKENTHVM: ami-007a795010b4127e0
+    us-east-2:
+        SPLUNKENTHVM: ami-05473a7c6bb67d08d
+    ap-south-1:
+        SPLUNKENTHVM: ami-0cec49d5e757a5f33
+    ap-northeast-1:
+        SPLUNKENTHVM: ami-01a75f1a5fc695c6a
+    ap-northeast-2:
+        SPLUNKENTHVM: ami-078d93945fcdff56b
+    ap-southeast-1:
+        SPLUNKENTHVM: ami-0d3a54224c422ef0f
+    ap-southeast-2:
+        SPLUNKENTHVM: ami-0058ac695afd225ad
+    ca-central-1:
+        SPLUNKENTHVM: ami-054fe877a0c95249c
+    eu-central-1:
+        SPLUNKENTHVM: ami-095c18584b1594f5f
+    eu-west-1:
+        SPLUNKENTHVM: ami-025f09aa1fc01a753
+    eu-west-2:
+        SPLUNKENTHVM: ami-070fe41f9278da0a6
+    eu-west-3:
+        SPLUNKENTHVM: ami-04259025655f35e28
+    eu-north-1:
+        SPLUNKENTHVM: ami-0c3bc77d7df889063
+    sa-east-1:
+        SPLUNKENTHVM: ami-0a9d951795c10b6d3
   SplunkConfig:
     dedicated-instance-type:
       clusterMaster: c5.xlarge
@@ -525,7 +503,6 @@ Resources:
           Fn::Sub:
             - |
               #!/bin/bash -xe
-              export INSTALL_INDEXER_APPS="0"
               export INSTALL_LICENSE="0"
               export SYMMKEY="${SplunkIndexerDiscoverySecret}"
               export ADMIN_PASSWORD="${SplunkAdminPassword}"
@@ -577,7 +554,7 @@ Resources:
         - DeviceName: /dev/xvda
           Ebs:
             VolumeType: gp2
-            VolumeSize: 150
+            VolumeSize: 334
       NetworkInterfaces:
         - GroupSet:
             - !Ref 'SplunkSecurityGroup'
@@ -607,7 +584,6 @@ Resources:
         Fn::Sub:
           - |
             #!/bin/bash -xe
-            export INSTALL_INDEXER_APPS="0"
             export INSTALL_LICENSE="0"
             export SYMMKEY="${SplunkIndexerDiscoverySecret}"
             export ADMIN_PASSWORD="${SplunkAdminPassword}"
@@ -674,7 +650,6 @@ Resources:
         Fn::Sub:
           - |
             #!/bin/bash -xe
-            export INSTALL_INDEXER_APPS="0"
             export INSTALL_LICENSE="0"
             export SYMMKEY="${SplunkIndexerDiscoverySecret}"
             export ADMIN_PASSWORD="${SplunkAdminPassword}"
@@ -728,7 +703,6 @@ Resources:
         Fn::Sub:
           - |
             #!/bin/bash -xe
-            export INSTALL_INDEXER_APPS="0"
             export INSTALL_LICENSE="0"
             export SYMMKEY="${SplunkIndexerDiscoverySecret}"
             export ADMIN_PASSWORD="${SplunkAdminPassword}"
@@ -787,7 +761,6 @@ Resources:
         Fn::Sub:
           - |
             #!/bin/bash -xe
-            export INSTALL_INDEXER_APPS="0"
             export INSTALL_LICENSE="0"
             export SYMMKEY="${SplunkIndexerDiscoverySecret}"
             export ADMIN_PASSWORD="${SplunkAdminPassword}"
@@ -849,7 +822,6 @@ Resources:
         Fn::Sub:
           - |
             #!/bin/bash -xe
-            export INSTALL_INDEXER_APPS="0"
             export INSTALL_LICENSE="0"
             export SYMMKEY="${SplunkIndexerDiscoverySecret}"
             export ADMIN_PASSWORD="${SplunkAdminPassword}"
@@ -924,7 +896,6 @@ Resources:
         Fn::Sub:
           - |
             #!/bin/bash -xe
-            export INSTALL_INDEXER_APPS="0"
             export INSTALL_LICENSE="0"
             export SYMMKEY="${SplunkIndexerDiscoverySecret}"
             export ADMIN_PASSWORD="${SplunkAdminPassword}"

@@ -58,14 +58,6 @@ Parameters:
     ConstraintDescription: must be a valid EC2 instance type.
     Default: c5.4xlarge
     Type: String
-  IndexerApps:
-    Description: Comma separated list of URLs of Splunk App (or Add-on) tarballs (.spl) to pre-install on indexer(s)
-    Default: ''
-    Type: CommaDelimitedList
-  SearchHeadApps:
-    Description: Comma separated list of URLs of Splunk App (or Add-on) tarballs (.spl) to pre-install on search head(s)
-    Default: ''
-    Type: CommaDelimitedList
   KeyName:
     ConstraintDescription: Must be the name of an existing EC2 KeyPair.
     Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
@@ -127,18 +119,18 @@ Parameters:
     MinValue: '4'
     Type: Number
   SplunkIndexerDiskSize:
-    ConstraintDescription: must be a valid number, 320-16000
-    Default: '320'
+    ConstraintDescription: must be a valid number, 300-16000
+    Default: '334'
     Description: The size of the attached EBS volume to the Splunk indexers.  (in GB)
     MaxValue: '16000'
-    MinValue: '320'
+    MinValue: '300'
     Type: Number
   SplunkSearchHeadDiskSize:
-    ConstraintDescription: must be a valid number, 320-16000
-    Default: '320'
+    ConstraintDescription: must be a valid number, 300-16000
+    Default: '334'
     Description: The size of the attached EBS volume to the Splunk search head(s).  (in GB)
     MaxValue: '16000'
-    MinValue: '320'
+    MinValue: '334'
     Type: Number
   SplunkLicenseBucket:
     Default: splk-quickstart-testing
@@ -223,8 +215,6 @@ Metadata:
           - SplunkSearchFactor
           - SmartStoreBucketName
           - SHCEnabled
-          - IndexerApps
-          - SearchHeadApps
       - Label:
           default: AWS Quick Start Configuration
         Parameters:
@@ -279,10 +269,6 @@ Metadata:
         default: Shared Security Key for Cluster Nodes
       SplunkIndexerDiscoverySecret:
         default: Shared Security Key for Forwarders using Indexer Discovery
-      IndexerApps:
-        default: Apps/Add-ons to pre-Install on Splunk Indexers
-      SearchHeadApps:
-        default: Apps/Add-ons to pre-Install on Splunk Search Heads
       VPCCIDR:
         default: VPC CIDR
 Conditions:
@@ -309,7 +295,7 @@ Resources:
   SplunkStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/splunk-enterprise-ss.yaml'
+      TemplateURL: !Sub 'https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/splunk-enterprise.yaml'
       Parameters:
         VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
         VPCCIDR: !GetAtt 'VPCStack.Outputs.VPCCIDR'
@@ -336,12 +322,6 @@ Resources:
         SplunkIndexerDiskSize: !Ref 'SplunkIndexerDiskSize'
         SmartStoreBucketName: !Ref 'SmartStoreBucketName'
         SplunkReplicationFactor: !Ref 'SplunkReplicationFactor'
-        IndexerApps: !Join
-          - ','
-          - !Ref 'IndexerApps'
-        SearchHeadApps: !Join
-          - ','
-          - !Ref 'SearchHeadApps'
       TimeoutInMinutes: 60
 Outputs:
   SearchHeadURL:

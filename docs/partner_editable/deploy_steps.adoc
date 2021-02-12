@@ -1,3 +1,4 @@
+// We need to work around Step numbers here if we are going to potentially exclude the AMI subscription
 === Sign in to your AWS account
 
 . Sign in to your AWS account at https://aws.amazon.com with an AWS Identity and Access Management (IAM) user role that has the necessary permissions. For details, see link:#_planning_the_deployment[Planning the deployment] earlier in this guide.
@@ -26,20 +27,16 @@ NOTE: You are responsible for the cost of the AWS services used while running th
 
 [cols=",]
 |===
-|https://fwd.aws/vjaWP[Deploy {partner-product-name} into a new VPC on AWS^]
-|https://fwd.aws/VwgQP[Deploy {partner-product-name} into an existing VPC on AWS^]
+|https://fwd.aws/MNRVe[Deploy {partner-product-name} into a new VPC on AWS^]
+|https://fwd.aws/DD3gQ[Deploy {partner-product-name} into an existing VPC on AWS^]
 |===
 
-WARNING: If you’re deploying {partner-product-name} into an existing VPC, make sure that your VPC has two private subnets in different Availability Zones for the workload instances, and that the subnets aren’t shared. This Quick Start doesn’t support https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing.html[shared subnets^]. These subnets require https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html[NAT gateways^] in their route tables to allow the instances to download packages and software without exposing them to the internet.
-
-Also, make sure that the domain name option in the DHCP options is configured according to the http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_DHCP_Options.html[Amazon VPC documentation^]. You will provide your VPC settings when you launch the Quick Start.
+WARNING: If you’re deploying {partner-product-name} into an existing VPC, make sure that your VPC has at least two subnets in different Availability Zones for the indexers and search head(s), and that the subnets aren’t shared. If you choose to deploy into three AZ, then your VPC will require at least three available AZ.  This Quick Start doesn’t support https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing.html[shared subnets^].
 
 Each deployment takes about {deployment_time} to complete.
 
 [start=2]
-. Check the AWS Region that’s displayed in the upper-right corner of the navigation bar, and change it if necessary. This Region is where the network infrastructure for {partner-product-name} is built. The template is launched in the {default_deployment_region} Region by default.
-
-// *Note:* This deployment includes Amazon EFS, which isn’t currently supported in all AWS Regions. For a current list of supported Regions, see the https://docs.aws.amazon.com/general/latest/gr/elasticfilesystem.html[endpoints and quotas webpage].
+. Check the AWS Region that’s displayed in the upper-right corner of the navigation bar, and change it if necessary. This Region is where {partner-product-name} will be deployed. The template is launched in the {default_deployment_region} Region by default.
 
 [start=3]
 . On the *Create stack* page, keep the default setting for the template URL, and then choose *Next*.
@@ -48,4 +45,5 @@ Each deployment takes about {deployment_time} to complete.
 // In the following tables, parameters are listed by category and described separately for the two deployment options:
 
 // * Parameters for deploying {partner-product-name} into a new VPC
+
 // * Parameters for deploying {partner-product-name} into an existing VPC
