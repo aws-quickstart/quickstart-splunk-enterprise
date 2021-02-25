@@ -41,7 +41,7 @@ Parameters:
       - i3en.12xlarge
     Description: EC2 instance type for Splunk Indexers
     ConstraintDescription: must be a valid EC2 instance type.
-    Default: c5.4xlarge
+    Default: i3.4xlarge
     Type: String
   SearchHeadInstanceType:
     AllowedValues:
@@ -93,7 +93,7 @@ Parameters:
       - 'yes'
       - 'no'
     Default: 'no'
-    Description: Do you want to build a Splunk search head cluster?
+    Description: Do you want to build a Splunk search head cluster? yes or no
     Type: String
   SSHClientLocation:
     Default: '0.0.0.0/0'
@@ -119,26 +119,32 @@ Parameters:
     MinValue: '4'
     Type: Number
   SplunkIndexerDiskSize:
-    ConstraintDescription: must be a valid number, 300-16000
+    ConstraintDescription: must be a valid number, 100-16000
     Default: '334'
     Description: The size of the attached EBS volume to the Splunk indexers.  (in GB)
     MaxValue: '16000'
-    MinValue: '300'
+    MinValue: '100'
     Type: Number
   SplunkSearchHeadDiskSize:
-    ConstraintDescription: must be a valid number, 300-16000
+    ConstraintDescription: must be a valid number, 100-16000
     Default: '334'
     Description: The size of the attached EBS volume to the Splunk search head(s).  (in GB)
     MaxValue: '16000'
-    MinValue: '334'
+    MinValue: '100'
     Type: Number
   SplunkLicenseBucket:
-    Default: splk-quickstart-testing
-    Description: Name of private S3 bucket with licenses to be accessed via authenticated requests
+    AllowedPattern: (?=^.{3,63}$)(?!xn--)([a-z0-9](?:[a-z0-9-]*)[a-z0-9])$
+    ConstraintDescription: 'Required for QuickStart to function and must be a valid s3 bucket'
+    Description: 'Name of private S3 bucket with licenses to be accessed via authenticated requests'
+    MinLength: '3'
+    MaxLength: '63'
     Type: String
   SplunkLicensePath:
-    Default: license/splunk.license
-    Description: Path to license file in S3 Bucket (without leading '/')
+    ConstraintDescription: 'Required for QuickStart to function and must point to a valid Splunk license'
+    AllowedPattern: ([0-9]|[A-Z]|[a-z]|[\/\._-])+
+    Description: 'Path to license file in S3 Bucket, without leading /. (ex: license/splunk.license)'
+    MinLength: '2'
+    MaxLength: '128'
     Type: String
   SplunkReplicationFactor:
     ConstraintDescription: must be a valid number, 2-4
@@ -183,6 +189,8 @@ Parameters:
     Description: Name of bucket that will be created for SmartStore storage
     Type: String
 Metadata:
+  QuickStartDocumentation:
+    EntrypointName: "Splunk QuickStart (New VPC)"
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
@@ -223,6 +231,8 @@ Metadata:
     ParameterLabels:
       AvailabilityZones:
         default: Availability Zones
+      SplunkSearchHeadDiskSize:
+        default: Size (in GB) of Splunk search head disk
       NumberOfAZs:
         default: Number of Availability Zones
       WebClientLocation:
@@ -295,7 +305,7 @@ Resources:
   SplunkStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/splunk-enterprise.yaml'
+      TemplateURL: !Sub 'https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/splunk-enterprise.template'
       Parameters:
         VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
         VPCCIDR: !GetAtt 'VPCStack.Outputs.VPCCIDR'

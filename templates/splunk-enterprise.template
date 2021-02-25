@@ -29,7 +29,7 @@ Parameters:
       - i3en.12xlarge
     Description: 'EC2 instance type for Splunk Indexers'
     ConstraintDescription: 'Must be a valid EC2 instance type.'
-    Default: c5.4xlarge
+    Default: i3.4xlarge
     Type: String
   SearchHeadInstanceType:
     AllowedValues:
@@ -105,43 +105,49 @@ Parameters:
     MinValue: '3'
     Type: Number
   SplunkIndexerDiskSize:
-    ConstraintDescription: 'Must be a valid number, 300-16000'
+    ConstraintDescription: 'Must be a valid number, 100-16000'
     Default: '334'
     Description: 'The size of the attached EBS volume to the Splunk indexers.  (in GB)'
     MaxValue: '16000'
-    MinValue: '300'
+    MinValue: '100'
     Type: Number
   SplunkSearchHeadDiskSize:
-    ConstraintDescription: 'Must be a valid number, 300-16000'
+    ConstraintDescription: 'Must be a valid number, 100-16000'
     Default: '334'
     Description: 'The size of the attached EBS volume to the Splunk search head(s).  (in GB)'
     MaxValue: '16000'
-    MinValue: '300'
+    MinValue: '100'
     Type: Number
   SmartStoreBucketName:
     Default: ''
     Description: 'Name of S3 bucket to be created for SmartStore storage'
     Type: String
   SplunkLicenseBucket:
-    Default: ''
+    ConstraintDescription: 'Required for QuickStart to function and must be a valid s3 bucket'
+    AllowedPattern: (?=^.{3,63}$)(?!xn--)([a-z0-9](?:[a-z0-9-]*)[a-z0-9])$
     Description: 'Name of private S3 bucket with licenses to be accessed via authenticated requests'
+    MinLength: '3'
+    MaxLength: '63'
     Type: String
   SplunkLicensePath:
-    Default: ''
+    ConstraintDescription: 'Required for QuickStart to function and must point to a valid Splunk license'
+    AllowedPattern: ([0-9]|[A-Z]|[a-z]|[\/\._-])+
     Description: 'Path to license file in S3 Bucket (without leading /)'
+    MinLength: '1'
+    MaxLength: '128'
     Type: String
   SplunkReplicationFactor:
-    ConstraintDescription: 'must be a valid number, 2-4'
+    ConstraintDescription: 'Must be a valid number, 2-5'
     Default: '3'
     Description: 'How many copies of data should be stored in the Splunk Indexer Cluster'
-    MaxValue: '4'
+    MaxValue: '5'
     MinValue: '2'
     Type: Number
   SplunkSearchFactor:
-    ConstraintDescription: 'Must be a valid number, 2-4'
+    ConstraintDescription: 'Must be a valid number, 2-5'
     Default: '2'
     Description: 'How many copies of data should be searchable in the Splunk indexer clusters'
-    MaxValue: '4'
+    MaxValue: '5'
     MinValue: '2'
     Type: Number
   SplunkClusterSecret:
@@ -172,9 +178,11 @@ Metadata:
   AWSAMIRegionMap:
     Filters:
       SPLUNKENTHVM:
-        name: splunk_marketplace_AMI_*
+        name: splunk_AMI*
         owner-alias: aws-marketplace
         product-code.type: marketplace
+  QuickStartDocumentation:
+    EntrypointName: "Splunk QuickStart (Existing VPC)"
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
@@ -279,39 +287,40 @@ Conditions:
 Mappings:
   AWSAMIRegionMap:
     AMI:
-      SPLUNKENTHVM: splunk_AMI_8.1.1_2020-12-15_04-19-04-7b65de6c-5006-4ca2-bd75-fdba95ae5d9d
+      SPLUNKENTHVM: splunk_AMI_8.1.2_2021-02-18_01-19-37-7b65de6c-5006-4ca2-bd75-fdba95ae5d9d
     us-west-1:
-        SPLUNKENTHVM: ami-05efe3c52a42bf862
+      SPLUNKENTHVM: ami-0577151e81e068c5b
     us-west-2:
-        SPLUNKENTHVM: ami-0f7a62ef867109fe1
+      SPLUNKENTHVM: ami-0b21b11c334ca0427
     us-east-1:
-        SPLUNKENTHVM: ami-007a795010b4127e0
+      SPLUNKENTHVM: ami-01daa6ad903c19b1c
     us-east-2:
-        SPLUNKENTHVM: ami-05473a7c6bb67d08d
+      SPLUNKENTHVM: ami-01a5e6fa6480c2a19
     ap-south-1:
-        SPLUNKENTHVM: ami-0cec49d5e757a5f33
+      SPLUNKENTHVM: ami-026e00e2fa5434afc
     ap-northeast-1:
-        SPLUNKENTHVM: ami-01a75f1a5fc695c6a
+      SPLUNKENTHVM: ami-0b0869d223a5311d5
     ap-northeast-2:
-        SPLUNKENTHVM: ami-078d93945fcdff56b
+      SPLUNKENTHVM: ami-033bc43ac1100027e
     ap-southeast-1:
-        SPLUNKENTHVM: ami-0d3a54224c422ef0f
+      SPLUNKENTHVM: ami-0baefc1b789d60c08
     ap-southeast-2:
-        SPLUNKENTHVM: ami-0058ac695afd225ad
+      SPLUNKENTHVM: ami-09c3ddc0d05b5539d
     ca-central-1:
-        SPLUNKENTHVM: ami-054fe877a0c95249c
+      SPLUNKENTHVM: ami-0c124bcd160964f7e
     eu-central-1:
-        SPLUNKENTHVM: ami-095c18584b1594f5f
+      SPLUNKENTHVM: ami-005e223f1e49e674a
     eu-west-1:
-        SPLUNKENTHVM: ami-025f09aa1fc01a753
+      SPLUNKENTHVM: ami-0b3e2338bf64a9689
     eu-west-2:
-        SPLUNKENTHVM: ami-070fe41f9278da0a6
+      SPLUNKENTHVM: ami-0f5ecbafcccecefba
     eu-west-3:
-        SPLUNKENTHVM: ami-04259025655f35e28
+      SPLUNKENTHVM: ami-01836340f853aa028
     eu-north-1:
-        SPLUNKENTHVM: ami-0c3bc77d7df889063
+      SPLUNKENTHVM: ami-05c5ebd60f152af2d
     sa-east-1:
-        SPLUNKENTHVM: ami-0a9d951795c10b6d3
+      SPLUNKENTHVM: ami-07d6b2b977c0886c7
+
   SplunkConfig:
     dedicated-instance-type:
       clusterMaster: c5.xlarge
