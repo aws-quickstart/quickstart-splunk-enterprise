@@ -5,7 +5,7 @@
 :doc-year: 2021
 :partner-contributors: Bill Bartlett, {partner-company-name}
 :quickstart-contributors: Shivansh Singh, Amazon Web Services
-:deployment_time: 30 minutes
+:deployment_time: 25 minutes
 :default_deployment_region: us-east-1
 // Uncomment these two attributes if you are leveraging
 // - an AWS Marketplace listing.

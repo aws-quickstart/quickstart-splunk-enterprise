@@ -1,1 +1,8 @@
 // Add any tips or answers to anticipated questions. This could include the following troubleshooting information. If you don’t have any other Q&A to add, change “FAQ” to “Troubleshooting.”
+
+== FAQ
+*Q.* Why is my search factor and/or replication factor not being met ?
+
+*A.*
+
+

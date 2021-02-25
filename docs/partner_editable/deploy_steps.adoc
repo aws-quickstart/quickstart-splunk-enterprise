@@ -31,7 +31,7 @@ NOTE: You are responsible for the cost of the AWS services used while running th
 |https://fwd.aws/DD3gQ[Deploy {partner-product-name} into an existing VPC on AWS^]
 |===
 
-WARNING: If you’re deploying {partner-product-name} into an existing VPC, make sure that your VPC has at least two subnets in different Availability Zones for the indexers and search head(s), and that the subnets aren’t shared. If you choose to deploy into three AZ, then your VPC will require at least three available AZ.  This Quick Start doesn’t support https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing.html[shared subnets^].
+WARNING: If you’re deploying {partner-product-name} into an existing VPC, make sure that your VPC has at least two subnets in different Availability Zones for the indexers and search head(s), and that the subnets aren’t shared. If you choose to deploy into three AZ, then your VPC will require at least three available AZ with three separate subnets.  This Quick Start doesn’t support https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing.html[shared subnets^].
 
 Each deployment takes about {deployment_time} to complete.
 
