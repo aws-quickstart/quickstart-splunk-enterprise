@@ -1,7 +1,7 @@
 :quickstart-project-name: quickstart-splunk-enterprise
 :partner-product-name: Splunk Enterprise
 :partner-company-name: Splunk Inc.
-:doc-month: February
+:doc-month: March
 :doc-year: 2021
 :partner-contributors: Bill Bartlett, {partner-company-name}
 :quickstart-contributors: Shivansh Singh, Amazon Web Services

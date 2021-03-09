@@ -10,10 +10,10 @@ As shown in figure 1, the Quick Start sets up the following:
 * Two Elastic Load Balancing (ELB) load balancers: one to load-balance HTTP web traffic to the search head instances, and the other to load-balance HTTP event traffic destined for the Splunk HTTP Event Collector (HEC) across all indexer instances.
 * An IAM user with fine-grained permissions for access to AWS services necessary for the initial deployment process.
 * Appropriate security groups for each instance or function to restrict access to only necessary protocols and ports.
-* Amazon Simple Storage Service (Amazon S3) bucket for Splunk Smartstore usage.
+* Amazon Simple Storage Service (Amazon S3) bucket for Splunk SmartStore usage.
 * In the public subnets, EC2 instances for {partner-product-name}, including the following:
 ** {partner-product-name} indexer cluster with the number of indexers you specify (3-10), distributed across the number of Availability Zones you specify (2 or 3). The Splunk receiver (splunktcp) and Splunk HEC are enabled across all indexers.
-** Splunk search heads, either stand-alone or in a 3-node cluster, based on your input during deployment. In the latter case, the search heads are distributed across the number of Availability Zones you specify.
+** Splunk search head(s), either stand-alone or in a 3-node cluster, based on your input during deployment. In the latter case, the search heads are distributed across the number of Availability Zones you specify.
 ** Splunk license server and indexer cluster master, co-located.
 ** Splunk search head deployer, where applicable.
 

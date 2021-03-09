@@ -98,11 +98,11 @@ Parameters:
     NoEcho: 'true'
     Type: String
   SplunkIndexerCount:
-    ConstraintDescription: 'Must be a valid number, 3-10'
-    Default: '3'
-    Description: 'How many Splunk indexers to launch.  [3-10]'
+    ConstraintDescription: 'Must be a valid number, 4-10'
+    Default: '4'
+    Description: 'How many Splunk indexers to launch.  [4-10]'
     MaxValue: '10'
-    MinValue: '3'
+    MinValue: '4'
     Type: Number
   SplunkIndexerDiskSize:
     ConstraintDescription: 'Must be a valid number, 100-16000'

@@ -25,7 +25,7 @@ image:../images/search-head-distributed-search-success.png[distributed_search_su
 image:../images/indexer-clustering-menu.png[indexer_clustering_menu,width=850,height=294,link="../docs/images/indexer-clustering-menu.png"]
 [start=3]
 . A screen similar to the screenshot below indicates that both the search factor and replication factor are in good standing. (This example was created with a 4 node indexer cluster across 2 AZ)
-.. _Please note that it will likely take a few minutes after the Quick Start has successfully launched before the buckets are replicated and this status window shows both search factor and replication factor being met._
+.. _Please note that it will likely take a few minutes after the Quick Start has successfully launched before the buckets are replicated and this status window shows both search factor and replication factor being met. If there are errors for replication and/or search factor after 10 minutes, please see the link:#_faq[FAQ section] below._
 
 image:../images/cluster-master-sfrf-met.png[indexer_clustering_success,width=850,height=202,link="../docs/images/cluster-master-sfrf-met.png"]
 

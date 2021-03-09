@@ -5,5 +5,5 @@ There are two important steps to verify prior to launching this Quick start:
 * Upload a valid Splunk license to an S3 bucket owned by the user launching the Quick Start.  Take note of the bucket name as well as the path to the license file.  An example may look something like this:
 ** Splunk license file is named "splunk.license" and uploaded to an S3 bucket called "my-s3-bucket" under the 'directory' called "license"
 *** Parameter "SplunkLicenseBucket" should be configured to: my-s3-bucket
-*** Parameter "SplunkLicensePath" should be configured to license/splunk.license (note the lack of a leading "/" on the license path)
+*** Parameter "SplunkLicensePath" should be configured to: license/splunk.license (note the lack of a leading "/" on the license path)
 
