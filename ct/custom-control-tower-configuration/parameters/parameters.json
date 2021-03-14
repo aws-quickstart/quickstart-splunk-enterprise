@@ -1,0 +1,45 @@
+[
+    {
+        "ParameterKey": "AvailabilityZones",
+        "ParameterValue": [
+            "us-east-1a",
+            "us-east-1b"
+        ]
+    },
+    {
+        "ParameterKey": "WebClientLocation",
+        "ParameterValue": "72.21.196.66/32"
+    },
+    {
+        "ParameterKey": "HECClientLocation",
+        "ParameterValue": "10.0.0.0/16"
+    },
+    {
+        "ParameterKey": "KeyName",
+        "ParameterValue": "aws-qs-tc-all"
+    },
+    {
+        "ParameterKey": "SSHClientLocation",
+        "ParameterValue": "10.0.0.0/16"
+    },
+    {
+        "ParameterKey": "SplunkAdminPassword",
+        "ParameterValue": "!n6!ysqnq9"
+    },
+    {
+        "ParameterKey": "SplunkClusterSecret",
+        "ParameterValue": "!n6!ysqnq9"
+    },
+    {
+        "ParameterKey": "SplunkIndexerDiscoverySecret",
+        "ParameterValue": "!n6!ysqnq9"
+    },
+    {
+        "ParameterKey": "QSS3BucketName",
+        "ParameterValue": "aws-quickstart"
+    },
+    {
+        "ParameterKey": "QSS3BucketRegion",
+        "ParameterValue": "us-east-1"
+    }
+]
