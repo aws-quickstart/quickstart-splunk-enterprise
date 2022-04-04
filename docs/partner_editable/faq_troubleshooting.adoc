@@ -1,12 +1,6 @@
 // Add any tips or answers to anticipated questions. This could include the following troubleshooting information. If you don’t have any other Q&A to add, change “FAQ” to “Troubleshooting.”
 
 == FAQ
-*Q.* Why is my search factor and/or replication factor not being met ?
+*Q.* Why is my search factor and/or replication factor not being met?
 
 *A.* The most common reason for this is the cluster replication or search factor is set higher than the minimum indexers in a site.  For example, if you create a 5 node cluster across two sites, you will have 3 indexers in site1, and 2 indexers in site2.  In this example, if you also configured RF and/or SF = 3, Splunk will not be able to meet the required replication or search factor.  (RF or SF = 3, but you only have 2 indexers in site2)  For further reading, this topic is outlined in https://docs.splunk.com/Documentation/Splunk/8.1.2/Indexer/Bucketreplicationissues#Multisite_cluster_does_not_meet_its_replication_or_search_factors[Splunk documentation^].
-
-
-
-
-
-

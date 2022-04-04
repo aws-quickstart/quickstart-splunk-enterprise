@@ -66,7 +66,6 @@ Parameters:
   PublicSubnet3ID:
     Description: 'ID of Splunk public subnet 3 in Availability Zone 3 (e.g., subnet-xxxxxxxx)'
     Type: AWS::EC2::Subnet::Id
-    Default: ''
   QSS3BucketName:
     Default: splk-quickstart-testing
     Description: 'S3 bucket name for the Quick Start assets.'
@@ -94,7 +93,7 @@ Parameters:
     ConstraintDescription: 'Must be at least 8 characters containing letters, numbers and symbols.'
     Description: 'Admin password for Splunk. Must be at least 8 characters containing letters, numbers and symbols.'
     MaxLength: '32'
-    MinLength: '6'
+    MinLength: '8'
     NoEcho: 'true'
     Type: String
   SplunkIndexerCount:
@@ -137,17 +136,17 @@ Parameters:
     MaxLength: '128'
     Type: String
   SplunkReplicationFactor:
-    ConstraintDescription: 'Must be a valid number, 2-5'
-    Default: '3'
+    ConstraintDescription: 'Must be a valid number, 2-6'
+    Default: '2'
     Description: 'How many copies of data should be stored in the Splunk Indexer Cluster'
-    MaxValue: '5'
+    MaxValue: '6'
     MinValue: '2'
     Type: Number
   SplunkSearchFactor:
-    ConstraintDescription: 'Must be a valid number, 2-5'
+    ConstraintDescription: 'Must be a valid number, 2-6'
     Default: '2'
     Description: 'How many copies of data should be searchable in the Splunk indexer clusters'
-    MaxValue: '5'
+    MaxValue: '6'
     MinValue: '2'
     Type: Number
   SplunkClusterSecret:
@@ -200,7 +199,6 @@ Metadata:
           - PublicSubnet2ID
           - PublicSubnet3ID
           - NumberOfAZs
-          - SmartStoreBucketName
       - Label:
           default: Splunk Settings
         Parameters:
@@ -287,39 +285,39 @@ Conditions:
 Mappings:
   AWSAMIRegionMap:
     AMI:
-      SPLUNKENTHVM: splunk_AMI_8.1.2_2021-02-18_01-19-37-7b65de6c-5006-4ca2-bd75-fdba95ae5d9d
+      SPLUNKENTHVM: splunk_AMI_8.2.3.3_2021-12-18_00-53-30-7b65de6c-5006-4ca2-bd75-fdba95ae5d9d
     us-west-1:
-      SPLUNKENTHVM: ami-0577151e81e068c5b
+      SPLUNKENTHVM: ami-09661ae18cb9aedb4
     us-west-2:
-      SPLUNKENTHVM: ami-0b21b11c334ca0427
+      SPLUNKENTHVM: ami-0c22deb9fc3c775d9
     us-east-1:
-      SPLUNKENTHVM: ami-01daa6ad903c19b1c
+      SPLUNKENTHVM: ami-0582e6c6a47fc48c5
     us-east-2:
-      SPLUNKENTHVM: ami-01a5e6fa6480c2a19
+      SPLUNKENTHVM: ami-01021135eb4ce4d5d
     ap-south-1:
-      SPLUNKENTHVM: ami-026e00e2fa5434afc
+      SPLUNKENTHVM: ami-005110201be854c36
     ap-northeast-1:
-      SPLUNKENTHVM: ami-0b0869d223a5311d5
+      SPLUNKENTHVM: ami-0f652f101b96c37e9
     ap-northeast-2:
-      SPLUNKENTHVM: ami-033bc43ac1100027e
+      SPLUNKENTHVM: ami-0673efcda653adfb5
     ap-southeast-1:
-      SPLUNKENTHVM: ami-0baefc1b789d60c08
+      SPLUNKENTHVM: ami-091a6c8fd0012281e
     ap-southeast-2:
-      SPLUNKENTHVM: ami-09c3ddc0d05b5539d
+      SPLUNKENTHVM: ami-0cdb50ab376ee7d58
     ca-central-1:
-      SPLUNKENTHVM: ami-0c124bcd160964f7e
+      SPLUNKENTHVM: ami-03c36e8753b649758
     eu-central-1:
-      SPLUNKENTHVM: ami-005e223f1e49e674a
+      SPLUNKENTHVM: ami-00018e48dd37a4de3
     eu-west-1:
-      SPLUNKENTHVM: ami-0b3e2338bf64a9689
+      SPLUNKENTHVM: ami-01495bcd527c0ff9d
     eu-west-2:
-      SPLUNKENTHVM: ami-0f5ecbafcccecefba
+      SPLUNKENTHVM: ami-0b285d7712449bb17
     eu-west-3:
-      SPLUNKENTHVM: ami-01836340f853aa028
+      SPLUNKENTHVM: ami-05f8860a4be3a2a86
     eu-north-1:
-      SPLUNKENTHVM: ami-05c5ebd60f152af2d
+      SPLUNKENTHVM: ami-0a2d7f72e56037575
     sa-east-1:
-      SPLUNKENTHVM: ami-07d6b2b977c0886c7
+      SPLUNKENTHVM: ami-08c43f4591f7fc7a6
 
   SplunkConfig:
     dedicated-instance-type:
@@ -330,6 +328,7 @@ Mappings:
     labels:
       cluster: IndexerCluster
       shcluster: SearchHeadCluster
+
 Resources:
   SplunkSmartstoreBucket:
     Type: AWS::S3::Bucket
@@ -383,7 +382,7 @@ Resources:
                 - ''
                 - - 'arn:aws:s3:::'
                   - !Ref 'SmartStoreBucketName'
-                  - /*
+                  - '/*'
       Roles:
         - !Ref 'SmartStoreS3BucketRole'
   SplunkSearchHeadSecurityGroup:
@@ -623,7 +622,7 @@ Resources:
     Condition: CreateSHC
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT20M
+        Timeout: PT10M
     Properties:
       ImageId: !FindInMap
         - AWSAMIRegionMap
@@ -679,7 +678,7 @@ Resources:
     Condition: CreateSHC
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT20M
+        Timeout: PT10M
     Properties:
       ImageId: !FindInMap
         - AWSAMIRegionMap
@@ -737,7 +736,7 @@ Resources:
     Condition: CreateSHC
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT20M
+        Timeout: PT10M
     Properties:
       ImageId: !FindInMap
         - AWSAMIRegionMap
@@ -795,7 +794,7 @@ Resources:
     Condition: CreateSHC
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT20M
+        Timeout: PT10M
     Properties:
       ImageId: !FindInMap
         - AWSAMIRegionMap
@@ -846,10 +845,14 @@ Resources:
             export SH_REPLICATION_FACTOR="${SplunkReplicationFactor}"
             export THREEAZ="${THREEAZ}"
             export SH_DEPLOYER_IP="${SH_DEPLOYER_IP}"
+            export SH1_IP=${SH1_IP}
+            export SH2_IP=${SH2_IP}
             wget $S3_USERDATA -O /tmp/user_data.sh && chmod +x /tmp/user_data.sh
             /tmp/user_data.sh cluster_sh 3 && rm -f /tmp/user_data.sh
           - SplunkCMIP: !GetAtt SplunkCM.PrivateIp
             SH_DEPLOYER_IP: !GetAtt SplunkSHCDeployer.PrivateIp
+            SH1_IP: !GetAtt SplunkSHCMember1.PrivateIp
+            SH2_IP: !GetAtt SplunkSHCMember2.PrivateIp
             THREEAZ: !If [ Create3AZ, "1", "0" ]
   CfnUser:
     Type: AWS::IAM::User
@@ -1030,7 +1033,7 @@ Resources:
     CreationPolicy:
       ResourceSignal:
         Count: !Ref 'SplunkIndexerCount'
-        Timeout: PT30M
+        Timeout: PT20M
 Outputs:
   SearchHeadURL:
     Description: 'Splunk Enterprise - Search Head URL'

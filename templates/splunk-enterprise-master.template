@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Splunk deployment with indexer, search head clustering and cluster master.
+Description: Splunk deployment with indexer clustering, search head (optional search head clustering), and cluster master/license server.
 Parameters:
   AvailabilityZones:
     Description: List of Availability Zones to use for the subnets in the VPC (logical order preserved). This must match the Number of Availability Zones parameter value.
@@ -289,13 +289,14 @@ Resources:
   VPCStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}submodules/quickstart-aws-vpc/templates/aws-vpc.template'
+      TemplateURL: !Sub 'https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}submodules/quickstart-aws-vpc/templates/aws-vpc.template.yaml'
       Parameters:
         AvailabilityZones: !Join
           - ','
           - !Ref 'AvailabilityZones'
         CreatePrivateSubnets: 'false'
-        KeyPairName: !Ref 'KeyName'
+        CreatePublicSubnets: 'true'
+        CreateNATGateways: 'false'
         NumberOfAZs: !Ref 'NumberOfAZs'
         PublicSubnet1CIDR: !Ref 'PublicSubnet1CIDR'
         PublicSubnet2CIDR: !Ref 'PublicSubnet2CIDR'
@@ -332,7 +333,7 @@ Resources:
         SplunkIndexerDiskSize: !Ref 'SplunkIndexerDiskSize'
         SmartStoreBucketName: !Ref 'SmartStoreBucketName'
         SplunkReplicationFactor: !Ref 'SplunkReplicationFactor'
-      TimeoutInMinutes: 60
+      TimeoutInMinutes: 45
 Outputs:
   SearchHeadURL:
     Description: Splunk Enterprise - Search Head URL

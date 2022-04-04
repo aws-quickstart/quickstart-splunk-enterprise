@@ -4,8 +4,6 @@
 function base
 {
 
-  # https://splk-quickstart-testing.s3.us-west-2.amazonaws.com/quickstart-splunk-enterprise/templates/splunk-enterprise-master-ss.template
-
   # variables
   export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
   export INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
@@ -13,27 +11,25 @@ function base
   export SPLUNK_BIN=/opt/splunk/bin/splunk
   export SPLUNK_HOME=/opt/splunk
 
-
   # make cloud-init output log readable by root only to protect sensitive parameter values
   chmod 600 /var/log/cloud-init-output.log
 
-
-
   #- The newer version of the Splunk AMI does not come with Splunk pre-installed.  Instead
-  #- Splunk is installed via ansible as part of cloud-init.  The following code (line 28) is
+  #- Splunk is installed via ansible as part of cloud-init.  The following code (starting at line 30) is
   #- needed to ensure these install scripts are ran prior to the remainder of the Cloudformation
   #- user scripts. Without doing this first, the Splunk installer is ran after CloudFormation's
   #- cloud-init scripts, leaving no Splunk install to configure.
 
-  # remove the cloud-init scripts from running
+  #- remove the cloud-init scripts from running
   rm -f /etc/cloud/cloud.cfg.d/20_install_splunk.cfg
   rm -f /var/lib/cloud/instance/scripts/runcmd
 
-  # run the ansible manually
+  # run the ansible code 
   (cd /opt/splunk-ansible && time sudo -u ec2-user -E -S bash -c "SPLUNK_BUILD_URL=/tmp/splunk.tgz SPLUNK_ENABLE_SERVICE=true  SPLUNK_PASSWORD=SPLUNK-$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id) ansible-playbook -i inventory/environ.py site.yml")
 
-  # update cfn package
-  yum update -y aws-cfn-bootstrap
+  #- as of 8.2.0, aws-cfn-bootstrap is no longer pre-installed on the AMI.
+  #- install aws-cfn-bootstrap package
+  yum -y install aws-cfn-bootstrap
 
 
   # setup auth with user-selected admin password
@@ -117,7 +113,6 @@ function nvme_setup
       continue
     fi
   done
-
 
   # name of the raid device to create
   raid_device="/dev/md0"
@@ -224,10 +219,6 @@ end
 end
   chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/server.conf
 
-  # add base config for peer nodes (indexers) as an app under master-apps
-  # peer config 1: ENABLE HEC input on indexers
-
-  #printf "** create HEC token\t" && date
   # generate the config file and HEC token
   sudo -u $SPLUNK_USER $SPLUNK_BIN http-event-collector enable \
   -uri https://localhost:8089
@@ -252,17 +243,17 @@ end
   touch $SPLUNK_HOME/etc/master-apps/_cluster/local/indexes.conf
 
   cat >>$SPLUNK_HOME/etc/master-apps/_cluster/local/indexes.conf <<end
-    [default]
-    repFactor = auto
-    remotePath = volume:remote_store/splunk_db/$_index_name
-    coldPath=$SPLUNK_DB/$_index_name/colddb
-    thawedPath=$SPLUNK_DB/$_index_name/thaweddb
+  [default]
+  repFactor = auto
+  remotePath = volume:remote_store/splunk_db/$_index_name
+  coldPath=$SPLUNK_DB/$_index_name/colddb
+  thawedPath=$SPLUNK_DB/$_index_name/thaweddb
 
-   [volume:remote_store]
-   storageType = remote
+  [volume:remote_store]
+  storageType = remote
 
-   path = s3://$SMARTSTORE_BUCKET
-   remote.s3.encryption = sse-s3
+  path = s3://$SMARTSTORE_BUCKET
+  remote.s3.encryption = sse-s3
 end
 
   chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/master-apps/_cluster/local/indexes.conf
@@ -275,20 +266,18 @@ end
 
 function splunk_indexer
 {
-  # run through setting up nvme raid device.
-  #  if the indexer is not an i3, the function immediately exits and continues to base config as normal
+  #- run through setting up nvme raid device.
+  #- if the indexer is not an i3, the function immediately exits and continues to base config as normal
   nvme_setup
 
-  # execute base install and configuration
+  #- execute base install and configuration
   base
 
-  #variables
   export INSTANCE_MAC_ADDR=$(curl -s http://169.254.169.254/latest/meta-data/mac)
   export INSTANCE_SUBNET_ID=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$INSTANCE_MAC_ADDR/subnet-id)
   export RESOURCE="SplunkIndexerNodesASG"
 
-  # Configure smartstore as if it were a bundle already pushed by the CM.
-  # set SmartStore for all indexes except _internal, _introspection, etc.
+  #- configure smartstore as if it were a bundle already pushed by the CM.
 
   mkdir -p $SPLUNK_HOME/etc/slave-apps/_cluster/local
   touch $SPLUNK_HOME/etc/slave-apps/_cluster/local/indexes.conf
@@ -358,12 +347,11 @@ end
 
   sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode slave \
     -site $site \
-    -master_uri https://$CM_PRIVATEIP:8089 \
+    -manager_uri https://$CM_PRIVATEIP:8089 \
     -auth admin:$ADMIN_PASSWORD \
     -replication_port 9887 \
     -secret $SPLUNK_CLUSTER_SECRET
 
-  usermod --expiredate 1 splunk
   restart_signal
 }
 
@@ -407,24 +395,24 @@ function splunk_cluster_sh
 end
       # Configure some SHC parameters
       cat >>$SPLUNK_HOME/etc/system/local/server.conf <<end
-      [shclustering]
-      register_replication_address = $LOCALIP
+    [shclustering]
+    register_replication_address = $LOCALIP
 end
       chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local
       $SPLUNK_BIN restart
 
-      # sleep 20 seconds to make sure Splunk has restarted before applying the configuration
+      #- sleep 20 seconds to make sure Splunk has restarted before applying the configuration
       sleep 20
 
-      # log in to splunk to execute several commands without requiring -auth
+      #- log in to splunk to execute several commands without requiring -auth
       sudo -u $SPLUNK_USER $SPLUNK_BIN login -auth admin:$ADMIN_PASSWORD
 
       sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave \
       -master_uri https://$CM_PRIVATEIP:8089
 
-      # configure searchhead cluster
-      echo "### setup splunk search head cluster"
-      echo "### sudo -u $SPLUNK_USER $SPLUNK_BIN init shcluster-config -mgmt_uri https://$LOCALIP:8089 -replication_port 8090 -replication_factor $SH_REPLICATION_FACTOR -conf_deploy_fetch_url https://$SH_DEPLOYER_IP:8089 \ -shcluster_label SplunkSHC -secret $SPLUNK_CLUSTER_SECRET"
+      #- configure searchhead cluster
+      #echo "### setup splunk search head cluster"
+      #echo "### sudo -u $SPLUNK_USER $SPLUNK_BIN init shcluster-config -mgmt_uri https://$LOCALIP:8089 -replication_port 8090 -replication_factor $SH_REPLICATION_FACTOR -conf_deploy_fetch_url https://$SH_DEPLOYER_IP:8089 \ -shcluster_label SplunkSHC -secret $SPLUNK_CLUSTER_SECRET"
 
       sudo -u $SPLUNK_USER $SPLUNK_BIN init shcluster-config \
       -auth admin:$ADMIN_PASSWORD \
@@ -438,13 +426,14 @@ end
       $SPLUNK_BIN restart
       sleep 20
 
-      echo "### sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode searchhead -site $sitenum -master_uri https://$CM_PRIVATEIP:8089 -secret $SPLUNK_CLUSTER_SECRET"
+      #echo "### sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode searchhead -site $sitenum -manager_uri https://$CM_PRIVATEIP:8089 -secret $SPLUNK_CLUSTER_SECRET"
 
       sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config \
       -mode searchhead \
       -site $sitenum \
-      -master_uri https://$CM_PRIVATEIP:8089 \
-      -secret $SPLUNK_CLUSTER_SECRET
+      -manager_uri https://$CM_PRIVATEIP:8089 \
+      -secret $SPLUNK_CLUSTER_SECRET \
+      -auth admin:$ADMIN_PASSWORD 
 
       # Bootstrap SHC captain
 
@@ -453,10 +442,9 @@ end
       # first searchhead cluster captain.
       if [ $num -eq 3 ]
       then
-        echo "### setup splunk search head captain"
         export SH3_IP=$LOCALIP
 
-        echo "### sudo -u $SPLUNK_USER $SPLUNK_BIN bootstrap shcluster-captain -servers_list https://$SH1_IP:8089,https://$SH2_IP:8089,https://$SH3_IP:8089"
+        #echo "### sudo -u $SPLUNK_USER $SPLUNK_BIN bootstrap shcluster-captain -servers_list https://$SH1_IP:8089,https://$SH2_IP:8089,https://$SH3_IP:8089"
 
         sudo -u $SPLUNK_USER $SPLUNK_BIN bootstrap shcluster-captain \
         -servers_list https://$SH1_IP:8089,https://$SH2_IP:8089,https://$SH3_IP:8089 \
@@ -467,7 +455,7 @@ end
     echo "Incorrect value passed.  \"$1\" is not 1, 2, or 3."
     # communicate back to CloudFormation the status of the instance creation
     /opt/aws/bin/cfn-signal -e 1 --stack $STACK_NAME --resource $RESOURCE --region $AWS_REGION
-    exit 0
+    exit 1
   fi
 }
 
@@ -486,34 +474,34 @@ function splunk_deployer
   # Increase splunkweb connection timeout with splunkd
   mkdir -p $SPLUNK_HOME/etc/apps/base-autogenerated/local
   cat >>$SPLUNK_HOME/etc/apps/base-autogenerated/local/web.conf <<end
-  [settings]
-  splunkdConnectionTimeout = 300
+[settings]
+splunkdConnectionTimeout = 300
 end
 
-  # Configure some SHC parameters\n",
+  # Configure some SHC parameters
   cat >>$SPLUNK_HOME/etc/apps/base-autogenerated/local/server.conf <<end
-  [shclustering]
-  pass4SymmKey = $SYMMKEY
-  shcluster_label = SplunkSHC
+[shclustering]
+pass4SymmKey = $SYMMKEY
+shcluster_label = SplunkSHC
 end
 
-  # Forward to indexer cluster using indexer discovery\n",
+  # Forward to indexer cluster using indexer discovery
   cat >>$SPLUNK_HOME/etc/apps/base-autogenerated/local/outputs.conf <<end
-  # Turn off indexing on the search head
-  [indexAndForward]
-  index = false
+# Turn off indexing on the search head
+[indexAndForward]
+index = false
 
-  [tcpout]
-  defaultGroup = indexer_cluster_peers
-  forwardedindex.filter.disable = true
-  indexAndForward = false
+[tcpout]
+defaultGroup = indexer_cluster_peers
+forwardedindex.filter.disable = true
+indexAndForward = false
 
-  [tcpout:indexer_cluster_peers]
-  indexerDiscovery = cluster_master
+[tcpout:indexer_cluster_peers]
+indexerDiscovery = cluster_master
 
-  [indexer_discovery:cluster_master]
-  pass4SymmKey = $SYMMKEY
-  master_uri = https://$CM_PRIVATEIP:8089
+[indexer_discovery:cluster_master]
+pass4SymmKey = $SYMMKEY
+master_uri = https://$CM_PRIVATEIP:8089
 end
 
   # update permissions
@@ -522,22 +510,21 @@ end
   # Add base config for search head cluster members
   mkdir -p $SPLUNK_HOME/etc/shcluster/apps/member-base-autogenerated/local
   cat >>$SPLUNK_HOME/etc/shcluster/apps/member-base-autogenerated/local/outputs.conf <<end
-  # Turn off indexing on the search head
-  [indexAndForward]
-  index = false
+# Turn off indexing on the search head
+[indexAndForward]
+index = false
 
-  [tcpout]
-  defaultGroup = indexer_cluster_peers
-  forwardedindex.filter.disable = true
-  indexAndForward = false
+[tcpout]
+defaultGroup = indexer_cluster_peers
+forwardedindex.filter.disable = true
+indexAndForward = false
 
-  [tcpout:indexer_cluster_peers]
-  indexerDiscovery = cluster_master
+[tcpout:indexer_cluster_peers]
+indexerDiscovery = cluster_master
 
-  [indexer_discovery:cluster_master]
-  pass4SymmKey = $SYMMKEY
-
-  master_uri = $CM_PRIVATEIP:8089
+[indexer_discovery:cluster_master]
+pass4SymmKey = $SYMMKEY
+master_uri = https://$CM_PRIVATEIP:8089
 end
 
   #- set ownership
@@ -561,17 +548,14 @@ function splunk_single_sh
   # execute base install and configuration
   base
 
+  export RESOURCE="SplunkSearchHeadInstance"
+
   # sleep 20 seconds to make sure Splunk has restarted before applying the configuration
-  echo "#### sleeping"
   sleep 20
 
-  export RESOURCE="SplunkSearchHeadInstance"
   # add hostname to /etc/hosts and set hostname
   printf "$LOCALIP \t splunksearch\n" >> /etc/hosts
   hostname splunksearch
-
-  # stop splunk to make changes to search head configs
-  #/bin/systemctl stop Splunkd
 
   # Increase splunkweb connection timeout with splunkd
   mkdir -p $SPLUNK_HOME/etc/apps/base-autogenerated/local
@@ -579,7 +563,6 @@ function splunk_single_sh
   [settings]
   splunkdConnectionTimeout = 300
 end
-
 
   # Forward to indexer cluster using indexer discovery
   cat >>$SPLUNK_HOME/etc/apps/base-autogenerated/local/outputs.conf <<end
@@ -595,25 +578,21 @@ end
   indexerDiscovery = cluster_master
   [indexer_discovery:cluster_master]
   pass4SymmKey = $SYMMKEY
-  master_uri = https://$CM_PRIVATEIP:8089
+  manager_uri = https://$CM_PRIVATEIP:8089
 end
 
   # update permissions
   chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/apps/base-autogenerated
 
-  printf "#### license setup\t " && date
-
   # setup license server communication
-  sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave -master_uri https://$CM_PRIVATEIP:8089 -auth admin:$ADMIN_PASSWORD
-
-  printf "#### clustering setup\t " && date
+  sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave -manager_uri https://$CM_PRIVATEIP:8089 -auth admin:$ADMIN_PASSWORD
 
   # configure communication to the splunk indexer cluster
   sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config \
   -secret $SPLUNK_CLUSTER_SECRET \
   -mode searchhead \
   -site site1 \
-  -master_uri https://$CM_PRIVATEIP:8089 \
+  -manager_uri https://$CM_PRIVATEIP:8089 \
   -auth admin:$ADMIN_PASSWORD
 
   # final restart and cfn signal
@@ -641,4 +620,3 @@ case "$1" in
   echo "        Note: a single argument of integers 1,2, or 3 must be passed to cluster_sh to specify the specific search head cluster node."
   exit 0
 esac
-
