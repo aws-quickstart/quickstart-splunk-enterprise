@@ -12,7 +12,7 @@ Parameters:
     Description: Number of Availability Zones to use in the VPC. This must match your selections in the list of Availability Zones parameter.
     Type: String
   WebClientLocation:
-    Default: '0.0.0.0/0'
+    Default: ''
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     ConstraintDescription: Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions.
     Description: 'The IP address range that is allowed to connect to the Splunk web interface. Note: a value of 0.0.0.0/0 will allow access from ANY ip address.'
@@ -20,7 +20,7 @@ Parameters:
     MinLength: '9'
     Type: String
   HECClientLocation:
-    Default: '0.0.0.0/0'
+    Default: ''
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     ConstraintDescription: Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions.
     Description: 'The IP address range that is allowed to send data to Splunk HTTP Event Collector. Note: a value of 0.0.0.0/0 will allow access from ANY ip address.'
@@ -82,7 +82,7 @@ Parameters:
     Type: String
   QSS3BucketName:
     Description: S3 bucket name for the Quick Start assets.
-    Default: splk-quickstart-testing
+    Default: ''
     Type: String
   QSS3KeyPrefix:
     Default: quickstart-splunk-enterprise/
@@ -96,7 +96,7 @@ Parameters:
     Description: Do you want to build a Splunk search head cluster? yes or no
     Type: String
   SSHClientLocation:
-    Default: '0.0.0.0/0'
+    Default: ''
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     ConstraintDescription: Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions.
     Description: 'The IP address range that is allowed to SSH to the EC2 instances. Note: a value of 0.0.0.0/0 will allow access from ANY ip address'
@@ -185,7 +185,7 @@ Parameters:
     MinLength: '9'
     Type: String
   SmartStoreBucketName:
-    Default: bbartlett-smartstore-testing
+    Default: ''
     Description: Name of bucket that will be created for SmartStore storage
     Type: String
 Metadata:
