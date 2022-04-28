@@ -1,0 +1,9 @@
+// If no preperation is required, remove all content from here.
+There are two important steps to verify prior to launching this Quick start:
+
+* Ensure that the SmartStore bucket that is defined in the "SmartStoreBucketName" parameter *does not exist*.  This Quick Start will attempt to create that bucket with an appropriate bucket policy. If that bucket already exists, the Quick Start will fail.
+* Upload a valid Splunk license to an S3 bucket owned by the user launching the Quick Start.  Take note of the bucket name as well as the path to the license file.  An example may look something like this:
+** Splunk license file is named "splunk.license" and uploaded to an S3 bucket called "my-s3-bucket" under the 'directory' called "license"
+*** Parameter "SplunkLicenseBucket" should be configured to: my-s3-bucket
+*** Parameter "SplunkLicensePath" should be configured to: license/splunk.license (note the lack of a leading "/" on the license path)
+
