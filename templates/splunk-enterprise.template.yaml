@@ -1,15 +1,188 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Splunk deployment with indexer, search head clustering and cluster master.
-  (qs-1qup6ramp)
+Description: 'Splunk deployment with indexer, search head clustering and cluster manager. QS(5030)'
+Description: 'Splunk deployment with indexer clustering, search head (optional search head clustering), and cluster manager/license server.'
+Parameters:
+  WebClientLocation:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+    ConstraintDescription: 'Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions.'
+    Description: 'The IP address range that is allowed to connect to the Splunk web interface. Note: a value of 0.0.0.0/0 will allow access from ANY ip address'
+    MaxLength: '19'
+    MinLength: '9'
+    Type: String
+  HECClientLocation:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+    ConstraintDescription: 'Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions.'
+    Description: 'The IP address range that is allowed to send data to Splunk HTTP Event Collector. Note: a value of 0.0.0.0/0 will allow access from ANY ip address'
+    MaxLength: '19'
+    MinLength: '9'
+    Type: String
+  IndexerInstanceType:
+    AllowedValues:
+      - m5.4xlarge
+      - m5.8xlarge
+      - c5.4xlarge
+      - c5.9xlarge
+      - c5.18xlarge
+      - i3.4xlarge
+      - i3.8xlarge
+      - i3en.3xlarge
+      - i3en.6xlarge
+      - i3en.12xlarge
+    Description: 'EC2 instance type for Splunk Indexers'
+    ConstraintDescription: 'Must be a valid EC2 instance type.'
+    Default: i3.4xlarge
+    Type: String
+  SearchHeadInstanceType:
+    AllowedValues:
+      - r5.4xlarge
+      - r5.8xlarge
+      - r5.16xlarge
+      - c5.4xlarge
+      - c5.9xlarge
+      - m5.2xlarge
+      - m5.4xlarge
+      - m5.8xlarge
+      - m5.12xlarge
+    Description: 'EC2 instance type for Splunk Search Heads'
+    ConstraintDescription: 'Must be a valid EC2 instance type.'
+    Default: c5.4xlarge
+    Type: String
+  KeyName:
+    ConstraintDescription: 'Must be the name of an existing EC2 KeyPair.'
+    Description: 'Name of an existing EC2 KeyPair to enable SSH access to the instance.'
+    Type: AWS::EC2::KeyPair::KeyName
+  NumberOfAZs:
+    AllowedValues:
+      - '2'
+      - '3'
+    Default: '2'
+    Description: 'Number of Availability Zones to use in the VPC. This must match the number public subnet IDs entered as parameters.'
+    Type: String
+  PublicSubnet1ID:
+    Description: 'ID of Splunk public subnet 1 in Availability Zone 1 (e.g., subnet-xxxxxxxx)'
+    Type: AWS::EC2::Subnet::Id
+  PublicSubnet2ID:
+    Description: 'ID of Splunk public subnet 2 in Availability Zone 2 (e.g., subnet-xxxxxxxx)'
+    Type: AWS::EC2::Subnet::Id
+  PublicSubnet3ID:
+    Description: 'ID of Splunk public subnet 3 in Availability Zone 3 (e.g., subnet-xxxxxxxx)'
+    Type: AWS::EC2::Subnet::Id
+  QSS3BucketName:
+    Default: ''
+    Description: 'S3 bucket name for the Quick Start assets.'
+    Type: String
+  QSS3KeyPrefix:
+    Default: quickstart-splunk-enterprise/
+    Description: 'S3 key prefix for the Quick Start assets.'
+    Type: String
+  SHCEnabled:
+    AllowedValues:
+      - 'yes'
+      - 'no'
+    Default: 'no'
+    Description: 'Do you want to build a Splunk search head cluster?'
+    Type: String
+  SSHClientLocation:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+    ConstraintDescription: 'Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions.'
+    Description: 'The IP address range that is allowed to SSH to the EC2 instances. Note: a value of 0.0.0.0/0 will allow access from ANY ip address'
+    MaxLength: '19'
+    MinLength: '9'
+    Type: String
+  SplunkAdminPassword:
+    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
+    ConstraintDescription: 'Must be at least 8 characters containing letters, numbers and symbols.'
+    Description: 'Admin password for Splunk. Must be at least 8 characters containing letters, numbers and symbols.'
+    MaxLength: '32'
+    MinLength: '8'
+    NoEcho: 'true'
+    Type: String
+  SplunkIndexerCount:
+    ConstraintDescription: 'Must be a valid number, 4-10'
+    Default: '4'
+    Description: 'How many Splunk indexers to launch.  [4-10]'
+    MaxValue: '10'
+    MinValue: '4'
+    Type: Number
+  SplunkIndexerDiskSize:
+    ConstraintDescription: 'Must be a valid number, 100-16000'
+    Default: '334'
+    Description: 'The size of the attached EBS volume to the Splunk indexers.  (in GB)'
+    MaxValue: '16000'
+    MinValue: '100'
+    Type: Number
+  SplunkSearchHeadDiskSize:
+    ConstraintDescription: 'Must be a valid number, 100-16000'
+    Default: '334'
+    Description: 'The size of the attached EBS volume to the Splunk search head(s).  (in GB)'
+    MaxValue: '16000'
+    MinValue: '100'
+    Type: Number
+  SmartStoreBucketName:
+    Default: ''
+    Description: 'Name of S3 bucket to be created for SmartStore storage'
+    Type: String
+  SplunkLicenseBucket:
+    ConstraintDescription: 'Required for QuickStart to function and must be a valid s3 bucket'
+    AllowedPattern: (?=^.{3,63}$)(?!xn--)([a-z0-9](?:[a-z0-9-]*)[a-z0-9])$
+    Description: 'Name of private S3 bucket with licenses to be accessed via authenticated requests'
+    MinLength: '3'
+    MaxLength: '63'
+    Type: String
+  SplunkLicensePath:
+    ConstraintDescription: 'Required for QuickStart to function and must point to a valid Splunk license'
+    AllowedPattern: ([0-9]|[A-Z]|[a-z]|[\/\._-])+
+    Description: 'Path to license file in S3 Bucket (without leading /)'
+    MinLength: '1'
+    MaxLength: '128'
+    Type: String
+  SplunkReplicationFactor:
+    ConstraintDescription: 'Must be a valid number, 2-6'
+    Default: '2'
+    Description: 'How many copies of data should be stored in the Splunk Indexer Cluster'
+    MaxValue: '6'
+    MinValue: '2'
+    Type: Number
+  SplunkSearchFactor:
+    ConstraintDescription: 'Must be a valid number, 2-6'
+    Default: '2'
+    Description: 'How many copies of data should be searchable in the Splunk indexer clusters'
+    MaxValue: '6'
+    MinValue: '2'
+    Type: Number
+  SplunkClusterSecret:
+    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
+    ConstraintDescription: 'Must be at least 8 characters containing letters, numbers and symbols.'
+    Description: 'Shared cluster secret for Search Head and Indexer cluster nodes. Must be at least 8 characters containing letters, numbers and symbols.'
+    MaxLength: '32'
+    MinLength: '8'
+    NoEcho: 'true'
+    Type: String
+  SplunkIndexerDiscoverySecret:
+    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
+    ConstraintDescription: 'Must be at least 8 characters containing letters, numbers and symbols.'
+    Description: 'Security key used for communication between your forwarders and the cluster master. This value should also be used by forwarders in order to retrieve list of available peer nodes from cluster master. Must be at least 8 characters containing letters, numbers and symbols.'
+    MaxLength: '32'
+    MinLength: '8'
+    NoEcho: 'true'
+    Type: String
+  VPCCIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+    ConstraintDescription: 'Must be a valid IP CIDR range of the form x.x.x.x/x.'
+    Description: VPC CIDR Block (x.x.x.x/x notation)
+    Type: String
+  VPCID:
+    Description: VPC ID
+    Type: AWS::EC2::VPC::Id
 Metadata:
-  QuickStartDocumentation:
-    EntrypointName: "Parameters for an existing VPC"
   AWSAMIRegionMap:
     Filters:
       SPLUNKENTHVM:
-        name: splunk_marketplace_AMI_*
+        name: splunk_AMI*
         owner-alias: aws-marketplace
         product-code.type: marketplace
+  QuickStartDocumentation:
+    EntrypointName: "Splunk QuickStart (Existing VPC)"
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
@@ -40,16 +213,9 @@ Metadata:
           - SplunkSearchHeadDiskSize
           - SplunkReplicationFactor
           - SplunkSearchFactor
+          - SmartStoreBucketName
           - SHCEnabled
-          - IndexerApps
-          - SearchHeadApps
     ParameterLabels:
-      QSS3BucketName:
-        default: QuickStart S3 Bucket Name
-      QSS3BucketRegion:
-        default: Quick Start S3 bucket region
-      QSS3KeyPrefix:
-        default: QuickStart S3 Key Prefix
       WebClientLocation:
         default: Permitted CIDR for Splunk web interface
       HECClientLocation:
@@ -76,6 +242,8 @@ Metadata:
         default: Splunk Admin Password
       SplunkIndexerCount:
         default: No. of Splunk Indexers
+      SmartStoreBucketName:
+        default: Name of bucket to be created for Smartstore storage
       SplunkIndexerDiskSize:
         default: Indexer Disk Size
       SplunkSearchHeadDiskSize:
@@ -92,218 +260,10 @@ Metadata:
         default: Shared Security Key for Cluster Nodes
       SplunkIndexerDiscoverySecret:
         default: Shared Security Key for Forwarders using Indexer Discovery
-      IndexerApps:
-        default: Apps/Add-ons to pre-Install on Splunk Indexers
-      SearchHeadApps:
-        default: Apps/Add-ons to pre-Install on Splunk Search Heads
       VPCCIDR:
         default: VPC CIDR
       VPCID:
         default: VPC ID
-Parameters:
-  WebClientLocation:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
-    ConstraintDescription: Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0
-      for no restrictions.
-    Description: 'The IP address range that is allowed to connect to the Splunk web
-      interface. Note: a value of 0.0.0.0/0 will allow access from ANY ip address'
-    MaxLength: '19'
-    MinLength: '9'
-    Type: String
-  HECClientLocation:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
-    ConstraintDescription: Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0
-      for no restrictions.
-    Description: 'The IP address range that is allowed to send data to Splunk HTTP
-      Event Collector. Note: a value of 0.0.0.0/0 will allow access from ANY ip address'
-    MaxLength: '19'
-    MinLength: '9'
-    Type: String
-  IndexerInstanceType:
-    AllowedValues:
-      - c4.2xlarge
-      - c4.4xlarge
-      - c4.8xlarge
-      - m4.2xlarge
-      - m4.4xlarge
-      - m4.10xlarge
-      - c5.2xlarge
-      - c5.4xlarge
-      - c5.9xlarge
-      - c5.18xlarge
-      - i3.2xlarge
-      - i3.4xlarge
-      - i3.8xlarge
-    Description: EC2 instance type for Splunk Indexers
-    ConstraintDescription: must be a valid EC2 instance type.
-    Default: c5.4xlarge
-    Type: String
-  SearchHeadInstanceType:
-    AllowedValues:
-      - c4.2xlarge
-      - c4.4xlarge
-      - c4.8xlarge
-      - r4.4xlarge
-      - r4.8xlarge
-      - r4.16xlarge
-      - c5.2xlarge
-      - c5.4xlarge
-      - c5.9xlarge
-      - m5.2xlarge
-      - m5.4xlarge
-      - m5.12xlarge
-    Description: EC2 instance type for Splunk Search Heads
-    ConstraintDescription: must be a valid EC2 instance type.
-    Default: c5.4xlarge
-    Type: String
-  IndexerApps:
-    Description: Comma separated list of URLs of Splunk App (or Add-on) tarballs (.spl)
-      to pre-install on indexer(s)
-    Default: ''
-    Type: CommaDelimitedList
-  SearchHeadApps:
-    Description: Comma separated list of URLs of Splunk App (or Add-on) tarballs (.spl)
-      to pre-install on search head(s)
-    Default: ''
-    Type: CommaDelimitedList
-  KeyName:
-    ConstraintDescription: Must be the name of an existing EC2 KeyPair.
-    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
-    Type: AWS::EC2::KeyPair::KeyName
-  NumberOfAZs:
-    AllowedValues:
-      - '2'
-      - '3'
-    Default: '2'
-    Description: Number of Availability Zones to use in the VPC. This must match the
-      number public subnet IDs entered as parameters
-    Type: String
-  PublicSubnet1ID:
-    Description: ID of Splunk public subnet 1 in Availability Zone 1 (e.g., subnet-xxxxxxxx)
-    Type: AWS::EC2::Subnet::Id
-  PublicSubnet2ID:
-    Description: ID of Splunk public subnet 2 in Availability Zone 2 (e.g., subnet-xxxxxxxx)
-    Type: AWS::EC2::Subnet::Id
-  PublicSubnet3ID:
-    Description: ID of Splunk public subnet 3 in Availability Zone 3 (e.g., subnet-xxxxxxxx)
-    Type: AWS::EC2::Subnet::Id
-    Default: ''
-  QSS3BucketName:
-    Default: splk-quickstart-testing
-    Description: S3 bucket name for the Quick Start assets.
-    Type: String
-  QSS3BucketRegion:
-    Default: 'us-east-1'
-    Description: 'The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.'
-    Type: String
-  QSS3KeyPrefix:
-    Default: quickstart-splunk-enterprise/
-    Description: S3 key prefix for the Quick Start assets.
-    Type: String
-  SHCEnabled:
-    AllowedValues:
-      - 'yes'
-      - 'no'
-    Default: 'no'
-    Description: Do you want to build a Splunk search head cluster?
-    Type: String
-  SSHClientLocation:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
-    ConstraintDescription: Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0
-      for no restrictions.
-    Description: 'The IP address range that is allowed to SSH to the EC2 instances.
-      Note: a value of 0.0.0.0/0 will allow access from ANY ip address'
-    MaxLength: '19'
-    MinLength: '9'
-    Type: String
-  SplunkAdminPassword:
-    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
-    ConstraintDescription: Must be at least 8 characters containing letters, numbers
-      and symbols.
-    Description: Admin password for Splunk. Must be at least 6 characters containing
-      letters, numbers and symbols.
-    MaxLength: '32'
-    MinLength: '6'
-    NoEcho: 'true'
-    Type: String
-  SplunkIndexerCount:
-    ConstraintDescription: must be a valid number, 3-10
-    Default: '3'
-    Description: How many Splunk indexers to launch.  [3-10]
-    MaxValue: '10'
-    MinValue: '3'
-    Type: Number
-  SplunkIndexerDiskSize:
-    ConstraintDescription: must be a valid number, 320-16000
-    Default: '320'
-    Description: The size of the attached EBS volume to the Splunk indexers.  (in
-      GB)
-    MaxValue: '16000'
-    MinValue: '320'
-    Type: Number
-  SplunkSearchHeadDiskSize:
-    ConstraintDescription: must be a valid number, 320-16000
-    Default: '320'
-    Description: The size of the attached EBS volume to the Splunk search head(s).  (in
-      GB)
-    MaxValue: '16000'
-    MinValue: '320'
-    Type: Number
-  SplunkLicenseBucket:
-    Default: ''
-    Description: Name of private S3 bucket with licenses to be accessed via authenticated
-      requests
-    Type: String
-  SplunkLicensePath:
-    Default: ''
-    Description: Path to license file in S3 Bucket (without leading '/')
-    Type: String
-  SplunkReplicationFactor:
-    ConstraintDescription: must be a valid number, 2-4
-    Default: '2'
-    Description: How many copies of data should be stored in the Splunk Indexer Cluster
-    MaxValue: '4'
-    MinValue: '2'
-    Type: Number
-  SplunkSearchFactor:
-    ConstraintDescription: must be a valid number, 2-4
-    Default: '2'
-    Description: How many copies of data should be searchable in the Splunk indexer
-      clusters
-    MaxValue: '4'
-    MinValue: '2'
-    Type: Number
-  SplunkClusterSecret:
-    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
-    ConstraintDescription: Must be at least 8 characters containing letters, numbers
-      and symbols.
-    Description: Shared cluster secret for Search Head and Indexer cluster nodes.
-      Must be at least 8 characters containing letters, numbers and symbols.
-    MaxLength: '32'
-    MinLength: '8'
-    NoEcho: 'true'
-    Type: String
-  SplunkIndexerDiscoverySecret:
-    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
-    ConstraintDescription: Must be at least 8 characters containing letters, numbers
-      and symbols.
-    Description: >-
-      Security key used for communication between your forwarders and the cluster
-      master. This value should also be used by forwarders in order to retrieve list
-      of available peer nodes from cluster master. Must be at least 8 characters containing
-      letters, numbers and symbols.
-    MaxLength: '32'
-    MinLength: '8'
-    NoEcho: 'true'
-    Type: String
-  VPCCIDR:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
-    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
-    Description: VPC CIDR Block (x.x.x.x/x notation)
-    Type: String
-  VPCID:
-    Description: VPC ID
-    Type: AWS::EC2::VPC::Id
 Conditions:
   Create3AZ: !Equals
     - !Ref 'NumberOfAZs'
@@ -314,18 +274,6 @@ Conditions:
   CreateSHC: !Equals
     - !Ref 'SHCEnabled'
     - 'yes'
-  InstallIndexerApps: !Not
-    - !Equals
-      - !Join
-        - ''
-        - !Ref 'IndexerApps'
-      - ''
-  InstallSearchHeadApps: !Not
-    - !Equals
-      - !Join
-        - ''
-        - !Ref 'SearchHeadApps'
-      - ''
   ConfigureLicense: !And
     - !Not
       - !Equals
@@ -335,39 +283,43 @@ Conditions:
       - !Equals
         - ''
         - !Ref 'SplunkLicensePath'
-  UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
 Mappings:
   AWSAMIRegionMap:
     AMI:
-      SPLUNKENTHVM: splunk_marketplace_AMI_2018-10-16_22_07_36-7b65de6c-5006-4ca2-bd75-fdba95ae5d9d-ami-0d494b5a999e1c49f.4
-    ap-northeast-1:
-      SPLUNKENTHVM: ami-0db36f11d65f551fb
-    ap-northeast-2:
-      SPLUNKENTHVM: ami-09c7965888207979b
-    ap-south-1:
-      SPLUNKENTHVM: ami-07c20db6edfd45f98
-    ap-southeast-1:
-      SPLUNKENTHVM: ami-0e7b7ca1bdcdd93a6
-    ap-southeast-2:
-      SPLUNKENTHVM: ami-0c8a4d5bdf83f0df8
-    ca-central-1:
-      SPLUNKENTHVM: ami-02f085f4514fa7145
-    eu-central-1:
-      SPLUNKENTHVM: ami-09ce965c3b1a9a1cb
-    eu-west-1:
-      SPLUNKENTHVM: ami-0fafe9e81915f154e
-    eu-west-2:
-      SPLUNKENTHVM: ami-060d9e50d310e0ebb
-    sa-east-1:
-      SPLUNKENTHVM: ami-0dacd4005280936e5
-    us-east-1:
-      SPLUNKENTHVM: ami-0484972f36720ea7f
-    us-east-2:
-      SPLUNKENTHVM: ami-04b6874c649721f0a
+      SPLUNKENTHVM: splunk_AMI_8.2.6_2022-04-20_17-27-55-7b65de6c-5006-4ca2-bd75-fdba95ae5d9d
     us-west-1:
-      SPLUNKENTHVM: ami-0377011a3f771e353
+      SPLUNKENTHVM: ami-083c40352f95a2a8d
     us-west-2:
-      SPLUNKENTHVM: ami-0c3e33232b6c07537
+      SPLUNKENTHVM: ami-063db914927fd068a
+    us-east-1:
+      SPLUNKENTHVM: ami-02be4afccabbc98a7
+    us-east-2:
+      SPLUNKENTHVM: ami-0e3657d8025d1f571
+    ap-south-1:
+      SPLUNKENTHVM: ami-04f8e05450860a0e4
+    ap-northeast-1:
+      SPLUNKENTHVM: ami-0316ee1a35129c1ed
+    ap-northeast-2:
+      SPLUNKENTHVM: ami-0441f1c60fa588b30
+    ap-southeast-1:
+      SPLUNKENTHVM: ami-0066d2b4e4446b6b4
+    ap-southeast-2:
+      SPLUNKENTHVM: ami-0b93708f93e6fcefa
+    ca-central-1:
+      SPLUNKENTHVM: ami-0287afc9fe6de24dc
+    eu-central-1:
+      SPLUNKENTHVM: ami-0258ed74a65c3aa80
+    eu-west-1:
+      SPLUNKENTHVM: ami-0ef490267313f2958
+    eu-west-2:
+      SPLUNKENTHVM: ami-0eed7148a3c5db6a0
+    eu-west-3:
+      SPLUNKENTHVM: ami-0f8ed68391019e14a
+    eu-north-1:
+      SPLUNKENTHVM: ami-0c13450402b8e9f7a
+    sa-east-1:
+      SPLUNKENTHVM: ami-02f1a54ae0463d7ac
+
   SplunkConfig:
     dedicated-instance-type:
       clusterMaster: c5.xlarge
@@ -377,13 +329,68 @@ Mappings:
     labels:
       cluster: IndexerCluster
       shcluster: SearchHeadCluster
+
 Resources:
+  SplunkSmartstoreBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref 'SmartStoreBucketName'
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+    DeletionPolicy: Delete
+  SmartStoreS3BucketRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+  SmartStoreS3AccessInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref 'SmartStoreS3BucketRole'
+  SmartStoreS3BucketPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: SmartStoreS3BucketPolicy
+      PolicyDocument:
+        Statement:
+          - Action:
+              - s3:ListBucket
+            Effect: Allow
+            Resource:
+              - !Join
+                - ''
+                - - 'arn:aws:s3:::'
+                  - !Ref 'SmartStoreBucketName'
+          - Action:
+              - s3:PutObject
+              - s3:GetObject
+              - s3:DeleteObject
+              - s3:PutObjectAcl
+            Effect: Allow
+            Resource:
+              - !Join
+                - ''
+                - - 'arn:aws:s3:::'
+                  - !Ref 'SmartStoreBucketName'
+                  - '/*'
+      Roles:
+        - !Ref 'SmartStoreS3BucketRole'
   SplunkSearchHeadSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !Ref 'VPCID'
-      GroupDescription: Enable port 8000 for Splunk web interface, port 8090 for SHC
-        replication, and port 8191 for KV store replication
+      GroupDescription: 'Enable port 8000 for Splunk web interface, port 8090 for SHC replication, and port 8191 for KV store replication'
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 8000
@@ -406,8 +413,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !Ref 'VPCID'
-      GroupDescription: Enable port 9997 for splunktcp input, port 8088 for HEC input,
-        port 514 for tcp/udp input, and port 9887 for data replication
+      GroupDescription: 'Enable port 9997 for splunktcp input, port 8088 for HEC input, port 514 for tcp/udp input, and port 9887 for data replication'
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 9997
@@ -438,8 +444,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !Ref 'VPCID'
-      GroupDescription: Enable administrative ports like restricted SSH and management
-        port
+      GroupDescription: 'Enable administrative ports like restricted SSH and management port'
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
@@ -458,7 +463,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !Ref 'VPCID'
-      GroupDescription: Enable port 8088 on ELB for HEC input
+      GroupDescription: 'Enable port 8088 on ELB for HEC input'
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 8088
@@ -474,7 +479,7 @@ Resources:
     Condition: CreateSingleSearchHead
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT60M
+        Timeout: PT15M
     Properties:
       ImageId: !FindInMap
         - AWSAMIRegionMap
@@ -502,121 +507,34 @@ Resources:
           Ebs:
             VolumeType: gp2
             VolumeSize: !Ref 'SplunkSearchHeadDiskSize'
-      UserData: !Base64
-        Fn::Join:
-          - ''
-          - - "#!/bin/bash -v\n"
-            - "# First make cloud-init output log readable by root only to protect\
-              \ sensitive parameter values\n"
-            - "chmod 600 /var/log/cloud-init-output.log\n"
-            - "yum update -y aws-cfn-bootstrap\n"
-            - "export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)\n"
-            - "export INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)\n"
-            - "export SPLUNK_USER=splunk\n"
-            - "export SPLUNK_BIN=/opt/splunk/bin/splunk\n"
-            - "export SPLUNK_HOME=/opt/splunk\n"
-            - "printf '%s\t%s\n' \"$LOCALIP\" 'splunksearch' >> /etc/hosts\n"
-            - "hostname splunksearch\n"
-            - "mv $SPLUNK_HOME/etc/passwd $SPLUNK_HOME/etc/passwd.bak\n"
-            - "cat >>$SPLUNK_HOME/etc/system/local/user-seed.conf <<end\n"
-            - "[user_info]\n"
-            - "USERNAME = admin\n"
-            - 'PASSWORD = '
-            - !Ref 'SplunkAdminPassword'
-            - "\n"
-            - "end\n"
-            - "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n"
-            - "sed -i 's/ENFORCE_PWD_CHANGE=1/ENFORCE_PWD_CHANGE=0/' /etc/init.d/splunk\n"
-            - "touch $SPLUNK_HOME/etc/.ui_login\n"
-            - "service splunk restart\n"
-            - "# Increase splunkweb connection timeout with splunkd\n"
-            - "mkdir -p $SPLUNK_HOME/etc/apps/base-autogenerated/local\n"
-            - "cat >>$SPLUNK_HOME/etc/apps/base-autogenerated/local/web.conf <<end\n"
-            - "[settings]\n"
-            - "splunkdConnectionTimeout = 300\n"
-            - "end\n"
-            - "# Forward to indexer cluster using indexer discovery\n"
-            - "cat >>$SPLUNK_HOME/etc/apps/base-autogenerated/local/outputs.conf <<end\n"
-            - "# Turn off indexing on the search head\n"
-            - "[indexAndForward]\n"
-            - "index = false\n"
-            - "\n"
-            - "[tcpout]\n"
-            - "defaultGroup = indexer_cluster_peers\n"
-            - "forwardedindex.filter.disable = true\n"
-            - "indexAndForward = false\n"
-            - "\n"
-            - "[tcpout:indexer_cluster_peers]\n"
-            - "indexerDiscovery = cluster_master\n"
-            - "\n"
-            - "[indexer_discovery:cluster_master]\n"
-            - 'pass4SymmKey = '
-            - !Ref 'SplunkIndexerDiscoverySecret'
-            - "\n"
-            - master_uri = https://
-            - !GetAtt 'SplunkCM.PrivateIp'
-            - ":8089\n"
-            - "end\n"
-            - "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/apps/base-autogenerated\n"
-            - "service splunk start\n"
-            - sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave -master_uri
-              https://
-            - !GetAtt 'SplunkCM.PrivateIp'
-            - ':8089 -auth admin:'
-            - !Ref 'SplunkAdminPassword'
-            - "\n"
-            - 'sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -secret '
-            - !Ref 'SplunkClusterSecret'
-            - ' -mode searchhead -site site1 -master_uri https://'
-            - !GetAtt 'SplunkCM.PrivateIp'
-            - ':8089 -auth admin:'
-            - !Ref 'SplunkAdminPassword'
-            - "\n"
-            - !If
-              - InstallSearchHeadApps
-              - !Join
-                - ''
-                - - "# Add user-provided apps for cluster members\n"
-                  - 'user_apps=( '
-                  - !Join
-                    - ' '
-                    - !Ref 'SearchHeadApps'
-                  - " )\n"
-                  - "for i in ${!user_apps[*]}\n"
-                  - "do\n"
-                  - "   echo \"Downloading app ${user_apps[$i]}\"\n"
-                  - "   if wget --tries=3 ${user_apps[$i]} -O /tmp/app${i}.spl; then\n"
-                  - "        echo \"Installing app...\"\n"
-                  - "        tar -xvzf /tmp/app${i}.spl -C $SPLUNK_HOME/etc/apps/\n"
-                  - "        if [ $? -ne 0 ]; then\n"
-                  - "            echo \"Extracting tarball failed\"\n"
-                  - "        fi\n"
-                  - "        rm /tmp/app${i}.spl\n"
-                  - "    else\n"
-                  - "        echo \"Downloading tarball failed\"\n"
-                  - "    fi\n"
-                  - "done\n"
-                  - "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/apps\n"
-              - ''
-            - "service splunk restart\n"
-            - '/opt/aws/bin/cfn-signal -e $? --stack '
-            - !Ref 'AWS::StackName'
-            - ' --resource SplunkSearchHeadInstance'
-            - ' --region '
-            - !Ref 'AWS::Region'
-            - "\n"
-            - "usermod --expiredate 1 splunk\n"
+      UserData:
+        Fn::Base64:
+          Fn::Sub:
+            - |
+              #!/bin/bash -xe
+              export INSTALL_LICENSE="0"
+              export SYMMKEY="${SplunkIndexerDiscoverySecret}"
+              export ADMIN_PASSWORD="${SplunkAdminPassword}"
+              export STACK_NAME="${AWS::StackName}"
+              export AWS_REGION="${AWS::Region}"
+              export SPLUNK_CLUSTER_SECRET="${SplunkClusterSecret}"
+              export SplunkCMWaitHandle="${SplunkCMWaitHandle}"
+              export S3_USERDATA="https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}scripts/user_data.sh"
+              wget $S3_USERDATA -O /tmp/user_data.sh && chmod +x /tmp/user_data.sh
+              export CM_PRIVATEIP="${SplunkCMIP}"
+              /tmp/user_data.sh single_sh && rm -f /tmp/user_data.sh
+            - SplunkCMIP: !GetAtt SplunkCM.PrivateIp
   SplunkCM:
     Type: AWS::EC2::Instance
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT60M
+        Timeout: PT15M
     Metadata:
       AWS::CloudFormation::Init: !If
         - ConfigureLicense
         - config:
             files:
-              /etc/splunk/splunk.license:
+              /opt/splunk/etc/licenses/enterprise/splunk.license:
                 source: !If
                   - ConfigureLicense
                   - !Join
@@ -645,7 +563,7 @@ Resources:
         - DeviceName: /dev/xvda
           Ebs:
             VolumeType: gp2
-            VolumeSize: 50
+            VolumeSize: 334
       NetworkInterfaces:
         - GroupSet:
             - !Ref 'SplunkSecurityGroup'
@@ -670,162 +588,28 @@ Resources:
           Value: cluster-master
         - Key: Name
           Value: cluster-master
-      UserData: !Base64
-        Fn::Join:
-          - ''
-          - - "#!/bin/bash -v\n"
-            - "# First make cloud-init output log readable by root only to protect\
-              \ sensitive parameter values\n"
-            - "chmod 600 /var/log/cloud-init-output.log\n"
-            - "yum update -y aws-cfn-bootstrap\n"
-            - "export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)\n"
-            - "export INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id\
-              \ 2>/dev/null)\n"
-            - "export SPLUNK_USER=splunk\n"
-            - "export SPLUNK_BIN=/opt/splunk/bin/splunk\n"
-            - "export SPLUNK_HOME=/opt/splunk\n"
-            - "# remove stale splunkd.log that ships with AMI.\n"
-            - "rm -f $SPLUNK_HOME/var/log/splunk/splunkd.log\n"
-            - "printf '%s\t%s\n' \"$LOCALIP\" 'splunklicense' >> /etc/hosts\n"
-            - "hostname splunklicense\n"
-            - "mv $SPLUNK_HOME/etc/passwd $SPLUNK_HOME/etc/passwd.bak\n"
-            - "cat >>$SPLUNK_HOME/etc/system/local/user-seed.conf <<end\n"
-            - "[user_info]\n"
-            - "USERNAME = admin\n"
-            - 'PASSWORD = '
-            - !Ref 'SplunkAdminPassword'
-            - "\n"
-            - "end\n"
-            - "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n"
-            - "sed -i 's/ENFORCE_PWD_CHANGE=1/ENFORCE_PWD_CHANGE=0/' /etc/init.d/splunk\n"
-            - "touch $SPLUNK_HOME/etc/.ui_login\n"
-            - "service splunk restart\n"
-            - 'sudo -u $SPLUNK_USER $SPLUNK_BIN edit user admin -password '
-            - !Ref 'SplunkAdminPassword'
-            - " -role admin -auth admin:$INSTANCEID\n"
-            - "service splunk restart\n"
-            - "# Install files from the metadata\n"
-            - '/opt/aws/bin/cfn-init -v '
-            - '         --stack '
-            - !Ref 'AWS::StackName'
-            - '         --resource SplunkCM'
-            - '         --region '
-            - !Ref 'AWS::Region'
-            - "\n"
-            - "mkdir -p $SPLUNK_HOME/etc/licenses/enterprise\n"
-            - "chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/licenses/enterprise\n"
-            - "mv /etc/splunk/splunk.license $SPLUNK_HOME/etc/licenses/enterprise/\n"
-            - "# Increase splunkweb connection timeout with splunkd\n"
-            - "mkdir -p $SPLUNK_HOME/etc/apps/base-autogenerated/local\n"
-            - "cat >>$SPLUNK_HOME/etc/apps/base-autogenerated/local/web.conf <<end\n"
-            - "[settings]\n"
-            - "splunkdConnectionTimeout = 300\n"
-            - "end\n"
-            - "# Forward to indexer cluster using indexer discovery\n"
-            - "cat >>$SPLUNK_HOME/etc/apps/base-autogenerated/local/outputs.conf <<end\n"
-            - "# Turn off indexing\n"
-            - "[indexAndForward]\n"
-            - "index = false\n"
-            - "\n"
-            - "[tcpout]\n"
-            - "defaultGroup = indexer_cluster_peers\n"
-            - "forwardedindex.filter.disable = true\n"
-            - "indexAndForward = false\n"
-            - "\n"
-            - "[tcpout:indexer_cluster_peers]\n"
-            - "indexerDiscovery = cluster_master\n"
-            - "\n"
-            - "[indexer_discovery:cluster_master]\n"
-            - 'pass4SymmKey = '
-            - !Ref 'SplunkIndexerDiscoverySecret'
-            - "\n"
-            - "master_uri = https://127.0.0.1:8089\n"
-            - "end\n"
-            - "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/apps/base-autogenerated\n"
-            - "service splunk restart\n"
-            - 'sudo -u $SPLUNK_USER $SPLUNK_BIN login -auth admin:'
-            - !Ref 'SplunkAdminPassword'
-            - "\n"
-            - 'sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode master -multisite
-              true -replication_factor '
-            - !Ref 'SplunkReplicationFactor'
-            - ' -available_sites '
-            - !If
-              - Create3AZ
-              - site1,site2,site3
-              - site1,site2
-            - ' -site site1'
-            - ' -site_replication_factor origin:1,total:'
-            - !Ref 'SplunkReplicationFactor'
-            - ' -site_search_factor origin:1,total:'
-            - !Ref 'SplunkSearchFactor'
-            - ' -secret '
-            - !Ref 'SplunkClusterSecret'
-            - ' -cluster_label SplunkIndexersASG'
-            - "\n"
-            - "# Configure indexer discovery\n"
-            - "cat >>$SPLUNK_HOME/etc/system/local/server.conf <<end\n"
-            - "\n"
-            - "[indexer_discovery]\n"
-            - 'pass4SymmKey = '
-            - !Ref 'SplunkIndexerDiscoverySecret'
-            - "\n"
-            - "indexerWeightByDiskCapacity = true\n"
-            - "end\n"
-            - "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local/server.conf\n"
-            - "# Add base configs for peer nodes as an app under master-apps\n"
-            - "# Peer config 1: Enable HEC input\n"
-            - "sudo -u $SPLUNK_USER $SPLUNK_BIN http-event-collector enable -uri https://localhost:8089\n"
-            - "sudo -u $SPLUNK_USER $SPLUNK_BIN http-event-collector create default-token\
-              \ -uri https://localhost:8089 > /tmp/token\n"
-            - "TOKEN=`sed -n 's/\\ttoken=//p' /tmp/token` && rm /tmp/token\n"
-            - "echo $TOKEN\n"
-            - "mkdir -p $SPLUNK_HOME/etc/master-apps/peer-base-autogenerated/local\n"
-            - "mv $SPLUNK_HOME/etc/apps/splunk_httpinput/local/inputs.conf $SPLUNK_HOME/etc/master-apps/peer-base-autogenerated/local\n"
-            - "# Peer config 2: Enable splunktcp input\n"
-            - "cat >>$SPLUNK_HOME/etc/master-apps/peer-base-autogenerated/local/inputs.conf\
-              \ <<end\n"
-            - "\n"
-            - "[splunktcp://9997]\n"
-            - "disabled=0\n"
-            - "end\n"
-            - !If
-              - InstallIndexerApps
-              - !Join
-                - ''
-                - - "# Add user-provided apps for peer nodes\n"
-                  - 'user_apps=( '
-                  - !Join
-                    - ' '
-                    - !Ref 'IndexerApps'
-                  - " )\n"
-                  - "for i in ${!user_apps[*]}\n"
-                  - "do\n"
-                  - "   echo \"Downloading app ${user_apps[$i]}\"\n"
-                  - "   if wget --tries=3 ${user_apps[$i]} -O /tmp/app${i}.spl; then\n"
-                  - "        echo \"Installing app...\"\n"
-                  - "        tar -xvzf /tmp/app${i}.spl -C $SPLUNK_HOME/etc/master-apps/\n"
-                  - "        if [ $? -ne 0 ]; then\n"
-                  - "            echo \"Extracting tarball failed\"\n"
-                  - "        fi\n"
-                  - "        rm /tmp/app${i}.spl\n"
-                  - "    else\n"
-                  - "        echo \"Downloading tarball failed\"\n"
-                  - "    fi\n"
-                  - "done\n"
-              - ''
-            - "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/master-apps\n"
-            - "service splunk restart\n"
-            - '/opt/aws/bin/cfn-signal -e $? --stack '
-            - !Ref 'AWS::StackName'
-            - ' --resource SplunkCM'
-            - ' --region '
-            - !Ref 'AWS::Region'
-            - "\n"
-            - /opt/aws/bin/cfn-signal -e 0 -i token -d "$TOKEN" '
-            - !Ref 'SplunkCMWaitHandle'
-            - "'\n"
-            - "usermod --expiredate 1 splunk\n"
+      UserData:
+       Fn::Base64:
+        Fn::Sub:
+          - |
+            #!/bin/bash -xe
+            export INSTALL_LICENSE="0"
+            export SYMMKEY="${SplunkIndexerDiscoverySecret}"
+            export ADMIN_PASSWORD="${SplunkAdminPassword}"
+            export STACK_NAME="${AWS::StackName}"
+            export AWS_REGION="${AWS::Region}"
+            export SPLUNK_CLUSTER_SECRET="${SplunkClusterSecret}"
+            export SMARTSTORE_BUCKET="${SmartStoreBucketName}"
+            export SplunkCMWaitHandle="${SplunkCMWaitHandle}"
+            export REPFACTOR="${SplunkReplicationFactor}"
+            export SEARCHFACTOR="${SplunkSearchFactor}"
+            export S3_USERDATA="https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}scripts/user_data.sh"
+            export SITELIST="${Sitelist}"
+            export INSTALL_LICENSE="${InstallLicense}"
+            wget $S3_USERDATA -O /tmp/user_data.sh && chmod +x /tmp/user_data.sh
+            /tmp/user_data.sh cm && rm -f /tmp/user_data.sh
+          - Sitelist: !If [Create3AZ, "site1,site2,site3", "site1,site2" ]
+            InstallLicense: !If [ConfigureLicense, "1", "0"]
   SplunkCMWaitHandle:
     Type: AWS::CloudFormation::WaitConditionHandle
   SplunkCMWaitCondition:
@@ -833,13 +617,13 @@ Resources:
     DependsOn: SplunkCM
     Properties:
       Handle: !Ref 'SplunkCMWaitHandle'
-      Timeout: '3600'
+      Timeout: '900'
   SplunkSHCDeployer:
     Type: AWS::EC2::Instance
     Condition: CreateSHC
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT60M
+        Timeout: PT10M
     Properties:
       ImageId: !FindInMap
         - AWSAMIRegionMap
@@ -854,7 +638,7 @@ Resources:
         - Key: Application
           Value: !Ref 'AWS::StackId'
         - Key: Role
-          Value: splunk-search-head
+          Value: splunk-deployer
         - Key: Name
           Value: deployer
       NetworkInterfaces:
@@ -870,145 +654,32 @@ Resources:
           Ebs:
             VolumeType: gp2
             VolumeSize: !Ref 'SplunkSearchHeadDiskSize'
-      UserData: !Base64
-        Fn::Join:
-          - ''
-          - - "#!/bin/bash -v\n"
-            - "# First make cloud-init output log readable by root only to protect\
-              \ sensitive parameter values\n"
-            - "chmod 600 /var/log/cloud-init-output.log\n"
-            - "yum update -y aws-cfn-bootstrap\n"
-            - "export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)\n"
-            - "export INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)\n"
-            - "export SPLUNK_USER=splunk\n"
-            - "export SPLUNK_BIN=/opt/splunk/bin/splunk\n"
-            - "export SPLUNK_HOME=/opt/splunk\n"
-            - "printf '%s\t%s\n' \"$LOCALIP\" 'splunk-shc-deployer' >> /etc/hosts\n"
-            - "hostname splunk-shc-deployer\n"
-            - "mv $SPLUNK_HOME/etc/passwd $SPLUNK_HOME/etc/passwd.bak\n"
-            - "cat >>$SPLUNK_HOME/etc/system/local/user-seed.conf <<end\n"
-            - "[user_info]\n"
-            - "USERNAME = admin\n"
-            - 'PASSWORD = '
-            - !Ref 'SplunkAdminPassword'
-            - "\n"
-            - "end\n"
-            - "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n"
-            - "sed -i 's/ENFORCE_PWD_CHANGE=1/ENFORCE_PWD_CHANGE=0/' /etc/init.d/splunk\n"
-            - "touch $SPLUNK_HOME/etc/.ui_login\n"
-            - "service splunk restart\n"
-            - "# Increase splunkweb connection timeout with splunkd\n"
-            - "mkdir -p $SPLUNK_HOME/etc/apps/base-autogenerated/local\n"
-            - "cat >>$SPLUNK_HOME/etc/apps/base-autogenerated/local/web.conf <<end\n"
-            - "[settings]\n"
-            - "splunkdConnectionTimeout = 300\n"
-            - "end\n"
-            - "# Configure some SHC parameters\n"
-            - "cat >>$SPLUNK_HOME/etc/apps/base-autogenerated/local/server.conf <<end\n"
-            - "\n"
-            - "[shclustering]\n"
-            - 'pass4SymmKey = '
-            - !Ref 'SplunkClusterSecret'
-            - "\n"
-            - "shcluster_label = SplunkSHC\n"
-            - "end\n"
-            - "# Forward to indexer cluster using indexer discovery\n"
-            - "cat >>$SPLUNK_HOME/etc/apps/base-autogenerated/local/outputs.conf <<end\n"
-            - "# Turn off indexing on the search head\n"
-            - "[indexAndForward]\n"
-            - "index = false\n"
-            - "\n"
-            - "[tcpout]\n"
-            - "defaultGroup = indexer_cluster_peers\n"
-            - "forwardedindex.filter.disable = true\n"
-            - "indexAndForward = false\n"
-            - "\n"
-            - "[tcpout:indexer_cluster_peers]\n"
-            - "indexerDiscovery = cluster_master\n"
-            - "\n"
-            - "[indexer_discovery:cluster_master]\n"
-            - 'pass4SymmKey = '
-            - !Ref 'SplunkIndexerDiscoverySecret'
-            - "\n"
-            - master_uri = https://
-            - !GetAtt 'SplunkCM.PrivateIp'
-            - ":8089\n"
-            - "end\n"
-            - "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/apps/base-autogenerated\n"
-            - "# Add base config for search head cluster members\n"
-            - "mkdir -p $SPLUNK_HOME/etc/shcluster/apps/member-base-autogenerated/local\n"
-            - "cat >>$SPLUNK_HOME/etc/shcluster/apps/member-base-autogenerated/local/outputs.conf\
-              \ <<end\n"
-            - "# Turn off indexing on the search head\n"
-            - "[indexAndForward]\n"
-            - "index = false\n"
-            - "\n"
-            - "[tcpout]\n"
-            - "defaultGroup = indexer_cluster_peers\n"
-            - "forwardedindex.filter.disable = true\n"
-            - "indexAndForward = false\n"
-            - "\n"
-            - "[tcpout:indexer_cluster_peers]\n"
-            - "indexerDiscovery = cluster_master\n"
-            - "\n"
-            - "[indexer_discovery:cluster_master]\n"
-            - 'pass4SymmKey = '
-            - !Ref 'SplunkIndexerDiscoverySecret'
-            - "\n"
-            - master_uri = https://
-            - !GetAtt 'SplunkCM.PrivateIp'
-            - ":8089\n"
-            - "end\n"
-            - !If
-              - InstallSearchHeadApps
-              - !Join
-                - ''
-                - - "# Add user-provided apps for cluster members\n"
-                  - 'user_apps=( '
-                  - !Join
-                    - ' '
-                    - !Ref 'SearchHeadApps'
-                  - " )\n"
-                  - "for i in ${!user_apps[*]}\n"
-                  - "do\n"
-                  - "   echo \"Downloading app ${user_apps[$i]}\"\n"
-                  - "   if wget --tries=3 ${user_apps[$i]} -O /tmp/app${i}.spl; then\n"
-                  - "        echo \"Installing app...\"\n"
-                  - "        tar -xvzf /tmp/app${i}.spl -C $SPLUNK_HOME/etc/shcluster/apps/\n"
-                  - "        if [ $? -ne 0 ]; then\n"
-                  - "            echo \"Extracting tarball failed\"\n"
-                  - "        fi\n"
-                  - "        rm /tmp/app${i}.spl\n"
-                  - "    else\n"
-                  - "        echo \"Downloading tarball failed\"\n"
-                  - "    fi\n"
-                  - "done\n"
-              - ''
-            - "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/shcluster/apps\n"
-            - "service splunk start\n"
-            - 'sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave '
-            - -master_uri https://
-            - !GetAtt 'SplunkCM.PrivateIp'
-            - ':8089 '
-            - '-auth admin:'
-            - !Ref 'SplunkAdminPassword'
-            - "\n"
-            - "sudo -u $SPLUNK_USER $SPLUNK_BIN apply shcluster-bundle -action stage\
-              \ --answer-yes\n"
-            - "service splunk restart\n"
-            - '/opt/aws/bin/cfn-signal -e $? --stack '
-            - !Ref 'AWS::StackName'
-            - ' --resource SplunkSHCDeployer'
-            - ' --region '
-            - !Ref 'AWS::Region'
-            - "\n"
-            - "usermod --expiredate 1 splunk\n"
+      UserData:
+       Fn::Base64:
+        Fn::Sub:
+          - |
+            #!/bin/bash -xe
+            export INSTALL_LICENSE="0"
+            export SYMMKEY="${SplunkIndexerDiscoverySecret}"
+            export ADMIN_PASSWORD="${SplunkAdminPassword}"
+            export STACK_NAME="${AWS::StackName}"
+            export AWS_REGION="${AWS::Region}"
+            export SPLUNK_CLUSTER_SECRET="${SplunkClusterSecret}"
+            export SMARTSTORE_BUCKET="${SmartStoreBucketName}"
+            export SplunkCMWaitHandle="${SplunkCMWaitHandle}"
+            export REPFACTOR="${SplunkReplicationFactor}"
+            export SEARCHFACTOR="${SplunkSearchFactor}"
+            export S3_USERDATA="https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}scripts/user_data.sh"
+            export CM_PRIVATEIP="${SplunkCMIP}"
+            wget $S3_USERDATA -O /tmp/user_data.sh && chmod +x /tmp/user_data.sh
+            /tmp/user_data.sh deployer && rm -f /tmp/user_data.sh
+          - SplunkCMIP: !GetAtt SplunkCM.PrivateIp
   SplunkSHCMember1:
     Type: AWS::EC2::Instance
     Condition: CreateSHC
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT60M
+        Timeout: PT10M
     Properties:
       ImageId: !FindInMap
         - AWSAMIRegionMap
@@ -1036,92 +707,37 @@ Resources:
           Ebs:
             VolumeType: gp2
             VolumeSize: !Ref 'SplunkSearchHeadDiskSize'
-      UserData: !Base64
-        Fn::Join:
-          - ''
-          - - "#!/bin/bash -v\n"
-            - "# First make cloud-init output log readable by root only to protect\
-              \ sensitive parameter values\n"
-            - "chmod 600 /var/log/cloud-init-output.log\n"
-            - "yum update -y aws-cfn-bootstrap\n"
-            - "export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)\n"
-            - "export INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)\n"
-            - "export SPLUNK_USER=splunk\n"
-            - "export SPLUNK_BIN=/opt/splunk/bin/splunk\n"
-            - "export SPLUNK_HOME=/opt/splunk\n"
-            - "printf '%s\t%s\n' \"$LOCALIP\" 'splunksearch' >> /etc/hosts\n"
-            - "hostname splunksearch\n"
-            - "mv $SPLUNK_HOME/etc/passwd $SPLUNK_HOME/etc/passwd.bak\n"
-            - "cat >>$SPLUNK_HOME/etc/system/local/user-seed.conf <<end\n"
-            - "[user_info]\n"
-            - "USERNAME = admin\n"
-            - 'PASSWORD = '
-            - !Ref 'SplunkAdminPassword'
-            - "\n"
-            - "end\n"
-            - "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n"
-            - "sed -i 's/ENFORCE_PWD_CHANGE=1/ENFORCE_PWD_CHANGE=0/' /etc/init.d/splunk\n"
-            - "touch $SPLUNK_HOME/etc/.ui_login\n"
-            - "# set splunk servername \n"
-            - "sudo -u $SPLUNK_USER $SPLUNK_BIN set servername SHC1\n"
-            - "service splunk restart\n"
-            - "# Increase splunkweb connection timeout with splunkd\n"
-            - "cat >$SPLUNK_HOME/etc/system/local/web.conf <<end\n"
-            - "[settings]\n"
-            - "splunkdConnectionTimeout = 300\n"
-            - "end\n"
-            - "# Configure some SHC parameters\n"
-            - "cat >>$SPLUNK_HOME/etc/system/local/server.conf <<end\n"
-            - "[shclustering]\n"
-            - "register_replication_address = $LOCALIP\n"
-            - "end\n"
-            - "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local\n"
-            - "service splunk restart\n"
-            - 'sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave '
-            - -master_uri https://
-            - !GetAtt 'SplunkCM.PrivateIp'
-            - ':8089 '
-            - '-auth admin:'
-            - !Ref 'SplunkAdminPassword'
-            - "\n"
-            - 'sudo -u $SPLUNK_USER $SPLUNK_BIN init shcluster-config '
-            - '-mgmt_uri https://$LOCALIP:8089 -replication_port 8090 -replication_factor '
-            - !FindInMap
-              - SplunkConfig
-              - shcluster-replication-factor
-              - num
-            - ' -conf_deploy_fetch_url https://'
-            - !GetAtt 'SplunkSHCDeployer.PrivateIp'
-            - ':8089 '
-            - '-shcluster_label SplunkSHC '
-            - '-secret '
-            - !Ref 'SplunkClusterSecret'
-            - ' '
-            - '-auth admin:'
-            - !Ref 'SplunkAdminPassword'
-            - "\n"
-            - sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode searchhead
-            - ' -site site1'
-            - ' -master_uri https://'
-            - !GetAtt 'SplunkCM.PrivateIp'
-            - ':8089 '
-            - ' -secret '
-            - !Ref 'SplunkClusterSecret'
-            - "\n"
-            - "service splunk restart\n"
-            - '/opt/aws/bin/cfn-signal -e $? --stack '
-            - !Ref 'AWS::StackName'
-            - ' --resource SplunkSHCMember1'
-            - ' --region '
-            - !Ref 'AWS::Region'
-            - "\n"
-            - "usermod --expiredate 1 splunk\n"
+      UserData:
+       Fn::Base64:
+        Fn::Sub:
+          - |
+            #!/bin/bash -xe
+            export INSTALL_LICENSE="0"
+            export SYMMKEY="${SplunkIndexerDiscoverySecret}"
+            export ADMIN_PASSWORD="${SplunkAdminPassword}"
+            export STACK_NAME="${AWS::StackName}"
+            export AWS_REGION="${AWS::Region}"
+            export SPLUNK_CLUSTER_SECRET="${SplunkClusterSecret}"
+            export SMARTSTORE_BUCKET="${SmartStoreBucketName}"
+            export SplunkCMWaitHandle="${SplunkCMWaitHandle}"
+            export REPFACTOR="${SplunkReplicationFactor}"
+            export SEARCHFACTOR="${SplunkSearchFactor}"
+            export S3_USERDATA="https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}scripts/user_data.sh"
+            export CM_PRIVATEIP="${SplunkCMIP}"
+            export SH_REPLICATION_FACTOR="${SplunkReplicationFactor}"
+            export THREEAZ="${THREEAZ}"
+            export SH_DEPLOYER_IP="${SH_DEPLOYER_IP}"
+            wget $S3_USERDATA -O /tmp/user_data.sh && chmod +x /tmp/user_data.sh
+            /tmp/user_data.sh cluster_sh 1 && rm -f /tmp/user_data.sh
+          - SplunkCMIP: !GetAtt SplunkCM.PrivateIp
+            SH_DEPLOYER_IP: !GetAtt SplunkSHCDeployer.PrivateIp
+            THREEAZ: !If [ Create3AZ, "1", "0" ]
   SplunkSHCMember2:
     Type: AWS::EC2::Instance
     Condition: CreateSHC
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT60M
+        Timeout: PT10M
     Properties:
       ImageId: !FindInMap
         - AWSAMIRegionMap
@@ -1149,92 +765,37 @@ Resources:
           Ebs:
             VolumeType: gp2
             VolumeSize: !Ref 'SplunkSearchHeadDiskSize'
-      UserData: !Base64
-        Fn::Join:
-          - ''
-          - - "#!/bin/bash -v\n"
-            - "# First make cloud-init output log readable by root only to protect\
-              \ sensitive parameter values\n"
-            - "chmod 600 /var/log/cloud-init-output.log\n"
-            - "yum update -y aws-cfn-bootstrap\n"
-            - "export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)\n"
-            - "export INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)\n"
-            - "export SPLUNK_USER=splunk\n"
-            - "export SPLUNK_BIN=/opt/splunk/bin/splunk\n"
-            - "export SPLUNK_HOME=/opt/splunk\n"
-            - "printf '%s\t%s\n' \"$LOCALIP\" 'splunksearch' >> /etc/hosts\n"
-            - "hostname splunksearch\n"
-            - "mv $SPLUNK_HOME/etc/passwd $SPLUNK_HOME/etc/passwd.bak\n"
-            - "cat >>$SPLUNK_HOME/etc/system/local/user-seed.conf <<end\n"
-            - "[user_info]\n"
-            - "USERNAME = admin\n"
-            - 'PASSWORD = '
-            - !Ref 'SplunkAdminPassword'
-            - "\n"
-            - "end\n"
-            - "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n"
-            - "sed -i 's/ENFORCE_PWD_CHANGE=1/ENFORCE_PWD_CHANGE=0/' /etc/init.d/splunk\n"
-            - "touch $SPLUNK_HOME/etc/.ui_login\n"
-            - "# set splunk servername \n"
-            - "sudo -u $SPLUNK_USER $SPLUNK_BIN set servername SHC2\n"
-            - "service splunk restart\n"
-            - "# Increase splunkweb connection timeout with splunkd\n"
-            - "cat >$SPLUNK_HOME/etc/system/local/web.conf <<end\n"
-            - "[settings]\n"
-            - "splunkdConnectionTimeout = 300\n"
-            - "end\n"
-            - "# Configure some SHC parameters\n"
-            - "cat >>$SPLUNK_HOME/etc/system/local/server.conf <<end\n"
-            - "[shclustering]\n"
-            - "register_replication_address = $LOCALIP\n"
-            - "end\n"
-            - "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local\n"
-            - "service splunk start\n"
-            - 'sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave '
-            - -master_uri https://
-            - !GetAtt 'SplunkCM.PrivateIp'
-            - ':8089 '
-            - '-auth admin:'
-            - !Ref 'SplunkAdminPassword'
-            - "\n"
-            - 'sudo -u $SPLUNK_USER $SPLUNK_BIN init shcluster-config '
-            - '-mgmt_uri https://$LOCALIP:8089 -replication_port 8090 -replication_factor '
-            - !FindInMap
-              - SplunkConfig
-              - shcluster-replication-factor
-              - num
-            - ' -conf_deploy_fetch_url https://'
-            - !GetAtt 'SplunkSHCDeployer.PrivateIp'
-            - ':8089 '
-            - '-shcluster_label SplunkSHC '
-            - '-secret '
-            - !Ref 'SplunkClusterSecret'
-            - ' '
-            - '-auth admin:'
-            - !Ref 'SplunkAdminPassword'
-            - "\n"
-            - sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode searchhead
-            - ' -site site2'
-            - ' -master_uri https://'
-            - !GetAtt 'SplunkCM.PrivateIp'
-            - ':8089 '
-            - ' -secret '
-            - !Ref 'SplunkClusterSecret'
-            - "\n"
-            - "service splunk restart\n"
-            - '/opt/aws/bin/cfn-signal -e $? --stack '
-            - !Ref 'AWS::StackName'
-            - ' --resource SplunkSHCMember2'
-            - ' --region '
-            - !Ref 'AWS::Region'
-            - "\n"
-            - "usermod --expiredate 1 splunk\n"
+      UserData:
+       Fn::Base64:
+        Fn::Sub:
+          - |
+            #!/bin/bash -xe
+            export INSTALL_LICENSE="0"
+            export SYMMKEY="${SplunkIndexerDiscoverySecret}"
+            export ADMIN_PASSWORD="${SplunkAdminPassword}"
+            export STACK_NAME="${AWS::StackName}"
+            export AWS_REGION="${AWS::Region}"
+            export SPLUNK_CLUSTER_SECRET="${SplunkClusterSecret}"
+            export SMARTSTORE_BUCKET="${SmartStoreBucketName}"
+            export SplunkCMWaitHandle="${SplunkCMWaitHandle}"
+            export REPFACTOR="${SplunkReplicationFactor}"
+            export SEARCHFACTOR="${SplunkSearchFactor}"
+            export S3_USERDATA="https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}scripts/user_data.sh"
+            export CM_PRIVATEIP="${SplunkCMIP}"
+            export SH_REPLICATION_FACTOR="${SplunkReplicationFactor}"
+            export THREEAZ="${THREEAZ}"
+            export SH_DEPLOYER_IP="${SH_DEPLOYER_IP}"
+            wget $S3_USERDATA -O /tmp/user_data.sh && chmod +x /tmp/user_data.sh
+            /tmp/user_data.sh cluster_sh 2 && rm -f /tmp/user_data.sh
+          - SplunkCMIP: !GetAtt SplunkCM.PrivateIp
+            SH_DEPLOYER_IP: !GetAtt SplunkSHCDeployer.PrivateIp
+            THREEAZ: !If [ Create3AZ, "1", "0" ]
   SplunkSHCMember3:
     Type: AWS::EC2::Instance
     Condition: CreateSHC
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT60M
+        Timeout: PT10M
     Properties:
       ImageId: !FindInMap
         - AWSAMIRegionMap
@@ -1265,109 +826,35 @@ Resources:
           Ebs:
             VolumeType: gp2
             VolumeSize: !Ref 'SplunkSearchHeadDiskSize'
-      UserData: !Base64
-        Fn::Join:
-          - ''
-          - - "#!/bin/bash -v\n"
-            - "# First make cloud-init output log readable by root only to protect\
-              \ sensitive parameter values\n"
-            - "chmod 600 /var/log/cloud-init-output.log\n"
-            - "yum update -y aws-cfn-bootstrap\n"
-            - "export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)\n"
-            - "export INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)\n"
-            - "export SPLUNK_USER=splunk\n"
-            - "export SPLUNK_BIN=/opt/splunk/bin/splunk\n"
-            - "export SPLUNK_HOME=/opt/splunk\n"
-            - "printf '%s\t%s\n' \"$LOCALIP\" 'splunksearch' >> /etc/hosts\n"
-            - "hostname splunksearch\n"
-            - "mv $SPLUNK_HOME/etc/passwd $SPLUNK_HOME/etc/passwd.bak\n"
-            - "cat >>$SPLUNK_HOME/etc/system/local/user-seed.conf <<end\n"
-            - "[user_info]\n"
-            - "USERNAME = admin\n"
-            - 'PASSWORD = '
-            - !Ref 'SplunkAdminPassword'
-            - "\n"
-            - "end\n"
-            - "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n"
-            - "sed -i 's/ENFORCE_PWD_CHANGE=1/ENFORCE_PWD_CHANGE=0/' /etc/init.d/splunk\n"
-            - "touch $SPLUNK_HOME/etc/.ui_login\n"
-            - "# set splunk servername \n"
-            - "sudo -u $SPLUNK_USER $SPLUNK_BIN set servername SHC3\n"
-            - "service splunk restart\n"
-            - 'sudo -u $SPLUNK_USER $SPLUNK_BIN edit user admin -password '
-            - !Ref 'SplunkAdminPassword'
-            - " -role admin -auth admin:$INSTANCEID\n"
-            - "service splunk restart\n"
-            - "# Increase splunkweb connection timeout with splunkd\n"
-            - "cat >$SPLUNK_HOME/etc/system/local/web.conf <<end\n"
-            - "[settings]\n"
-            - "splunkdConnectionTimeout = 300\n"
-            - "end\n"
-            - "# Configure some SHC parameters\n"
-            - "cat >>$SPLUNK_HOME/etc/system/local/server.conf <<end\n"
-            - "[shclustering]\n"
-            - "register_replication_address = $LOCALIP\n"
-            - "end\n"
-            - "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/system/local\n"
-            - "service splunk start\n"
-            - 'sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave '
-            - -master_uri https://
-            - !GetAtt 'SplunkCM.PrivateIp'
-            - ':8089 '
-            - '-auth admin:'
-            - !Ref 'SplunkAdminPassword'
-            - "\n"
-            - 'sudo -u $SPLUNK_USER $SPLUNK_BIN init shcluster-config '
-            - '-mgmt_uri https://$LOCALIP:8089 -replication_port 8090 -replication_factor '
-            - !FindInMap
-              - SplunkConfig
-              - shcluster-replication-factor
-              - num
-            - ' -conf_deploy_fetch_url https://'
-            - !GetAtt 'SplunkSHCDeployer.PrivateIp'
-            - ':8089 '
-            - '-shcluster_label SplunkSHC '
-            - '-secret '
-            - !Ref 'SplunkClusterSecret'
-            - ' '
-            - '-auth admin:'
-            - !Ref 'SplunkAdminPassword'
-            - "\n"
-            - sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode searchhead
-            - ' -site '
-            - !If
-              - Create3AZ
-              - site3
-              - site2
-            - ' -master_uri https://'
-            - !GetAtt 'SplunkCM.PrivateIp'
-            - ':8089 '
-            - ' -secret '
-            - !Ref 'SplunkClusterSecret'
-            - "\n"
-            - "service splunk restart\n"
-            - "# Bootstrap SHC captain\n"
-            - 'sudo -u $SPLUNK_USER $SPLUNK_BIN bootstrap shcluster-captain '
-            - -servers_list "
-            - https://
-            - !GetAtt 'SplunkSHCMember1.PrivateIp'
-            - :8089,
-            - https://
-            - !GetAtt 'SplunkSHCMember2.PrivateIp'
-            - :8089,
-            - https://
-            - $LOCALIP
-            - :8089"
-            - ' -auth admin:'
-            - !Ref 'SplunkAdminPassword'
-            - "\n"
-            - '/opt/aws/bin/cfn-signal -e $? --stack '
-            - !Ref 'AWS::StackName'
-            - ' --resource SplunkSHCMember3'
-            - ' --region '
-            - !Ref 'AWS::Region'
-            - "\n"
-            - "usermod --expiredate 1 splunk\n"
+      UserData:
+       Fn::Base64:
+        Fn::Sub:
+          - |
+            #!/bin/bash -xe
+            export INSTALL_LICENSE="0"
+            export SYMMKEY="${SplunkIndexerDiscoverySecret}"
+            export ADMIN_PASSWORD="${SplunkAdminPassword}"
+            export STACK_NAME="${AWS::StackName}"
+            export AWS_REGION="${AWS::Region}"
+            export SPLUNK_CLUSTER_SECRET="${SplunkClusterSecret}"
+            export SMARTSTORE_BUCKET="${SmartStoreBucketName}"
+            export SplunkCMWaitHandle="${SplunkCMWaitHandle}"
+            export REPFACTOR="${SplunkReplicationFactor}"
+            export SEARCHFACTOR="${SplunkSearchFactor}"
+            export S3_USERDATA="https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}scripts/user_data.sh"
+            export CM_PRIVATEIP="${SplunkCMIP}"
+            export SH_REPLICATION_FACTOR="${SplunkReplicationFactor}"
+            export THREEAZ="${THREEAZ}"
+            export SH_DEPLOYER_IP="${SH_DEPLOYER_IP}"
+            export SH1_IP=${SH1_IP}
+            export SH2_IP=${SH2_IP}
+            wget $S3_USERDATA -O /tmp/user_data.sh && chmod +x /tmp/user_data.sh
+            /tmp/user_data.sh cluster_sh 3 && rm -f /tmp/user_data.sh
+          - SplunkCMIP: !GetAtt SplunkCM.PrivateIp
+            SH_DEPLOYER_IP: !GetAtt SplunkSHCDeployer.PrivateIp
+            SH1_IP: !GetAtt SplunkSHCMember1.PrivateIp
+            SH2_IP: !GetAtt SplunkSHCMember2.PrivateIp
+            THREEAZ: !If [ Create3AZ, "1", "0" ]
   CfnUser:
     Type: AWS::IAM::User
     Condition: ConfigureLicense
@@ -1402,6 +889,7 @@ Resources:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
       AssociatePublicIpAddress: true
+      IamInstanceProfile: !Ref 'SmartStoreS3AccessInstanceProfile'
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
           Ebs:
@@ -1416,93 +904,32 @@ Resources:
         - SPLUNKENTHVM
       InstanceType: !Ref 'IndexerInstanceType'
       KeyName: !Ref 'KeyName'
-      UserData: !Base64
-        Fn::Join:
-          - ''
-          - - "#!/bin/bash -v\n"
-            - "# First make cloud-init output log readable by root only to protect\
-              \ sensitive parameter values\n"
-            - "chmod 600 /var/log/cloud-init-output.log\n"
-            - "yum update -y aws-cfn-bootstrap\n"
-            - "export LOCALIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)\n"
-            - "export INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)\n"
-            - "export SPLUNK_USER=splunk\n"
-            - "export SPLUNK_BIN=/opt/splunk/bin/splunk\n"
-            - "export SPLUNK_HOME=/opt/splunk\n"
-            - "mv $SPLUNK_HOME/etc/passwd $SPLUNK_HOME/etc/passwd.bak\n"
-            - "cat >>$SPLUNK_HOME/etc/system/local/user-seed.conf <<end\n"
-            - "[user_info]\n"
-            - "USERNAME = admin\n"
-            - 'PASSWORD = '
-            - !Ref 'SplunkAdminPassword'
-            - "\n"
-            - "end\n"
-            - "sed -i '/guid/d' $SPLUNK_HOME/etc/instance.cfg\n"
-            - "sed -i 's/ENFORCE_PWD_CHANGE=1/ENFORCE_PWD_CHANGE=0/' /etc/init.d/splunk\n"
-            - "touch $SPLUNK_HOME/etc/.ui_login\n"
-            - "service splunk restart\n"
-            - "# set splunk server name to local hostname.\n"
-            - 'sudo -u $SPLUNK_USER $SPLUNK_BIN set servername $HOSTNAME -auth admin:'
-            - !Ref 'SplunkAdminPassword'
-            - "\n"
-            - "# Increase splunkweb connection timeout with splunkd\n"
-            - "mkdir -p $SPLUNK_HOME/etc/apps/base-autogenerated/local\n"
-            - "cat >>$SPLUNK_HOME/etc/apps/base-autogenerated/local/web.conf <<end\n"
-            - "[settings]\n"
-            - "splunkdConnectionTimeout = 300\n"
-            - "end\n"
-            - "# Configure some SHC parameters\n"
-            - "cat >>$SPLUNK_HOME/etc/apps/base-autogenerated/local/server.conf <<end\n"
-            - "[shclustering]\n"
-            - "register_replication_address = ${LOCALIP}\n"
-            - "end\n"
-            - "chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/apps/base-autogenerated\n"
-            - "service splunk start\n"
-            - sudo -u $SPLUNK_USER $SPLUNK_BIN edit licenser-localslave -master_uri
-              https://
-            - !GetAtt 'SplunkCM.PrivateIp'
-            - ':8089 -auth admin:'
-            - !Ref 'SplunkAdminPassword'
-            - "\n"
-            - "export INSTANCE_MAC_ADDR=$(curl -s http://169.254.169.254/latest/meta-data/mac)\n"
-            - "export INSTANCE_SUBNET_ID=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$INSTANCE_MAC_ADDR/subnet-id)\n"
-            - "case $INSTANCE_SUBNET_ID in\n"
-            - '  '
-            - !Ref 'PublicSubnet1ID'
-            - ")\n"
-            - "    site=\"site1\"\n"
-            - "    ;;\n"
-            - '  '
-            - !Ref 'PublicSubnet2ID'
-            - ")\n"
-            - "    site=\"site2\"\n"
-            - "    ;;\n"
-            - '  '
-            - !Ref 'PublicSubnet3ID'
-            - ")\n"
-            - "    site=\"site3\"\n"
-            - "    ;;\n"
-            - "  *)\n"
-            - "    echo \"Unexpected subnet id\"\n"
-            - "    exit 1\n"
-            - "esac\n"
-            - sudo -u $SPLUNK_USER $SPLUNK_BIN edit cluster-config -mode slave
-            - ' -site $site'
-            - ' -master_uri https://'
-            - !GetAtt 'SplunkCM.PrivateIp'
-            - ':8089 '
-            - ' -replication_port 9887'
-            - ' -secret '
-            - !Ref 'SplunkClusterSecret'
-            - "\n"
-            - "service splunk restart\n"
-            - '/opt/aws/bin/cfn-signal -s true --stack '
-            - !Ref 'AWS::StackName'
-            - ' --resource SplunkIndexerNodesASG'
-            - ' --region '
-            - !Ref 'AWS::Region'
-            - "\n"
-            - "usermod --expiredate 1 splunk\n"
+      UserData:
+       Fn::Base64:
+        Fn::Sub:
+          - |
+            #!/bin/bash -xe
+            export INSTALL_LICENSE="0"
+            export SYMMKEY="${SplunkIndexerDiscoverySecret}"
+            export ADMIN_PASSWORD="${SplunkAdminPassword}"
+            export STACK_NAME="${AWS::StackName}"
+            export AWS_REGION="${AWS::Region}"
+            export SPLUNK_CLUSTER_SECRET="${SplunkClusterSecret}"
+            export SMARTSTORE_BUCKET="${SmartStoreBucketName}"
+            export SplunkCMWaitHandle="${SplunkCMWaitHandle}"
+            export REPFACTOR="${SplunkReplicationFactor}"
+            export SEARCHFACTOR="${SplunkSearchFactor}"
+            export S3_USERDATA="https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}scripts/user_data.sh"
+            export CM_PRIVATEIP="${SplunkCMIP}"
+            export SH_REPLICATION_FACTOR="${SplunkReplicationFactor}"
+            export SMARTSTORE_BUCKET="${SmartStoreBucketName}"
+            export CM_PRIVATEIP="${SplunkCMIP}"
+            export SUBNET1_ID="${PublicSubnet1ID}"
+            export SUBNET2_ID="${PublicSubnet2ID}"
+            export SUBNET3_ID="${PublicSubnet3ID}"
+            wget $S3_USERDATA -O /tmp/user_data.sh && chmod +x /tmp/user_data.sh
+            /tmp/user_data.sh indexer && rm -f /tmp/user_data.sh
+          - SplunkCMIP: !GetAtt SplunkCM.PrivateIp
   SplunkSHCLoadBalancer:
     Type: AWS::ElasticLoadBalancing::LoadBalancer
     Condition: CreateSHC
@@ -1607,10 +1034,10 @@ Resources:
     CreationPolicy:
       ResourceSignal:
         Count: !Ref 'SplunkIndexerCount'
-        Timeout: PT30M
+        Timeout: PT20M
 Outputs:
   SearchHeadURL:
-    Description: Splunk Enterprise - Search Head URL
+    Description: 'Splunk Enterprise - Search Head URL'
     Value: !Join
       - ''
       - - http://
@@ -1620,22 +1047,21 @@ Outputs:
           - !GetAtt 'SplunkSearchHeadInstance.PublicIp'
         - :8000
   ClusterMasterURL:
-    Description: Splunk Enterprise - Cluster Master URL
+    Description: 'Splunk Enterprise - Cluster Master URL'
     Value: !Join
       - ''
       - - http://
         - !GetAtt 'SplunkCM.PublicIp'
         - :8000
   ClusterMasterManagementURL:
-    Description: Splunk Enterprise - Cluster Master Management URL (required for Indexer
-      Discovery)
+    Description: 'Splunk Enterprise - Cluster Master Management URL (required for Indexer Discovery)'
     Value: !Join
       - ''
       - - https://
-        - !GetAtt 'SplunkCM.PrivateIp'
+        - !GetAtt SplunkCM.PrivateIp
         - :8089
   DeployerURL:
-    Description: Splunk Enterprise - Search Head Cluster Deployer URL
+    Description: 'Splunk Enterprise - Search Head Cluster Deployer URL'
     Value: !If
       - CreateSHC
       - !Join
@@ -1645,7 +1071,7 @@ Outputs:
           - :8000
       - Applicable when Search Head Cluster is selected
   HttpEventCollectorURL:
-    Description: HTTP Event Collector URL
+    Description: 'HTTP Event Collector URL'
     Value: !Join
       - ''
       - - http://
@@ -1653,7 +1079,7 @@ Outputs:
         - :8088
         - /services/collector
   HttpEventCollectorToken:
-    Description: HTTP Event Collector Token
+    Description: 'HTTP Event Collector Token'
     Value: !Select
       - '1'
       - !Split
