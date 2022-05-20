@@ -1,10 +1,12 @@
+:xrefstyle: short
+
 Deploying this Quick Start for a new VPC with default parameters builds the following {partner-product-name} environment in the AWS Cloud.
 [#architecture1]
 .Quick Start architecture for {partner-product-name} on AWS
 [link=images/splunk-enterprise-architecture-on-aws.png]
 image::../images/splunk-enterprise-architecture-on-aws.png[Architecture,width=648,height=439]
 
-As shown in figure 1, the Quick Start sets up the following:
+As shown in <<architecture1>>, the Quick Start sets up the following:
 
 * A VPC configured across two or three Availability Zones, depending on your selection. The Quick Start provisions one public subnet in each Availability Zone.
 * Two Elastic Load Balancing (ELB) load balancers: one to load-balance HTTP web traffic to the search head instances, and the other to load-balance HTTP event traffic destined for the Splunk HTTP Event Collector (HEC) across all indexer instances.
