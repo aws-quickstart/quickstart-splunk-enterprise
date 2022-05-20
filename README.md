@@ -33,5 +33,3 @@ This project is licensed under Apache License 2.0 - see [LICENSE.txt](./LICENSE.
 
 If you have any problems or general questions, please file an issue in the parent repository:
 https://github.com/aws-quickstart/quickstart-splunk-enterprise/issues
-
-
