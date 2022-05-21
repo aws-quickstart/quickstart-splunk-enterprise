@@ -285,40 +285,39 @@ Conditions:
 Mappings:
   AWSAMIRegionMap:
     AMI:
-      SPLUNKENTHVM: splunk_AMI_8.2.3.3_2021-12-18_00-53-30-7b65de6c-5006-4ca2-bd75-fdba95ae5d9d
+      SPLUNKENTHVM: splunk_AMI_8.2.6_2022-04-20_17-27-55-7b65de6c-5006-4ca2-bd75-fdba95ae5d9d
     us-west-1:
-      SPLUNKENTHVM: ami-09661ae18cb9aedb4
+      SPLUNKENTHVM: ami-083c40352f95a2a8d
     us-west-2:
-      SPLUNKENTHVM: ami-0c22deb9fc3c775d9
+      SPLUNKENTHVM: ami-063db914927fd068a
     us-east-1:
-      SPLUNKENTHVM: ami-0582e6c6a47fc48c5
+      SPLUNKENTHVM: ami-02be4afccabbc98a7
     us-east-2:
-      SPLUNKENTHVM: ami-01021135eb4ce4d5d
+      SPLUNKENTHVM: ami-0e3657d8025d1f571
     ap-south-1:
-      SPLUNKENTHVM: ami-005110201be854c36
+      SPLUNKENTHVM: ami-04f8e05450860a0e4
     ap-northeast-1:
-      SPLUNKENTHVM: ami-0f652f101b96c37e9
+      SPLUNKENTHVM: ami-0316ee1a35129c1ed
     ap-northeast-2:
-      SPLUNKENTHVM: ami-0673efcda653adfb5
+      SPLUNKENTHVM: ami-0441f1c60fa588b30
     ap-southeast-1:
-      SPLUNKENTHVM: ami-091a6c8fd0012281e
+      SPLUNKENTHVM: ami-0066d2b4e4446b6b4
     ap-southeast-2:
-      SPLUNKENTHVM: ami-0cdb50ab376ee7d58
+      SPLUNKENTHVM: ami-0b93708f93e6fcefa
     ca-central-1:
-      SPLUNKENTHVM: ami-03c36e8753b649758
+      SPLUNKENTHVM: ami-0287afc9fe6de24dc
     eu-central-1:
-      SPLUNKENTHVM: ami-00018e48dd37a4de3
+      SPLUNKENTHVM: ami-0258ed74a65c3aa80
     eu-west-1:
-      SPLUNKENTHVM: ami-01495bcd527c0ff9d
+      SPLUNKENTHVM: ami-0ef490267313f2958
     eu-west-2:
-      SPLUNKENTHVM: ami-0b285d7712449bb17
+      SPLUNKENTHVM: ami-0eed7148a3c5db6a0
     eu-west-3:
-      SPLUNKENTHVM: ami-05f8860a4be3a2a86
+      SPLUNKENTHVM: ami-0f8ed68391019e14a
     eu-north-1:
-      SPLUNKENTHVM: ami-0a2d7f72e56037575
+      SPLUNKENTHVM: ami-0c13450402b8e9f7a
     sa-east-1:
-      SPLUNKENTHVM: ami-08c43f4591f7fc7a6
-
+      SPLUNKENTHVM: ami-02f1a54ae0463d7ac
   SplunkConfig:
     dedicated-instance-type:
       clusterMaster: c5.xlarge
