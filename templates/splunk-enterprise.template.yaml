@@ -1,10 +1,100 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Splunk deployment with indexer, search head clustering and cluster master. QS(5030)'
+Description: Splunk deployment with indexer, search head clustering and cluster master. (qs-1qup6ramp)
+Metadata:
+  AWSAMIRegionMap:
+    Filters:
+      SPLUNKENTHVM:
+        name: splunk_AMI*
+        owner-alias: aws-marketplace
+        product-code.type: marketplace
+  QuickStartDocumentation:
+    EntrypointName: "Splunk QuickStart (Existing VPC)"
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: AWS Instance and Network Settings
+        Parameters:
+          - IndexerInstanceType
+          - SearchHeadInstanceType
+          - KeyName
+          - WebClientLocation
+          - HECClientLocation
+          - SSHClientLocation
+          - VPCID
+          - VPCCIDR
+          - PublicSubnet1ID
+          - PublicSubnet2ID
+          - PublicSubnet3ID
+          - NumberOfAZs
+      - Label:
+          default: Splunk Settings
+        Parameters:
+          - SplunkAdminPassword
+          - SplunkClusterSecret
+          - SplunkIndexerDiscoverySecret
+          - SplunkLicenseBucket
+          - SplunkLicensePath
+          - SplunkIndexerCount
+          - SplunkIndexerDiskSize
+          - SplunkSearchHeadDiskSize
+          - SplunkReplicationFactor
+          - SplunkSearchFactor
+          - SmartStoreBucketName
+          - SHCEnabled
+    ParameterLabels:
+      WebClientLocation:
+        default: Permitted CIDR for Splunk web interface
+      HECClientLocation:
+        default: Permitted CIDR for Splunk HTTP event collector input
+      IndexerInstanceType:
+        default: EC2 instance type for Splunk indexer
+      SearchHeadInstanceType:
+        default: EC2 instance type for Splunk search head
+      KeyName:
+        default: Key Name
+      PublicSubnet1ID:
+        default: Public Subnet 1 ID
+      PublicSubnet2ID:
+        default: Public Subnet 2 ID
+      PublicSubnet3ID:
+        default: Public Subnet 3 ID
+      NumberOfAZs:
+        default: Number of Availability Zones
+      SHCEnabled:
+        default: Enable Search Head Cluster?
+      SSHClientLocation:
+        default: Permitted CIDR for ssh
+      SplunkAdminPassword:
+        default: Splunk Admin Password
+      SplunkIndexerCount:
+        default: No. of Splunk Indexers
+      SmartStoreBucketName:
+        default: Name of bucket to be created for Smartstore storage
+      SplunkIndexerDiskSize:
+        default: Indexer Disk Size
+      SplunkSearchHeadDiskSize:
+        default: Search Head(s) Disk Size
+      SplunkLicenseBucket:
+        default: Splunk License Bucket
+      SplunkLicensePath:
+        default: Splunk License S3 Bucket Path
+      SplunkReplicationFactor:
+        default: Index Cluster Replication Factor
+      SplunkSearchFactor:
+        default: Index Cluster Search Factor
+      SplunkClusterSecret:
+        default: Shared Security Key for Cluster Nodes
+      SplunkIndexerDiscoverySecret:
+        default: Shared Security Key for Forwarders using Indexer Discovery
+      VPCCIDR:
+        default: VPC CIDR
+      VPCID:
+        default: VPC ID
 Parameters:
   WebClientLocation:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
-    ConstraintDescription: 'Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions.'
-    Description: 'The IP address range that is allowed to connect to the Splunk web interface. Note: a value of 0.0.0.0/0 will allow access from ANY ip address'
+    ConstraintDescription: Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions.
+    Description: The IP address range that is allowed to connect to the Splunk web interface. a value of 0.0.0.0/0 will allow access from ANY IP address
     MaxLength: '19'
     MinLength: '9'
     Type: String
@@ -42,8 +132,8 @@ Parameters:
       - m5.4xlarge
       - m5.8xlarge
       - m5.12xlarge
-    Description: 'EC2 instance type for Splunk Search Heads'
-    ConstraintDescription: 'Must be a valid EC2 instance type.'
+    Description: EC2 instance type for Splunk Search Heads
+    ConstraintDescription: Must be a valid EC2 instance type.
     Default: c5.4xlarge
     Type: String
   KeyName:
@@ -173,96 +263,6 @@ Parameters:
   VPCID:
     Description: VPC ID
     Type: AWS::EC2::VPC::Id
-Metadata:
-  AWSAMIRegionMap:
-    Filters:
-      SPLUNKENTHVM:
-        name: splunk_AMI*
-        owner-alias: aws-marketplace
-        product-code.type: marketplace
-  QuickStartDocumentation:
-    EntrypointName: "Splunk QuickStart (Existing VPC)"
-  AWS::CloudFormation::Interface:
-    ParameterGroups:
-      - Label:
-          default: AWS Instance and Network Settings
-        Parameters:
-          - IndexerInstanceType
-          - SearchHeadInstanceType
-          - KeyName
-          - WebClientLocation
-          - HECClientLocation
-          - SSHClientLocation
-          - VPCID
-          - VPCCIDR
-          - PublicSubnet1ID
-          - PublicSubnet2ID
-          - PublicSubnet3ID
-          - NumberOfAZs
-      - Label:
-          default: Splunk Settings
-        Parameters:
-          - SplunkAdminPassword
-          - SplunkClusterSecret
-          - SplunkIndexerDiscoverySecret
-          - SplunkLicenseBucket
-          - SplunkLicensePath
-          - SplunkIndexerCount
-          - SplunkIndexerDiskSize
-          - SplunkSearchHeadDiskSize
-          - SplunkReplicationFactor
-          - SplunkSearchFactor
-          - SmartStoreBucketName
-          - SHCEnabled
-    ParameterLabels:
-      WebClientLocation:
-        default: Permitted CIDR for Splunk web interface
-      HECClientLocation:
-        default: Permitted CIDR for Splunk HTTP event collector input
-      IndexerInstanceType:
-        default: EC2 instance type for Splunk indexer
-      SearchHeadInstanceType:
-        default: EC2 instance type for Splunk search head
-      KeyName:
-        default: Key Name
-      PublicSubnet1ID:
-        default: Public Subnet 1 ID
-      PublicSubnet2ID:
-        default: Public Subnet 2 ID
-      PublicSubnet3ID:
-        default: Public Subnet 3 ID
-      NumberOfAZs:
-        default: Number of Availability Zones
-      SHCEnabled:
-        default: Enable Search Head Cluster?
-      SSHClientLocation:
-        default: Permitted CIDR for ssh
-      SplunkAdminPassword:
-        default: Splunk Admin Password
-      SplunkIndexerCount:
-        default: No. of Splunk Indexers
-      SmartStoreBucketName:
-        default: Name of bucket to be created for Smartstore storage
-      SplunkIndexerDiskSize:
-        default: Indexer Disk Size
-      SplunkSearchHeadDiskSize:
-        default: Search Head(s) Disk Size
-      SplunkLicenseBucket:
-        default: Splunk License Bucket
-      SplunkLicensePath:
-        default: Splunk License S3 Bucket Path
-      SplunkReplicationFactor:
-        default: Index Cluster Replication Factor
-      SplunkSearchFactor:
-        default: Index Cluster Search Factor
-      SplunkClusterSecret:
-        default: Shared Security Key for Cluster Nodes
-      SplunkIndexerDiscoverySecret:
-        default: Shared Security Key for Forwarders using Indexer Discovery
-      VPCCIDR:
-        default: VPC CIDR
-      VPCID:
-        default: VPC ID
 Conditions:
   Create3AZ: !Equals
     - !Ref 'NumberOfAZs'
@@ -285,39 +285,39 @@ Conditions:
 Mappings:
   AWSAMIRegionMap:
     AMI:
-      SPLUNKENTHVM: splunk_AMI_8.2.3.3_2021-12-18_00-53-30-7b65de6c-5006-4ca2-bd75-fdba95ae5d9d
+      SPLUNKENTHVM: splunk_AMI_8.2.6_2022-04-20_17-27-55-7b65de6c-5006-4ca2-bd75-fdba95ae5d9d
     us-west-1:
-      SPLUNKENTHVM: ami-09661ae18cb9aedb4
+      SPLUNKENTHVM: ami-083c40352f95a2a8d
     us-west-2:
-      SPLUNKENTHVM: ami-0c22deb9fc3c775d9
+      SPLUNKENTHVM: ami-063db914927fd068a
     us-east-1:
-      SPLUNKENTHVM: ami-0582e6c6a47fc48c5
+      SPLUNKENTHVM: ami-02be4afccabbc98a7
     us-east-2:
-      SPLUNKENTHVM: ami-01021135eb4ce4d5d
+      SPLUNKENTHVM: ami-0e3657d8025d1f571
     ap-south-1:
-      SPLUNKENTHVM: ami-005110201be854c36
+      SPLUNKENTHVM: ami-04f8e05450860a0e4
     ap-northeast-1:
-      SPLUNKENTHVM: ami-0f652f101b96c37e9
+      SPLUNKENTHVM: ami-0316ee1a35129c1ed
     ap-northeast-2:
-      SPLUNKENTHVM: ami-0673efcda653adfb5
+      SPLUNKENTHVM: ami-0441f1c60fa588b30
     ap-southeast-1:
-      SPLUNKENTHVM: ami-091a6c8fd0012281e
+      SPLUNKENTHVM: ami-0066d2b4e4446b6b4
     ap-southeast-2:
-      SPLUNKENTHVM: ami-0cdb50ab376ee7d58
+      SPLUNKENTHVM: ami-0b93708f93e6fcefa
     ca-central-1:
-      SPLUNKENTHVM: ami-03c36e8753b649758
+      SPLUNKENTHVM: ami-0287afc9fe6de24dc
     eu-central-1:
-      SPLUNKENTHVM: ami-00018e48dd37a4de3
+      SPLUNKENTHVM: ami-0258ed74a65c3aa80
     eu-west-1:
-      SPLUNKENTHVM: ami-01495bcd527c0ff9d
+      SPLUNKENTHVM: ami-0ef490267313f2958
     eu-west-2:
-      SPLUNKENTHVM: ami-0b285d7712449bb17
+      SPLUNKENTHVM: ami-0eed7148a3c5db6a0
     eu-west-3:
-      SPLUNKENTHVM: ami-05f8860a4be3a2a86
+      SPLUNKENTHVM: ami-0f8ed68391019e14a
     eu-north-1:
-      SPLUNKENTHVM: ami-0a2d7f72e56037575
+      SPLUNKENTHVM: ami-0c13450402b8e9f7a
     sa-east-1:
-      SPLUNKENTHVM: ami-08c43f4591f7fc7a6
+      SPLUNKENTHVM: ami-02f1a54ae0463d7ac
 
   SplunkConfig:
     dedicated-instance-type:
