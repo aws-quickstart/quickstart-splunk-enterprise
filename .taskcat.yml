@@ -23,7 +23,7 @@ tests:
     parameters:
       AvailabilityZones: $[taskcat_genaz_2]
       HECClientLocation: 10.0.0.0/16
-      KeyName: taskcat-test
+      KeyName: $[taskcat_getkeypair]
       QSS3BucketName: $[taskcat_autobucket]
       QSS3BucketRegion: $[taskcat_current_region]
       SSHClientLocation: 10.0.0.0/16
@@ -32,7 +32,7 @@ tests:
       SplunkIndexerDiscoverySecret: $[taskcat_genpass_10]
       WebClientLocation: 72.21.196.66/32
     regions:
-    - us-west-1
+    # - us-west-1
     - us-east-2
     s3_bucket: ''
-    template: templates/splunk-enterprise-master.template.yaml
+    template: templates/splunk-enterprise-main.template.yaml
