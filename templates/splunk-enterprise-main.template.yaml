@@ -306,7 +306,7 @@ Resources:
   SplunkStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/splunk-enterprise.template'
+      TemplateURL: !Sub 'https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/splunk-enterprise.template.yaml'
       Parameters:
         VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
         VPCCIDR: !GetAtt 'VPCStack.Outputs.VPCCIDR'
