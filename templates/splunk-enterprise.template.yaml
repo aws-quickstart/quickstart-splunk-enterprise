@@ -67,7 +67,6 @@ Parameters:
     Description: 'ID of Splunk public subnet 3 in Availability Zone 3 (e.g., subnet-xxxxxxxx)'
     Type: AWS::EC2::Subnet::Id
   QSS3BucketName:
-    Default: ''
     Description: 'S3 bucket name for the Quick Start assets.'
     Type: String
   QSS3KeyPrefix:
