@@ -3,36 +3,39 @@ project:
   owner: quickstart@amazon.com
   package_lambda: false
   regions:
-  - ap-northeast-1
-  - ap-northeast-2
-  - ap-south-1
-  - ap-southeast-1
-  - ap-southeast-2
-  - ca-central-1
-  - eu-central-1
-  - eu-west-1
-  - eu-west-2
-  - sa-east-1
-  - us-east-1
-  - us-east-2
-  - us-west-1
   - us-west-2
   s3_bucket: ''
 tests:
   splunk-enterprise:
     parameters:
-      AvailabilityZones: $[taskcat_genaz_2]
-      HECClientLocation: 10.0.0.0/16
-      KeyName: taskcat-test
-      QSS3BucketName: $[taskcat_autobucket]
-      QSS3BucketRegion: $[taskcat_current_region]
-      SSHClientLocation: 10.0.0.0/16
-      SplunkAdminPassword: $[taskcat_genpass_10]
-      SplunkClusterSecret: $[taskcat_genpass_10]
-      SplunkIndexerDiscoverySecret: $[taskcat_genpass_10]
-      WebClientLocation: 72.21.196.66/32
+      AvailabilityZones: us-west-2a,us-west-2b
+      KeyName: [your-aws-keypair]
+      QSS3BucketName: [quickstart-bucket-name]
+      QSS3KeyPrefix: quickstart-splunk-enterprise/
+      QSS3BucketRegion: us-west-2
+      SplunkAdminPassword: Splunk123!
+      SplunkClusterSecret: Splunk123!
+      SplunkIndexerDiscoverySecret: Splunk123!
+      IndexerInstanceType: i3.4xlarge
+      SearchHeadInstanceType: c5.4xlarge
+      SplunkIndexerDiskSize: '500'
+      SplunkSearchHeadDiskSize: '500'
+      SHCEnabled: 'no'
+      SplunkIndexerCount: 4
+      SplunkReplicationFactor: 2
+      SplunkSearchFactor: 2
+      SplunkLicenseBucket: [splunk-license-bucket-name]
+      SplunkLicensePath: [splunk-license-file]
+      WebClientLocation: 1.2.3.4/32
+      HECClientLocation: 1.2.3.4/32
+      SSHClientLocation: 1.2.3.4/32
+      VPCCIDR: 10.0.0.0/16
+      PublicSubnet1CIDR: 10.0.1.0/24
+      PublicSubnet2CIDR: 10.0.2.0/24
+      PublicSubnet3CIDR: 10.0.3.0/24
+      NumberOfAZs: 2
+      SmartStoreBucketName: [your-smartstore-bucket-name]
     regions:
-    - us-west-1
-    - us-east-2
+    - us-west-2
     s3_bucket: ''
-    template: templates/splunk-enterprise-master.template.yaml
+    template: templates/splunk-enterprise-main.template.yaml
