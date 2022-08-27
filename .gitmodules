@@ -1,6 +1,6 @@
 [submodule "submodules/quickstart-aws-vpc"]
 	path = submodules/quickstart-aws-vpc
-	url = ../../aws-quickstart/quickstart-aws-vpc.git 
+	url = https://github.com/aws-quickstart/quickstart-aws-vpc.git
 	branch = main
 [submodule "docs/boilerplate"]
 	path = docs/boilerplate
