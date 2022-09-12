@@ -8,18 +8,18 @@ project:
 tests:
   splunk-enterprise:
     parameters:
-      AvailabilityZones: us-west-2a,us-west-2b
-      KeyName: [your-aws-keypair]
-      QSS3BucketName: [quickstart-bucket-name]
+      AvailabilityZones: $[taskcat_genaz_2]
+      KeyName: [your-aws-key]
+      QSS3BucketName: $[taskcat_autobucket]
       QSS3KeyPrefix: quickstart-splunk-enterprise/
-      QSS3BucketRegion: us-west-2
-      SplunkAdminPassword: Splunk123!
-      SplunkClusterSecret: Splunk123!
-      SplunkIndexerDiscoverySecret: Splunk123!
+      QSS3BucketRegion: $[taskcat_current_region]
+      SplunkAdminPassword: $[taskcat_genpass_8S]
+      SplunkClusterSecret: $[taskcat_genpass_8S]
+      SplunkIndexerDiscoverySecret: $[taskcat_genpass_8S]
       IndexerInstanceType: i3.4xlarge
       SearchHeadInstanceType: c5.4xlarge
-      SplunkIndexerDiskSize: '500'
-      SplunkSearchHeadDiskSize: '500'
+      SplunkIndexerDiskSize: '300'
+      SplunkSearchHeadDiskSize: '300'
       SHCEnabled: 'no'
       SplunkIndexerCount: 4
       SplunkReplicationFactor: 2
@@ -34,8 +34,7 @@ tests:
       PublicSubnet2CIDR: 10.0.2.0/24
       PublicSubnet3CIDR: 10.0.3.0/24
       NumberOfAZs: 2
-      SmartStoreBucketName: [your-smartstore-bucket-name]
-    regions:
-    - us-west-2
+      SmartStoreBucketName: $[taskcat_autobucket]
+    regions: $[taskcat_current_region]
     s3_bucket: ''
     template: templates/splunk-enterprise-main.template.yaml
