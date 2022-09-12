@@ -1,17 +1,17 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Splunk deployment with indexer, search head clustering and cluster master. QS(5030)'
+Description: Splunk deployment with indexer clustering, search head with optional search head clustering, and cluster manager/license server. (qs-1qup6ramp)
 Parameters:
   WebClientLocation:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
-    ConstraintDescription: 'Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions.'
-    Description: 'The IP address range that is allowed to connect to the Splunk web interface. Note: a value of 0.0.0.0/0 will allow access from ANY ip address'
+    ConstraintDescription: Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions.
+    Description: The IP address range that is allowed to connect to the Splunk web interface. Note that a value of 0.0.0.0/0 will allow access from ANY ip address
     MaxLength: '19'
     MinLength: '9'
     Type: String
   HECClientLocation:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
-    ConstraintDescription: 'Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions.'
-    Description: 'The IP address range that is allowed to send data to Splunk HTTP Event Collector. Note: a value of 0.0.0.0/0 will allow access from ANY ip address'
+    ConstraintDescription: Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions.
+    Description: The IP address range that is allowed to send data to Splunk HTTP Event Collector. Note that a value of 0.0.0.0/0 will allow access from ANY ip address
     MaxLength: '19'
     MinLength: '9'
     Type: String
@@ -27,8 +27,8 @@ Parameters:
       - i3en.3xlarge
       - i3en.6xlarge
       - i3en.12xlarge
-    Description: 'EC2 instance type for Splunk Indexers'
-    ConstraintDescription: 'Must be a valid EC2 instance type.'
+    Description: EC2 instance type for Splunk Indexers
+    ConstraintDescription: Must be a valid EC2 instance type.
     Default: i3.4xlarge
     Type: String
   SearchHeadInstanceType:
@@ -42,131 +42,132 @@ Parameters:
       - m5.4xlarge
       - m5.8xlarge
       - m5.12xlarge
-    Description: 'EC2 instance type for Splunk Search Heads'
-    ConstraintDescription: 'Must be a valid EC2 instance type.'
+    Description: EC2 instance type for Splunk Search Heads
+    ConstraintDescription: Must be a valid EC2 instance type.
     Default: c5.4xlarge
     Type: String
   KeyName:
-    ConstraintDescription: 'Must be the name of an existing EC2 KeyPair.'
-    Description: 'Name of an existing EC2 KeyPair to enable SSH access to the instance.'
+    ConstraintDescription: Must be the name of an existing EC2 KeyPair.
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance.
     Type: AWS::EC2::KeyPair::KeyName
   NumberOfAZs:
     AllowedValues:
       - '2'
       - '3'
     Default: '2'
-    Description: 'Number of Availability Zones to use in the VPC. This must match the number public subnet IDs entered as parameters.'
+    Description: Number of Availability Zones to use in the VPC. This must match the number public subnet IDs entered as parameters.
     Type: String
   PublicSubnet1ID:
-    Description: 'ID of Splunk public subnet 1 in Availability Zone 1 (e.g., subnet-xxxxxxxx)'
+    Description: ID of Splunk public subnet 1 in Availability Zone 1 (e.g., subnet-xxxxxxxx)
     Type: AWS::EC2::Subnet::Id
   PublicSubnet2ID:
-    Description: 'ID of Splunk public subnet 2 in Availability Zone 2 (e.g., subnet-xxxxxxxx)'
+    Description: ID of Splunk public subnet 2 in Availability Zone 2 (e.g., subnet-xxxxxxxx)
     Type: AWS::EC2::Subnet::Id
   PublicSubnet3ID:
-    Description: 'ID of Splunk public subnet 3 in Availability Zone 3 (e.g., subnet-xxxxxxxx)'
+    Description: ID of Splunk public subnet 3 in Availability Zone 3 (e.g., subnet-xxxxxxxx)
     Type: AWS::EC2::Subnet::Id
   QSS3BucketName:
-    Description: 'S3 bucket name for the Quick Start assets.'
+    Default: aws-quickstart
+    Description: S3 bucket name for the Quick Start assets.
     Type: String
   QSS3KeyPrefix:
     Default: quickstart-splunk-enterprise/
-    Description: 'S3 key prefix for the Quick Start assets.'
+    Description: S3 key prefix for the Quick Start assets.
     Type: String
   SHCEnabled:
     AllowedValues:
       - 'yes'
       - 'no'
     Default: 'no'
-    Description: 'Do you want to build a Splunk search head cluster?'
+    Description: Do you want to build a Splunk search head cluster?
     Type: String
   SSHClientLocation:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
-    ConstraintDescription: 'Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions.'
-    Description: 'The IP address range that is allowed to SSH to the EC2 instances. Note: a value of 0.0.0.0/0 will allow access from ANY ip address'
+    ConstraintDescription: Must be a valid IP range in x.x.x.x/x notation.  Use 0.0.0.0/0 for no restrictions.
+    Description: The IP address range that is allowed to SSH to the EC2 instances. Note that a value of 0.0.0.0/0 will allow access from ANY ip address
     MaxLength: '19'
     MinLength: '9'
     Type: String
   SplunkAdminPassword:
-    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
-    ConstraintDescription: 'Must be at least 8 characters containing letters, numbers and symbols.'
-    Description: 'Admin password for Splunk. Must be at least 8 characters containing letters, numbers and symbols.'
+    AllowedPattern: (?=.{8,})(?=.*[a-zA-Z])(?=.*[0-9]).*
+    ConstraintDescription: Must be at least 8 characters containing letters, numbers and symbols.
+    Description: Admin password for Splunk. Must be at least 8 characters containing letters, numbers and symbols.
     MaxLength: '32'
     MinLength: '8'
     NoEcho: 'true'
     Type: String
   SplunkIndexerCount:
-    ConstraintDescription: 'Must be a valid number, 4-10'
+    ConstraintDescription: Must be a valid number, 4-10
     Default: '4'
-    Description: 'How many Splunk indexers to launch.  [4-10]'
+    Description: How many Splunk indexers to launch.  [4-10]
     MaxValue: '10'
     MinValue: '4'
     Type: Number
   SplunkIndexerDiskSize:
-    ConstraintDescription: 'Must be a valid number, 100-16000'
+    ConstraintDescription: Must be a valid number, 100-16000
     Default: '334'
-    Description: 'The size of the attached EBS volume to the Splunk indexers.  (in GB)'
+    Description: The size of the attached EBS volume to the Splunk indexers.  (in GB)
     MaxValue: '16000'
     MinValue: '100'
     Type: Number
   SplunkSearchHeadDiskSize:
-    ConstraintDescription: 'Must be a valid number, 100-16000'
+    ConstraintDescription: Must be a valid number, 100-16000
     Default: '334'
-    Description: 'The size of the attached EBS volume to the Splunk search head(s).  (in GB)'
+    Description: The size of the attached EBS volume to the Splunk search head(s).  (in GB)
     MaxValue: '16000'
     MinValue: '100'
     Type: Number
   SmartStoreBucketName:
     Default: ''
-    Description: 'Name of S3 bucket to be created for SmartStore storage'
+    Description: Name of S3 bucket to be created for SmartStore storage
     Type: String
   SplunkLicenseBucket:
-    ConstraintDescription: 'Required for QuickStart to function and must be a valid s3 bucket'
+    ConstraintDescription: Required for QuickStart to function and must be a valid s3 bucket
     AllowedPattern: (?=^.{3,63}$)(?!xn--)([a-z0-9](?:[a-z0-9-]*)[a-z0-9])$
-    Description: 'Name of private S3 bucket with licenses to be accessed via authenticated requests'
+    Description: Name of private S3 bucket with licenses to be accessed via authenticated requests
     MinLength: '3'
     MaxLength: '63'
     Type: String
   SplunkLicensePath:
-    ConstraintDescription: 'Required for QuickStart to function and must point to a valid Splunk license'
+    ConstraintDescription: Required for QuickStart to function and must point to a valid Splunk license
     AllowedPattern: ([0-9]|[A-Z]|[a-z]|[\/\._-])+
-    Description: 'Path to license file in S3 Bucket (without leading /)'
+    Description: Path to license file in S3 Bucket (without leading /)
     MinLength: '1'
     MaxLength: '128'
     Type: String
   SplunkReplicationFactor:
-    ConstraintDescription: 'Must be a valid number, 2-6'
+    ConstraintDescription: Must be a valid number, 2-6
     Default: '2'
-    Description: 'How many copies of data should be stored in the Splunk Indexer Cluster'
+    Description: How many copies of data should be stored in the Splunk Indexer Cluster
     MaxValue: '6'
     MinValue: '2'
     Type: Number
   SplunkSearchFactor:
-    ConstraintDescription: 'Must be a valid number, 2-6'
+    ConstraintDescription: Must be a valid number, 2-6
     Default: '2'
-    Description: 'How many copies of data should be searchable in the Splunk indexer clusters'
+    Description: How many copies of data should be searchable in the Splunk indexer clusters
     MaxValue: '6'
     MinValue: '2'
     Type: Number
   SplunkClusterSecret:
-    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
-    ConstraintDescription: 'Must be at least 8 characters containing letters, numbers and symbols.'
-    Description: 'Shared cluster secret for Search Head and Indexer cluster nodes. Must be at least 8 characters containing letters, numbers and symbols.'
+    AllowedPattern: (?=.{8,})(?=.*[a-zA-Z])(?=.*[0-9]).*
+    ConstraintDescription: Must be at least 8 characters containing letters, numbers and symbols.
+    Description: Shared cluster secret for Search Head and Indexer cluster nodes. Must be at least 8 characters containing letters, numbers and symbols.
     MaxLength: '32'
     MinLength: '8'
     NoEcho: 'true'
     Type: String
   SplunkIndexerDiscoverySecret:
-    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
-    ConstraintDescription: 'Must be at least 8 characters containing letters, numbers and symbols.'
-    Description: 'Security key used for communication between your forwarders and the cluster master. This value should also be used by forwarders in order to retrieve list of available peer nodes from cluster master. Must be at least 8 characters containing letters, numbers and symbols.'
+    AllowedPattern: (?=.{8,})(?=.*[a-zA-Z])(?=.*[0-9]).*
+    ConstraintDescription: Must be at least 8 characters containing letters, numbers and symbols.
+    Description: Security key used for communication between your forwarders and the cluster master. This value should also be used by forwarders in order to retrieve list of available peer nodes from cluster master. Must be at least 8 characters containing letters, numbers and symbols.
     MaxLength: '32'
     MinLength: '8'
     NoEcho: 'true'
     Type: String
   VPCCIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
-    ConstraintDescription: 'Must be a valid IP CIDR range of the form x.x.x.x/x.'
+    ConstraintDescription: Must be a valid IP CIDR range of the form x.x.x.x/x.
     Description: VPC CIDR Block (x.x.x.x/x notation)
     Type: String
   VPCID:
@@ -387,7 +388,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !Ref 'VPCID'
-      GroupDescription: 'Enable port 8000 for Splunk web interface, port 8090 for SHC replication, and port 8191 for KV store replication'
+      GroupDescription: Enable port 8000 for Splunk web interface, port 8090 for SHC replication, and port 8191 for KV store replication
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 8000
@@ -410,7 +411,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !Ref 'VPCID'
-      GroupDescription: 'Enable port 9997 for splunktcp input, port 8088 for HEC input, port 514 for tcp/udp input, and port 9887 for data replication'
+      GroupDescription: Enable port 9997 for splunktcp input, port 8088 for HEC input, port 514 for tcp/udp input, and port 9887 for data replication
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 9997
@@ -441,7 +442,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !Ref 'VPCID'
-      GroupDescription: 'Enable administrative ports like restricted SSH and management port'
+      GroupDescription: Enable administrative ports like restricted SSH and management port
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
@@ -460,7 +461,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !Ref 'VPCID'
-      GroupDescription: 'Enable port 8088 on ELB for HEC input'
+      GroupDescription: Enable port 8088 on ELB for HEC input
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 8088
@@ -1034,7 +1035,7 @@ Resources:
         Timeout: PT20M
 Outputs:
   SearchHeadURL:
-    Description: 'Splunk Enterprise - Search Head URL'
+    Description: Splunk Enterprise - Search Head URL
     Value: !Join
       - ''
       - - http://
@@ -1044,21 +1045,21 @@ Outputs:
           - !GetAtt 'SplunkSearchHeadInstance.PublicIp'
         - :8000
   ClusterMasterURL:
-    Description: 'Splunk Enterprise - Cluster Master URL'
+    Description: Splunk Enterprise - Cluster Master URL
     Value: !Join
       - ''
       - - http://
         - !GetAtt 'SplunkCM.PublicIp'
         - :8000
   ClusterMasterManagementURL:
-    Description: 'Splunk Enterprise - Cluster Master Management URL (required for Indexer Discovery)'
+    Description: Splunk Enterprise - Cluster Master Management URL (required for Indexer Discovery)
     Value: !Join
       - ''
       - - https://
         - !GetAtt SplunkCM.PrivateIp
         - :8089
   DeployerURL:
-    Description: 'Splunk Enterprise - Search Head Cluster Deployer URL'
+    Description: Splunk Enterprise - Search Head Cluster Deployer URL
     Value: !If
       - CreateSHC
       - !Join
@@ -1068,7 +1069,7 @@ Outputs:
           - :8000
       - Applicable when Search Head Cluster is selected
   HttpEventCollectorURL:
-    Description: 'HTTP Event Collector URL'
+    Description: HTTP Event Collector URL
     Value: !Join
       - ''
       - - http://
@@ -1076,7 +1077,7 @@ Outputs:
         - :8088
         - /services/collector
   HttpEventCollectorToken:
-    Description: 'HTTP Event Collector Token'
+    Description: HTTP Event Collector Token
     Value: !Select
       - '1'
       - !Split
