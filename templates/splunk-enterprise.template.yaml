@@ -320,7 +320,7 @@ Mappings:
       SPLUNKENTHVM: ami-02f1a54ae0463d7ac
   SplunkConfig:
     dedicated-instance-type:
-      clusterMaster: c5.xlarge
+      clusterManager: c5.xlarge
       shclusterDeployer: c5.xlarge
     shcluster-replication-factor:
       num: '3'
@@ -577,15 +577,15 @@ Resources:
       InstanceType: !FindInMap
         - SplunkConfig
         - dedicated-instance-type
-        - clusterMaster
+        - clusterManager
       KeyName: !Ref 'KeyName'
       Tags:
         - Key: Application
           Value: !Ref 'AWS::StackId'
         - Key: Role
-          Value: cluster-master
+          Value: cluster-manager
         - Key: Name
-          Value: cluster-master
+          Value: cluster-manager
       UserData:
        Fn::Base64:
         Fn::Sub:
