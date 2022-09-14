@@ -268,7 +268,7 @@ Parameters:
   SplunkIndexerDiscoverySecret:
     AllowedPattern: (?=.{8,})(?=.*[a-zA-Z])(?=.*[0-9]).*
     ConstraintDescription: Must be at least 8 characters containing letters and numbers.
-    Description: Security key used for communication between your forwarders and the cluster master. This value should also be used by forwarders in order to retrieve list of available peer nodes from cluster master. Must be at least 8 characters containing letters and numbers.
+    Description: Security key used for communication between your forwarders and the cluster manager. This value should also be used by forwarders in order to retrieve list of available peer nodes from cluster manager. Must be at least 8 characters containing letters and numbers.
     MaxLength: '32'
     MinLength: '8'
     NoEcho: 'true'
@@ -342,8 +342,10 @@ Resources:
           SplunkIndexerCount: !Ref 'SplunkIndexerCount'
           SHCEnabled: !Ref 'SHCEnabled'
           SplunkIndexerDiskSize: !Ref 'SplunkIndexerDiskSize'
+          SplunkSearchHeadDiskSize: !Ref 'SplunkSearchHeadDiskSize'
           SmartStoreBucketName: !Ref 'SmartStoreBucketName'
           SplunkReplicationFactor: !Ref 'SplunkReplicationFactor'
+          SplunkSearchFactor: !Ref 'SplunkSearchFactor'
           QSS3KeyPrefix: !Ref 'QSS3KeyPrefix' 
           QSS3BucketName: !Ref 'QSS3BucketName' 
         TimeoutInMinutes: 45
@@ -351,12 +353,12 @@ Outputs:
   SearchHeadURL:
     Description: Splunk Enterprise - Search Head URL
     Value: !GetAtt 'SplunkStack.Outputs.SearchHeadURL'
-  ClusterMasterURL:
-    Description: Splunk Enterprise - Cluster Master URL
-    Value: !GetAtt 'SplunkStack.Outputs.ClusterMasterURL'
-  ClusterMasterManagementURL:
-    Description: Splunk Enterprise - Cluster Master Management URL (required for Indexer Discovery)
-    Value: !GetAtt 'SplunkStack.Outputs.ClusterMasterManagementURL'
+  ClusterManagerURL:
+    Description: Splunk Enterprise - Cluster Manager URL
+    Value: !GetAtt 'SplunkStack.Outputs.ClusterManagerURL'
+  ClusterManagerManagementURL:
+    Description: Splunk Enterprise - Cluster Manager Management URL (required for Indexer Discovery)
+    Value: !GetAtt 'SplunkStack.Outputs.ClusterManagerManagementURL'
   DeployerURL:
     Description: Splunk Enterprise - Search Head Cluster Deployer URL
     Value: !GetAtt 'SplunkStack.Outputs.DeployerURL'

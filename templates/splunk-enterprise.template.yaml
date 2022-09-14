@@ -160,7 +160,7 @@ Parameters:
   SplunkIndexerDiscoverySecret:
     AllowedPattern: (?=.{8,})(?=.*[a-zA-Z])(?=.*[0-9]).*
     ConstraintDescription: Must be at least 8 characters containing letters, numbers and symbols.
-    Description: Security key used for communication between your forwarders and the cluster master. This value should also be used by forwarders in order to retrieve list of available peer nodes from cluster master. Must be at least 8 characters containing letters, numbers and symbols.
+    Description: Security key used for communication between your forwarders and the cluster manager. This value should also be used by forwarders in order to retrieve list of available peer nodes from cluster manager. Must be at least 8 characters containing letters, numbers and symbols.
     MaxLength: '32'
     MinLength: '8'
     NoEcho: 'true'
@@ -1044,15 +1044,15 @@ Outputs:
           - !GetAtt 'SplunkSHCLoadBalancer.DNSName'
           - !GetAtt 'SplunkSearchHeadInstance.PublicIp'
         - :8000
-  ClusterMasterURL:
-    Description: Splunk Enterprise - Cluster Master URL
+  ClusterManagerURL:
+    Description: Splunk Enterprise - Cluster Manager URL
     Value: !Join
       - ''
       - - http://
         - !GetAtt 'SplunkCM.PublicIp'
         - :8000
-  ClusterMasterManagementURL:
-    Description: Splunk Enterprise - Cluster Master Management URL (required for Indexer Discovery)
+  ClusterManagerManagementURL:
+    Description: Splunk Enterprise - Cluster Manager Management URL (required for Indexer Discovery)
     Value: !Join
       - ''
       - - https://

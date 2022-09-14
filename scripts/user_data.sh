@@ -145,7 +145,7 @@ function nvme_setup
 }
 
 ###
-# Splunk Cluster Master / License Master
+# Splunk Cluster Manager / License Manager
 ###
 function splunk_cm
 {
