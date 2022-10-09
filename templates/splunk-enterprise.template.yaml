@@ -105,14 +105,14 @@ Parameters:
     Type: Number
   SplunkIndexerDiskSize:
     ConstraintDescription: Must be a valid number, 100-16000
-    Default: '334'
+    Default: '300'
     Description: The size of the attached EBS volume to the Splunk indexers.  (in GB)
     MaxValue: '16000'
     MinValue: '100'
     Type: Number
   SplunkSearchHeadDiskSize:
     ConstraintDescription: Must be a valid number, 100-16000
-    Default: '334'
+    Default: '300'
     Description: The size of the attached EBS volume to the Splunk search head(s).  (in GB)
     MaxValue: '16000'
     MinValue: '100'
@@ -478,6 +478,29 @@ Resources:
     CreationPolicy:
       ResourceSignal:
         Timeout: PT15M
+    Metadata:
+      AWS::CloudFormation::Init: 
+        config:
+          files: 
+            /tmp/user_data.sh:
+              source: !Join 
+                  - ''
+                  - - https://
+                    - !Ref 'QSS3BucketName'
+                    - .s3.amazonaws.com/
+                    - !Ref 'QSS3KeyPrefix'
+                    - scripts/user_data.sh
+              mode: '000755'
+              owner: root 
+              group: root
+              authentication: S3AccessCreds
+      AWS::CloudFormation::Authentication: 
+         S3AccessCreds:
+          type: S3
+          accessKeyId: !Ref 'CfnKeys'
+          secretKey: !GetAtt 'CfnKeys.SecretAccessKey'
+          buckets:
+            - !Ref 'QSS3BucketName'
     Properties:
       ImageId: !FindInMap
         - AWSAMIRegionMap
@@ -503,14 +526,18 @@ Resources:
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
           Ebs:
-            VolumeType: gp2
+            VolumeType: gp3
             VolumeSize: !Ref 'SplunkSearchHeadDiskSize'
       UserData:
         Fn::Base64:
           Fn::Sub:
             - |
               #!/bin/bash -xe
-              export INSTALL_LICENSE="0"
+              ## prevent cloud-init scripts from running
+              mv /etc/cloud/cloud.cfg.d/*splunk* /tmp
+              rm -f /var/lib/cloud/instance/scripts/runcmd
+              export INSTALL_LICENSE="1"
+              export RESOURCE="SplunkSearchHeadInstance"
               export SYMMKEY="${SplunkIndexerDiscoverySecret}"
               export ADMIN_PASSWORD="${SplunkAdminPassword}"
               export STACK_NAME="${AWS::StackName}"
@@ -518,9 +545,13 @@ Resources:
               export SPLUNK_CLUSTER_SECRET="${SplunkClusterSecret}"
               export SplunkCMWaitHandle="${SplunkCMWaitHandle}"
               export S3_USERDATA="https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}scripts/user_data.sh"
-              wget $S3_USERDATA -O /tmp/user_data.sh && chmod +x /tmp/user_data.sh
               export CM_PRIVATEIP="${SplunkCMIP}"
-              /tmp/user_data.sh single_sh && rm -f /tmp/user_data.sh
+              yum -y install aws-cfn-bootstrap 
+              ## required python modules for ansible to function
+              python3 -m pip install requests pyyaml
+              /opt/aws/bin/cfn-init -v --stack $STACK_NAME --resource $RESOURCE --region $AWS_REGION
+              chmod +x /tmp/user_data.sh
+              /tmp/user_data.sh single_sh 
             - SplunkCMIP: !GetAtt SplunkCM.PrivateIp
   SplunkCM:
     Type: AWS::EC2::Instance
@@ -532,7 +563,7 @@ Resources:
         - ConfigureLicense
         - config:
             files:
-              /opt/splunk/etc/licenses/enterprise/splunk.license:
+              /tmp/splunk.license:
                 source: !If
                   - ConfigureLicense
                   - !Join
@@ -546,6 +577,21 @@ Resources:
                 owner: splunk
                 group: splunk
                 authentication: S3AccessCreds
+              /tmp/user_data.sh:
+                source: !If
+                  - ConfigureLicense
+                  - !Join 
+                    - ''
+                    - - https://
+                      - !Ref 'QSS3BucketName'
+                      - .s3.amazonaws.com/
+                      - !Ref 'QSS3KeyPrefix'
+                      - scripts/user_data.sh
+                  - !Ref 'AWS::NoValue'
+                mode: '000755'
+                owner: root 
+                group: root
+                authentication: S3AccessCreds
         - !Ref 'AWS::NoValue'
       AWS::CloudFormation::Authentication: !If
         - ConfigureLicense
@@ -555,13 +601,14 @@ Resources:
             secretKey: !GetAtt 'CfnKeys.SecretAccessKey'
             buckets:
               - !Ref 'SplunkLicenseBucket'
+              - !Ref 'QSS3BucketName'
         - !Ref 'AWS::NoValue'
     Properties:
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
           Ebs:
-            VolumeType: gp2
-            VolumeSize: 334
+            VolumeType: gp3
+            VolumeSize: 300
       NetworkInterfaces:
         - GroupSet:
             - !Ref 'SplunkSecurityGroup'
@@ -591,7 +638,10 @@ Resources:
         Fn::Sub:
           - |
             #!/bin/bash -xe
-            export INSTALL_LICENSE="0"
+            ## prevent cloud-init scripts from running
+            mv /etc/cloud/cloud.cfg.d/*splunk* /tmp
+            rm -f /var/lib/cloud/instance/scripts/runcmd
+            export INSTALL_LICENSE="1"
             export SYMMKEY="${SplunkIndexerDiscoverySecret}"
             export ADMIN_PASSWORD="${SplunkAdminPassword}"
             export STACK_NAME="${AWS::StackName}"
@@ -603,11 +653,14 @@ Resources:
             export SEARCHFACTOR="${SplunkSearchFactor}"
             export S3_USERDATA="https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}scripts/user_data.sh"
             export SITELIST="${Sitelist}"
-            export INSTALL_LICENSE="${InstallLicense}"
-            wget $S3_USERDATA -O /tmp/user_data.sh && chmod +x /tmp/user_data.sh
-            /tmp/user_data.sh cm && rm -f /tmp/user_data.sh
+            export RESOURCE="SplunkCM"
+            yum -y install aws-cfn-bootstrap 
+            ## required python modules for ansible to function
+            python3 -m pip install requests pyyaml
+            /opt/aws/bin/cfn-init -v --stack $STACK_NAME --resource $RESOURCE --region $AWS_REGION
+            chmod +x /tmp/user_data.sh
+            /tmp/user_data.sh cm 
           - Sitelist: !If [Create3AZ, "site1,site2,site3", "site1,site2" ]
-            InstallLicense: !If [ConfigureLicense, "1", "0"]
   SplunkCMWaitHandle:
     Type: AWS::CloudFormation::WaitConditionHandle
   SplunkCMWaitCondition:
@@ -622,6 +675,29 @@ Resources:
     CreationPolicy:
       ResourceSignal:
         Timeout: PT10M
+    Metadata:
+      AWS::CloudFormation::Init: 
+        config:
+          files: 
+            /tmp/user_data.sh:
+              source: !Join 
+                  - ''
+                  - - https://
+                    - !Ref 'QSS3BucketName'
+                    - .s3.amazonaws.com/
+                    - !Ref 'QSS3KeyPrefix'
+                    - scripts/user_data.sh
+              mode: '000755'
+              owner: root 
+              group: root
+              authentication: S3AccessCreds
+      AWS::CloudFormation::Authentication: 
+         S3AccessCreds:
+          type: S3
+          accessKeyId: !Ref 'CfnKeys'
+          secretKey: !GetAtt 'CfnKeys.SecretAccessKey'
+          buckets:
+            - !Ref 'QSS3BucketName'
     Properties:
       ImageId: !FindInMap
         - AWSAMIRegionMap
@@ -650,14 +726,17 @@ Resources:
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
           Ebs:
-            VolumeType: gp2
+            VolumeType: gp3
             VolumeSize: !Ref 'SplunkSearchHeadDiskSize'
       UserData:
        Fn::Base64:
         Fn::Sub:
           - |
             #!/bin/bash -xe
-            export INSTALL_LICENSE="0"
+            ## prevent cloud-init scripts from running
+            mv /etc/cloud/cloud.cfg.d/*splunk* /tmp
+            rm -f /var/lib/cloud/instance/scripts/runcmd
+            export INSTALL_LICENSE="1"
             export SYMMKEY="${SplunkIndexerDiscoverySecret}"
             export ADMIN_PASSWORD="${SplunkAdminPassword}"
             export STACK_NAME="${AWS::StackName}"
@@ -669,8 +748,13 @@ Resources:
             export SEARCHFACTOR="${SplunkSearchFactor}"
             export S3_USERDATA="https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}scripts/user_data.sh"
             export CM_PRIVATEIP="${SplunkCMIP}"
-            wget $S3_USERDATA -O /tmp/user_data.sh && chmod +x /tmp/user_data.sh
-            /tmp/user_data.sh deployer && rm -f /tmp/user_data.sh
+            export RESOURCE="SplunkSHCDeployer"
+            yum -y install aws-cfn-bootstrap 
+            ## required python modules for ansible to function
+            python3 -m pip install requests pyyaml
+            /opt/aws/bin/cfn-init -v --stack $STACK_NAME --resource $RESOURCE --region $AWS_REGION
+            chmod +x /tmp/user_data.sh
+            /tmp/user_data.sh deployer 
           - SplunkCMIP: !GetAtt SplunkCM.PrivateIp
   SplunkSHCMember1:
     Type: AWS::EC2::Instance
@@ -678,6 +762,29 @@ Resources:
     CreationPolicy:
       ResourceSignal:
         Timeout: PT10M
+    Metadata:
+      AWS::CloudFormation::Init: 
+        config:
+          files: 
+            /tmp/user_data.sh:
+              source: !Join 
+                  - ''
+                  - - https://
+                    - !Ref 'QSS3BucketName'
+                    - .s3.amazonaws.com/
+                    - !Ref 'QSS3KeyPrefix'
+                    - scripts/user_data.sh
+              mode: '000755'
+              owner: root 
+              group: root
+              authentication: S3AccessCreds
+      AWS::CloudFormation::Authentication: 
+         S3AccessCreds:
+          type: S3
+          accessKeyId: !Ref 'CfnKeys'
+          secretKey: !GetAtt 'CfnKeys.SecretAccessKey'
+          buckets:
+            - !Ref 'QSS3BucketName'
     Properties:
       ImageId: !FindInMap
         - AWSAMIRegionMap
@@ -703,14 +810,17 @@ Resources:
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
           Ebs:
-            VolumeType: gp2
+            VolumeType: gp3
             VolumeSize: !Ref 'SplunkSearchHeadDiskSize'
       UserData:
        Fn::Base64:
         Fn::Sub:
           - |
             #!/bin/bash -xe
-            export INSTALL_LICENSE="0"
+            ## prevent cloud-init scripts from running
+            mv /etc/cloud/cloud.cfg.d/*splunk* /tmp
+            rm -f /var/lib/cloud/instance/scripts/runcmd
+            export INSTALL_LICENSE="1"
             export SYMMKEY="${SplunkIndexerDiscoverySecret}"
             export ADMIN_PASSWORD="${SplunkAdminPassword}"
             export STACK_NAME="${AWS::StackName}"
@@ -725,8 +835,14 @@ Resources:
             export SH_REPLICATION_FACTOR="${SplunkReplicationFactor}"
             export THREEAZ="${THREEAZ}"
             export SH_DEPLOYER_IP="${SH_DEPLOYER_IP}"
-            wget $S3_USERDATA -O /tmp/user_data.sh && chmod +x /tmp/user_data.sh
-            /tmp/user_data.sh cluster_sh 1 && rm -f /tmp/user_data.sh
+            ####
+            export RESOURCE="SplunkSHCMember1"
+            yum -y install aws-cfn-bootstrap 
+            ## required python modules for ansible to function
+            python3 -m pip install requests pyyaml
+            /opt/aws/bin/cfn-init -v --stack $STACK_NAME --resource $RESOURCE --region $AWS_REGION
+            chmod +x /tmp/user_data.sh
+            /tmp/user_data.sh cluster_sh 1 
           - SplunkCMIP: !GetAtt SplunkCM.PrivateIp
             SH_DEPLOYER_IP: !GetAtt SplunkSHCDeployer.PrivateIp
             THREEAZ: !If [ Create3AZ, "1", "0" ]
@@ -736,6 +852,29 @@ Resources:
     CreationPolicy:
       ResourceSignal:
         Timeout: PT10M
+    Metadata:
+      AWS::CloudFormation::Init: 
+        config:
+          files: 
+            /tmp/user_data.sh:
+              source: !Join 
+                  - ''
+                  - - https://
+                    - !Ref 'QSS3BucketName'
+                    - .s3.amazonaws.com/
+                    - !Ref 'QSS3KeyPrefix'
+                    - scripts/user_data.sh
+              mode: '000755'
+              owner: root 
+              group: root
+              authentication: S3AccessCreds
+      AWS::CloudFormation::Authentication: 
+         S3AccessCreds:
+          type: S3
+          accessKeyId: !Ref 'CfnKeys'
+          secretKey: !GetAtt 'CfnKeys.SecretAccessKey'
+          buckets:
+            - !Ref 'QSS3BucketName'
     Properties:
       ImageId: !FindInMap
         - AWSAMIRegionMap
@@ -761,14 +900,17 @@ Resources:
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
           Ebs:
-            VolumeType: gp2
+            VolumeType: gp3
             VolumeSize: !Ref 'SplunkSearchHeadDiskSize'
       UserData:
        Fn::Base64:
         Fn::Sub:
           - |
             #!/bin/bash -xe
-            export INSTALL_LICENSE="0"
+            ## prevent cloud-init scripts from running
+            mv /etc/cloud/cloud.cfg.d/*splunk* /tmp
+            rm -f /var/lib/cloud/instance/scripts/runcmd
+            export INSTALL_LICENSE="1"
             export SYMMKEY="${SplunkIndexerDiscoverySecret}"
             export ADMIN_PASSWORD="${SplunkAdminPassword}"
             export STACK_NAME="${AWS::StackName}"
@@ -783,8 +925,13 @@ Resources:
             export SH_REPLICATION_FACTOR="${SplunkReplicationFactor}"
             export THREEAZ="${THREEAZ}"
             export SH_DEPLOYER_IP="${SH_DEPLOYER_IP}"
-            wget $S3_USERDATA -O /tmp/user_data.sh && chmod +x /tmp/user_data.sh
-            /tmp/user_data.sh cluster_sh 2 && rm -f /tmp/user_data.sh
+            export RESOURCE="SplunkSHCMember2"
+            yum -y install aws-cfn-bootstrap 
+            ## required python modules for ansible to function
+            python3 -m pip install requests pyyaml
+            /opt/aws/bin/cfn-init -v --stack $STACK_NAME --resource $RESOURCE --region $AWS_REGION
+            chmod +x /tmp/user_data.sh
+            /tmp/user_data.sh cluster_sh 2 
           - SplunkCMIP: !GetAtt SplunkCM.PrivateIp
             SH_DEPLOYER_IP: !GetAtt SplunkSHCDeployer.PrivateIp
             THREEAZ: !If [ Create3AZ, "1", "0" ]
@@ -794,6 +941,29 @@ Resources:
     CreationPolicy:
       ResourceSignal:
         Timeout: PT10M
+    Metadata:
+      AWS::CloudFormation::Init: 
+        config:
+          files: 
+            /tmp/user_data.sh:
+              source: !Join 
+                  - ''
+                  - - https://
+                    - !Ref 'QSS3BucketName'
+                    - .s3.amazonaws.com/
+                    - !Ref 'QSS3KeyPrefix'
+                    - scripts/user_data.sh
+              mode: '000755'
+              owner: root 
+              group: root
+              authentication: S3AccessCreds
+      AWS::CloudFormation::Authentication: 
+         S3AccessCreds:
+          type: S3
+          accessKeyId: !Ref 'CfnKeys'
+          secretKey: !GetAtt 'CfnKeys.SecretAccessKey'
+          buckets:
+            - !Ref 'QSS3BucketName'
     Properties:
       ImageId: !FindInMap
         - AWSAMIRegionMap
@@ -822,14 +992,17 @@ Resources:
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
           Ebs:
-            VolumeType: gp2
+            VolumeType: gp3
             VolumeSize: !Ref 'SplunkSearchHeadDiskSize'
       UserData:
        Fn::Base64:
         Fn::Sub:
           - |
             #!/bin/bash -xe
-            export INSTALL_LICENSE="0"
+            ## prevent cloud-init scripts from running
+            mv /etc/cloud/cloud.cfg.d/*splunk* /tmp
+            rm -f /var/lib/cloud/instance/scripts/runcmd
+            export INSTALL_LICENSE="1"
             export SYMMKEY="${SplunkIndexerDiscoverySecret}"
             export ADMIN_PASSWORD="${SplunkAdminPassword}"
             export STACK_NAME="${AWS::StackName}"
@@ -846,8 +1019,13 @@ Resources:
             export SH_DEPLOYER_IP="${SH_DEPLOYER_IP}"
             export SH1_IP=${SH1_IP}
             export SH2_IP=${SH2_IP}
-            wget $S3_USERDATA -O /tmp/user_data.sh && chmod +x /tmp/user_data.sh
-            /tmp/user_data.sh cluster_sh 3 && rm -f /tmp/user_data.sh
+            export RESOURCE="SplunkSHCMember2"
+            yum -y install aws-cfn-bootstrap 
+            ## required python modules for ansible to function
+            python3 -m pip install requests pyyaml
+            /opt/aws/bin/cfn-init -v --stack $STACK_NAME --resource $RESOURCE --region $AWS_REGION
+            chmod +x /tmp/user_data.sh
+            /tmp/user_data.sh cluster_sh 3 
           - SplunkCMIP: !GetAtt SplunkCM.PrivateIp
             SH_DEPLOYER_IP: !GetAtt SplunkSHCDeployer.PrivateIp
             SH1_IP: !GetAtt SplunkSHCMember1.PrivateIp
@@ -855,12 +1033,10 @@ Resources:
             THREEAZ: !If [ Create3AZ, "1", "0" ]
   CfnUser:
     Type: AWS::IAM::User
-    Condition: ConfigureLicense
     Properties:
       Path: /
   CfnKeys:
     Type: AWS::IAM::AccessKey
-    Condition: ConfigureLicense
     Properties:
       UserName: !Ref 'CfnUser'
   BucketPolicy:
@@ -883,15 +1059,60 @@ Resources:
             Principal:
               AWS: !GetAtt 'CfnUser.Arn'
       Bucket: !Ref 'SplunkLicenseBucket'
+  UserDataBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Id: MyPolicy
+        Statement:
+          - Sid: ReadAccess
+            Action:
+              - s3:GetObject
+            Effect: Allow
+            Resource: !Join
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref QSS3BucketName
+                - /
+                - !Ref QSS3KeyPrefix
+                - scripts/*
+            Principal:
+              AWS: !GetAtt 'CfnUser.Arn'
+      Bucket: !Ref 'QSS3BucketName'
+ 
   SplunkIndexerLaunchConfiguration:
     Type: AWS::AutoScaling::LaunchConfiguration
+    Metadata:
+      AWS::CloudFormation::Init: 
+        config:
+          files: 
+            /tmp/user_data.sh:
+              source: !Join 
+                  - ''
+                  - - https://
+                    - !Ref 'QSS3BucketName'
+                    - .s3.amazonaws.com/
+                    - !Ref 'QSS3KeyPrefix'
+                    - scripts/user_data.sh
+              mode: '000755'
+              owner: root 
+              group: root
+              authentication: S3AccessCreds
+      AWS::CloudFormation::Authentication: 
+         S3AccessCreds:
+          type: S3
+          accessKeyId: !Ref 'CfnKeys'
+          secretKey: !GetAtt 'CfnKeys.SecretAccessKey'
+          buckets:
+            - !Ref 'QSS3BucketName'
     Properties:
       AssociatePublicIpAddress: true
       IamInstanceProfile: !Ref 'SmartStoreS3AccessInstanceProfile'
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
           Ebs:
-            VolumeType: gp2
+            VolumeType: gp3
             VolumeSize: !Ref 'SplunkIndexerDiskSize'
       SecurityGroups:
         - !Ref 'SplunkSecurityGroup'
@@ -907,7 +1128,10 @@ Resources:
         Fn::Sub:
           - |
             #!/bin/bash -xe
-            export INSTALL_LICENSE="0"
+            ## prevent cloud-init scripts from running
+            mv /etc/cloud/cloud.cfg.d/*splunk* /tmp
+            rm -f /var/lib/cloud/instance/scripts/runcmd
+            export INSTALL_LICENSE="1"
             export SYMMKEY="${SplunkIndexerDiscoverySecret}"
             export ADMIN_PASSWORD="${SplunkAdminPassword}"
             export STACK_NAME="${AWS::StackName}"
@@ -925,8 +1149,13 @@ Resources:
             export SUBNET1_ID="${PublicSubnet1ID}"
             export SUBNET2_ID="${PublicSubnet2ID}"
             export SUBNET3_ID="${PublicSubnet3ID}"
-            wget $S3_USERDATA -O /tmp/user_data.sh && chmod +x /tmp/user_data.sh
-            /tmp/user_data.sh indexer && rm -f /tmp/user_data.sh
+            export RESOURCE="SplunkIndexerLaunchConfiguration"
+            yum -y install aws-cfn-bootstrap 
+            ## required python modules for ansible to function
+            python3 -m pip install requests pyyaml
+            /opt/aws/bin/cfn-init -v --stack $STACK_NAME --resource $RESOURCE --region $AWS_REGION
+            chmod +x /tmp/user_data.sh
+            /tmp/user_data.sh indexer 
           - SplunkCMIP: !GetAtt SplunkCM.PrivateIp
   SplunkSHCLoadBalancer:
     Type: AWS::ElasticLoadBalancing::LoadBalancer
