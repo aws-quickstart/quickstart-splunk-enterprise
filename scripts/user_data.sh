@@ -14,23 +14,14 @@ function base
   # make cloud-init output log readable by root only to protect sensitive parameter values
   chmod 600 /var/log/cloud-init-output.log
 
-  #- The newer version of the Splunk AMI does not come with Splunk pre-installed.  Instead
-  #- Splunk is installed via ansible as part of cloud-init.  The following code (starting at line 30) is
-  #- needed to ensure these install scripts are ran prior to the remainder of the Cloudformation
-  #- user scripts. Without doing this first, the Splunk installer is ran after CloudFormation's
-  #- cloud-init scripts, leaving no Splunk install to configure.
-
-  #- remove the cloud-init scripts from running
-  rm -f /etc/cloud/cloud.cfg.d/20_install_splunk.cfg
-  rm -f /var/lib/cloud/instance/scripts/runcmd
+  #- Newer versions of the Splunk AMI do not come with Splunk pre-installed.  Instead Splunk 
+  #- is installed via ansible as part of cloud-init.  The following code (line 23 & 24) is 
+  #- needed to ensure the ansible code is ran prior to the remainder of this script. Without 
+  #- explicitly executing ansible first, the configuration in this user_data.sh script tries 
+  #- (and fails) to execute as there isn't a Splunk deployment to configure.
 
   # run the ansible code 
   (cd /opt/splunk-ansible && time sudo -u ec2-user -E -S bash -c "SPLUNK_BUILD_URL=/tmp/splunk.tgz SPLUNK_ENABLE_SERVICE=true  SPLUNK_PASSWORD=SPLUNK-$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id) ansible-playbook -i inventory/environ.py site.yml")
-
-  #- as of 8.2.0, aws-cfn-bootstrap is no longer pre-installed on the AMI.
-  #- install aws-cfn-bootstrap package
-  yum -y install aws-cfn-bootstrap
-
 
   # setup auth with user-selected admin password
   mv $SPLUNK_HOME/etc/passwd $SPLUNK_HOME/etc/passwd.bak
@@ -152,7 +143,7 @@ function splunk_cm
   # execute base install and configuration
   base
 
-  export RESOURCE="SplunkCM"
+  #export RESOURCE="SplunkCM"
   printf '%s\t%s\n' "$LOCALIP" 'splunklicense' >> /etc/hosts
   hostname splunklicense
 
@@ -165,8 +156,9 @@ function splunk_cm
   # Install license from metadata.
   if [ $INSTALL_LICENSE = 1 ]; then
     mkdir -p $SPLUNK_HOME/etc/licenses/enterprise/
-    chown $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/licenses/enterprise
-    /opt/aws/bin/cfn-init -v --stack $STACK_NAME --resource $RESOURCE --region $AWS_REGION
+    mv /tmp/splunk.license $SPLUNK_HOME/etc/licenses/enterprise/splunk.license
+    chown -R $SPLUNK_USER:$SPLUNK_USER $SPLUNK_HOME/etc/licenses/enterprise
+    #/opt/aws/bin/cfn-init -v --stack $STACK_NAME --resource $RESOURCE --region $AWS_REGION
   fi
 
   # Increase splunkweb connection timeout with splunkd
@@ -380,7 +372,7 @@ function splunk_cluster_sh
         sitenum="site$num"
       fi
 
-      export RESOURCE="SplunkSHCMember$num"
+      #export RESOURCE="SplunkSHCMember$num"
 
       printf '%s\t%s\n' \"$LOCALIP\" \"splunksearch-$num\" >> /etc/hosts
       hostname "splunksearch-$num"
@@ -467,7 +459,7 @@ function splunk_deployer
   # execute base install and configuration
   base
 
-  export RESOURCE="SplunkSHCDeployer"
+  #export RESOURCE="SplunkSHCDeployer"
   printf "$LOCALIP \t splunk-shc-deployer\n" >> /etc/hosts
   hostname splunk-shc-deployer
 
@@ -548,7 +540,7 @@ function splunk_single_sh
   # execute base install and configuration
   base
 
-  export RESOURCE="SplunkSearchHeadInstance"
+  #export RESOURCE="SplunkSearchHeadInstance"
 
   # sleep 20 seconds to make sure Splunk has restarted before applying the configuration
   sleep 20
